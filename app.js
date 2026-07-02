@@ -1,0 +1,1 @@
+console.log('Dolphin ERP v12 starter loaded');

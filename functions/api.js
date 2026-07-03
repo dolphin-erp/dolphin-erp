@@ -1,4 +1,4 @@
-// Dolphin ERP v13 Cloudflare Pages Function
+// Dolphin ERP v13 Cloudflare Pages Function - backend Code.gs API와 세트
 // 핵심: Apps Script를 JSONP callback 방식으로 호출한 뒤 Cloudflare가 JSON으로 변환합니다.
 // 이유: 현재 Apps Script는 직접 JSON보다 callback 응답이 가장 안정적입니다.
 

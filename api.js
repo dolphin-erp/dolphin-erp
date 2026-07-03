@@ -1,69 +1,51 @@
-/* Dolphin ERP v12 API shim
- * 기존 Apps Script 화면 코드의 google.script.run 호출을 Cloudflare에서도 동작하게 만드는 어댑터입니다.
- * config.js의 CONFIG.API_URL에 Apps Script 웹앱 URL을 넣어야 합니다.
+/* Dolphin ERP v12.1 API shim
+ * 모바일 브라우저에서 Apps Script JSONP 로드가 막히는 문제를 피하기 위해
+ * Cloudflare Pages Function(/api)을 통해 Apps Script를 호출합니다.
  */
 (function () {
   'use strict';
 
   function getApiUrl() {
     var cfg = window.CONFIG || {};
-    var url = String(cfg.API_URL || '').trim();
-    if (!url || url.indexOf('PASTE_APPS_SCRIPT_WEBAPP_URL_HERE') >= 0) {
-      throw new Error('config.js의 CONFIG.API_URL에 Apps Script 웹앱 URL을 입력하세요.');
-    }
-    return url;
+    var url = String(cfg.API_URL || '/api').trim();
+    return url || '/api';
   }
 
-  function jsonp(action, args, onSuccess, onFailure) {
-    var callbackName = '__dolphinApiCallback_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
-    var script = document.createElement('script');
-    var url;
+  function callApi(action, args, onSuccess, onFailure) {
+    var url = getApiUrl();
 
-    window[callbackName] = function (response) {
-      cleanup();
-      if (response && response.ok) {
-        if (typeof onSuccess === 'function') onSuccess(response.result);
-      } else {
-        var message = response && response.error ? response.error : 'API 호출 실패';
-        if (typeof onFailure === 'function') onFailure({ message: message });
-        else alert(message);
-      }
-    };
-
-    function cleanup() {
-      try { delete window[callbackName]; } catch (e) { window[callbackName] = undefined; }
-      if (script && script.parentNode) script.parentNode.removeChild(script);
-      clearTimeout(timer);
-    }
-
-    var timer = setTimeout(function () {
-      cleanup();
-      var err = { message: 'API 응답 시간이 초과되었습니다.' };
-      if (typeof onFailure === 'function') onFailure(err);
-      else alert(err.message);
-    }, 30000);
-
-    try {
-      url = getApiUrl();
-      var qs = [
-        'action=' + encodeURIComponent(action),
-        'payload=' + encodeURIComponent(JSON.stringify(args || [])),
-        'callback=' + encodeURIComponent(callbackName),
-        '_=' + Date.now()
-      ].join('&');
-      script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + qs;
-      script.onerror = function () {
-        cleanup();
-        var err = { message: 'API 스크립트 로드 실패. Apps Script 배포 URL/권한을 확인하세요.' };
-        if (typeof onFailure === 'function') onFailure(err);
-        else alert(err.message);
-      };
-      document.head.appendChild(script);
-    } catch (e) {
-      cleanup();
-      if (typeof onFailure === 'function') onFailure(e);
-      else alert(e.message || e);
-    }
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: action, payload: args || [] }),
+      cache: 'no-store'
+    })
+      .then(function (res) {
+        return res.text().then(function (text) {
+          var data;
+          try {
+            data = text ? JSON.parse(text) : null;
+          } catch (e) {
+            throw new Error('API 응답 해석 실패: ' + text.slice(0, 120));
+          }
+          if (!res.ok) {
+            throw new Error((data && data.error) || ('HTTP ' + res.status));
+          }
+          return data;
+        });
+      })
+      .then(function (response) {
+        if (response && response.ok) {
+          if (typeof onSuccess === 'function') onSuccess(response.result);
+        } else {
+          throw new Error(response && response.error ? response.error : 'API 호출 실패');
+        }
+      })
+      .catch(function (err) {
+        var errorObj = { message: err && err.message ? err.message : String(err) };
+        if (typeof onFailure === 'function') onFailure(errorObj);
+        else alert(errorObj.message);
+      });
   }
 
   function createRunner() {
@@ -80,7 +62,7 @@
         }
         return function () {
           var args = Array.prototype.slice.call(arguments);
-          jsonp(String(prop), args, state.success, state.failure);
+          callApi(String(prop), args, state.success, state.failure);
           state = { success: null, failure: null };
           return this;
         };

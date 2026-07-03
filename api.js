@@ -1,6 +1,6 @@
-/* Dolphin ERP v12.2 API shim
- * Cloudflare Pages Functions 프록시(/api)를 통해 Apps Script를 호출합니다.
- * 모바일 Safari/Chrome에서 Apps Script 직접 script 로드가 막히는 문제를 피합니다.
+/* Dolphin ERP v13 API shim
+ * 브라우저는 Apps Script를 직접 호출하지 않습니다.
+ * Cloudflare Pages Function(/api)이 Apps Script를 대신 호출합니다.
  */
 (function () {
   'use strict';
@@ -9,7 +9,8 @@
     fetch('/api', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: action, args: args || [] })
+      body: JSON.stringify({ action: action, args: args || [] }),
+      cache: 'no-store'
     })
       .then(function (res) {
         return res.text().then(function (text) {
@@ -36,21 +37,13 @@
 
   function createRunner() {
     var state = { success: null, failure: null };
-    var runner = {};
-
-    return new Proxy(runner, {
+    return new Proxy({}, {
       get: function (target, prop) {
         if (prop === 'withSuccessHandler') {
-          return function (fn) {
-            state.success = fn;
-            return this;
-          };
+          return function (fn) { state.success = fn; return this; };
         }
         if (prop === 'withFailureHandler') {
-          return function (fn) {
-            state.failure = fn;
-            return this;
-          };
+          return function (fn) { state.failure = fn; return this; };
         }
         return function () {
           var args = Array.prototype.slice.call(arguments);

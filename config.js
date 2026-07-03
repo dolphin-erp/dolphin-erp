@@ -1,6 +1,5 @@
-// Dolphin ERP v12.1 설정 파일
-// 모바일 호환을 위해 브라우저가 Apps Script를 직접 호출하지 않고,
-// Cloudflare Pages Function(/api)이 중간에서 Apps Script를 호출합니다.
+// Dolphin ERP v12.2 설정 파일
 window.CONFIG = {
-  API_URL: '/api'
+    API_URL: 'https://script.google.com/macros/s/AKfycbyhys504lPWXdQsqgkbjEezu_w3XRcrQpyLvoQSy9FMy9Zm0zPtXIzvEvyCd-tM58-0/exec',
+    API_MODE: 'cloudflare-function'
 };

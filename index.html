@@ -342,7 +342,7 @@
 </head>
 <body>
 <div id="loadingOverlay"><div class="box">⏳ 등록 중입니다...<br><small>잠시만 기다려 주세요.</small></div></div>
-<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v13.7 · 2026-07-06 · 요청잔량/수주관리</span></header>
+<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v14.0 · 2026-07-06 · 현장사용 개선</span></header>
 <main>
   <datalist id="workerNameList"></datalist>
   <div class="tabs">
@@ -381,7 +381,7 @@
     <div class="card">
       <h2>제품별 공정재고 현황</h2>
       <div class="note">요청잔량은 마감되지 않은 영업요청의 미출하 잔량 합계입니다. 출하하면 자동으로 줄어들고, 잔량이 0이면 해당 요청은 마감됩니다. 층 구분: 용접 3층 / 조립·검사·포장 2층 / 완제품 1층입니다.</div>
-      <button class="refresh-btn" onclick="loadAll()">새로고침</button>
+      <button class="refresh-btn" onclick="loadAll()">새로고침</button><span class="auto-refresh-badge" id="autoRefreshText">현황판 30초 자동갱신</span>
       <div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th rowspan="2">요청잔량</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th><th rowspan="2">출하누계</th></tr><tr><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="dashboardBody"></tbody></table></div>
     </div>
     <div class="card">
@@ -535,6 +535,7 @@
   </section>
 
   <section id="worklog" class="page">
+    <div class="card"><h2>작업일보 입력용 공정재고 현황</h2><div class="note">재고 숫자를 클릭하면 해당 제품/공정/수량이 작업일보 작성란에 자동 세팅됩니다. 조립대기→조립완료, 검사대기→검사완료, 포장대기→포장완료 기준입니다.</div><div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th></tr><tr><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="workStockBody"></tbody></table></div></div>
     <div class="card"><h2>금일 작업일보 요약</h2><button class="refresh-btn" onclick="loadTodayWorkSummary()">새로고침</button><div class="table-wrap"><table><thead><tr><th>제품명</th><th>공정</th><th>완료수량 합계</th><th>불량수량 합계</th></tr></thead><tbody id="todayWorkSummaryBody"></tbody></table></div></div>
     <div class="card"><h2>금일 작업일보 입력 로그</h2><div class="table-wrap"><table><thead><tr><th>등록일시</th><th>제품명</th><th>공정</th><th>수량</th><th>작업자</th><th>비고</th></tr></thead><tbody id="todayWorkLogBody"></tbody></table></div></div>
     <div class="card"><h2>작업일보 작성</h2><div class="form-grid"><div><label>작업일</label><input type="date" id="workDate" onchange="loadTodayWorkSummary()"></div><div><label>제품</label><select id="workProduct" onchange="updateWorkProcess()"></select></div><div><label>공정</label><select id="workProcess"></select></div><div><label>완료수량</label><input type="number" id="workQty" min="1" value="1"></div><div><label>불량수량</label><input type="number" id="badQty" min="0" value="0"></div><div><label>작업자</label><input type="text" id="worker" placeholder="예: 홍길동" list="workerNameList"></div><div class="full"><label>비고</label><textarea id="workMemo"></textarea></div></div><button class="submit-btn" id="workSubmitBtn" onclick="saveWorkLog()">작업일보 등록</button><div class="message" id="workMsg"></div></div>
@@ -841,10 +842,29 @@ function displayLocationName(name){
   return map[name]||name;
 }
 
-document.addEventListener('DOMContentLoaded',function(){setToday();initDropZone();loadReportSettings();applyAdminSession();loadAll();});
+document.addEventListener('DOMContentLoaded',function(){setToday();initDropZone();loadReportSettings();applyAdminSession();loadAll();startDashboardAutoRefresh();});
 
 function getTodayString(){const d=new Date();const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);return local.toISOString().slice(0,10);}
 function setToday(){const today=getTodayString();['workDate','receiptDate','shipDate','salesDate','masterDate','improveDate'].forEach(function(id){const el=document.getElementById(id);if(el)el.value=today;});}
+
+let DASHBOARD_AUTO_TIMER=null;
+function startDashboardAutoRefresh(){
+  if(DASHBOARD_AUTO_TIMER)return;
+  DASHBOARD_AUTO_TIMER=setInterval(function(){
+    const dash=document.getElementById('dashboard');
+    if(dash&&dash.classList.contains('active')){
+      const t=document.getElementById('autoRefreshText');
+      if(t)t.textContent='현황판 자동갱신 중...';
+      loadDashboard(function(){if(t)t.textContent='현황판 30초 자동갱신';});
+    }
+  },30000);
+}
+function refreshAfterSave(){
+  loadDashboard();
+  loadSalesRequests();
+  loadHistory();
+  loadTodayWorkSummary();
+}
 function openPage(pageId,button){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('active');});document.getElementById(pageId).classList.add('active');button.classList.add('active');if(pageId==='dashboard')loadDashboard();if(pageId==='history')loadHistory();if(pageId==='flow')loadFlowTable();if(pageId==='worklog')loadTodayWorkSummary();if(pageId==='sales')loadSalesRequests();if(pageId==='improvement')loadImprovementRequests();if(pageId==='improvementAdmin')loadImprovementRequests();if(pageId==='master'){fillMasterSelects();renderMasterStockTable();}if(pageId==='printSummary')renderPrintSummary();}
 function loadAll(){google.script.run.withSuccessHandler(function(data){APP.products=data.products||[];APP.flows=data.flows||[];APP.workers=data.workers||[];APP.locations=data.locations||[];APP.salesRequests=data.salesRequests||[];['workProduct','receiptProduct','shipProduct','salesProduct','masterProduct'].forEach(fillProductSelect);fillLocationSelect('manualFromLocation',true);fillLocationSelect('manualToLocation',false);fillLocationSelect('autoManualToLocation',true,'자동 노선 그대로 사용');fillWorkerDatalist();fillLocationSelect('shipLocation',false);fillLocationSelect('masterLocation',false);updateWorkProcess();updateReceiptProcess();loadDashboard();loadSalesRequests();loadFlowTable();loadTodayWorkSummary();}).withFailureHandler(showError).getInitialData();}
 function fillProductSelect(id){const select=document.getElementById(id);if(!select)return;select.innerHTML='';APP.products.forEach(function(p){const o=document.createElement('option');o.value=p.code;o.textContent=p.name;select.appendChild(o);});}
@@ -1184,7 +1204,7 @@ function saveReceipt(){
   const data={receiptMode:mode,receiptDate:document.getElementById('receiptDate').value,productCode:document.getElementById('receiptProduct').value,qty:document.getElementById('receiptQty').value,writer:document.getElementById('receiptWriter').value,memo:document.getElementById('receiptMemo').value};
   if(mode==='auto'){data.fromProcess=document.getElementById('receiptProcess').value;data.manualToLocation=document.getElementById('autoManualToLocation').value;}else{data.receiptType=document.getElementById('manualReceiptType').value||'수동입고';data.fromLocation=document.getElementById('manualFromLocation').value;data.toLocation=document.getElementById('manualToLocation').value;}
   if(!beginAction(key,'receiptSubmitBtn','receiptMsg','등록 중...','입고증 등록 중입니다. 중복 등록 방지를 위해 버튼을 잠시 비활성화했습니다.'))return;
-  google.script.run.withSuccessHandler(function(msg){document.getElementById('receiptMsg').textContent=msg;document.getElementById('receiptMemo').value='';document.getElementById('autoManualToLocation').value='';loadDashboard();loadHistory();endAction(key,'receiptSubmitBtn','입고증 등록');}).withFailureHandler(function(err){endAction(key,'receiptSubmitBtn','입고증 등록');showError(err);}).addReceipt(data);
+  google.script.run.withSuccessHandler(function(msg){document.getElementById('receiptMsg').textContent=msg;document.getElementById('receiptMemo').value='';document.getElementById('autoManualToLocation').value='';refreshAfterSave();endAction(key,'receiptSubmitBtn','입고증 등록');}).withFailureHandler(function(err){endAction(key,'receiptSubmitBtn','입고증 등록');showError(err);}).addReceipt(data);
 }
 function saveWorkLog(){
   const key='workLogSave';
@@ -1192,7 +1212,7 @@ function saveWorkLog(){
   if(!document.getElementById('worker').value.trim()){alert('작업자명을 입력하세요.');return;}
   const data={workDate:document.getElementById('workDate').value,process:document.getElementById('workProcess').value,productCode:document.getElementById('workProduct').value,qty:document.getElementById('workQty').value,badQty:document.getElementById('badQty').value,worker:document.getElementById('worker').value,memo:document.getElementById('workMemo').value};
   if(!beginAction(key,'workSubmitBtn','workMsg','등록 중...','작업일보 등록 중입니다. 중복 등록 방지를 위해 버튼을 잠시 비활성화했습니다.'))return;
-  google.script.run.withSuccessHandler(function(msg){document.getElementById('workMsg').textContent=msg;document.getElementById('workQty').value=1;document.getElementById('badQty').value=0;document.getElementById('workMemo').value='';loadDashboard();loadHistory();loadTodayWorkSummary();endAction(key,'workSubmitBtn','작업일보 등록');}).withFailureHandler(function(err){endAction(key,'workSubmitBtn','작업일보 등록');showError(err);}).addWorkLog(data);
+  google.script.run.withSuccessHandler(function(msg){document.getElementById('workMsg').textContent=msg;document.getElementById('workQty').value=1;document.getElementById('badQty').value=0;document.getElementById('workMemo').value='';refreshAfterSave();endAction(key,'workSubmitBtn','작업일보 등록');}).withFailureHandler(function(err){endAction(key,'workSubmitBtn','작업일보 등록');showError(err);}).addWorkLog(data);
 }
 function setShipQtyToAvailable(){const productCode=document.getElementById('shipProduct').value;const location=document.getElementById('shipLocation').value;const qty=getStockByLocation(productCode,location);if(qty>0)document.getElementById('shipQty').value=qty;}
 function updateShipStockPreview(){const productCode=document.getElementById('shipProduct').value;const location=document.getElementById('shipLocation').value;const qty=getStockByLocation(productCode,location);APP.shipSelection={productCode:productCode,location:location};const box=document.getElementById('shipStockPreview');if(box)box.textContent='현재 출하위치 재고: '+qty+'대';renderShipmentStockTable(APP.dashboard);}
@@ -1217,10 +1237,10 @@ function saveShipment(){
   if(!validateShipmentBeforeSave())return;
   const data={shipDate:document.getElementById('shipDate').value,shipType:document.getElementById('shipType').value,location:document.getElementById('shipLocation').value,productCode:document.getElementById('shipProduct').value,qty:document.getElementById('shipQty').value,customerName:document.getElementById('customerName').value,writer:document.getElementById('shipWriter').value,memo:document.getElementById('shipMemo').value,salesRequestId:document.getElementById('shipSalesRequest').value};
   if(!beginAction(key,'shipSubmitBtn','shipMsg','등록 중...','출하증 등록 중입니다. 중복 등록 방지를 위해 버튼을 잠시 비활성화했습니다.'))return;
-  google.script.run.withSuccessHandler(function(msg){document.getElementById('shipMsg').textContent=msg;document.getElementById('shipMemo').value='';document.getElementById('shipSalesRequest').value='';loadDashboard();loadSalesRequests();loadHistory();endAction(key,'shipSubmitBtn','출하증 등록');}).withFailureHandler(function(err){endAction(key,'shipSubmitBtn','출하증 등록');showError(err);}).addShipment(data);
+  google.script.run.withSuccessHandler(function(msg){document.getElementById('shipMsg').textContent=msg;document.getElementById('shipMemo').value='';document.getElementById('shipSalesRequest').value='';refreshAfterSave();endAction(key,'shipSubmitBtn','출하증 등록');}).withFailureHandler(function(err){endAction(key,'shipSubmitBtn','출하증 등록');showError(err);}).addShipment(data);
 }
 
-function loadDashboard(){google.script.run.withSuccessHandler(function(rows){APP.dashboard=rows;renderDashboardTable(rows);renderReceiptStockTable(rows);renderShipmentStockTable(rows);updateReceiptPreview();updateShipStockPreview();renderPrintSummary();loadSalesRequests();}).withFailureHandler(showError).getDashboard();}
+function loadDashboard(done){google.script.run.withSuccessHandler(function(rows){APP.dashboard=rows||[];renderDashboardTable(APP.dashboard);renderReceiptStockTable(APP.dashboard);renderShipmentStockTable(APP.dashboard);renderWorkStockTable(APP.dashboard);updateReceiptPreview();updateShipStockPreview();renderPrintSummary();loadSalesRequests();if(typeof done==='function')done();}).withFailureHandler(function(err){if(typeof done==='function')done();showError(err);}).getDashboard();}
 function renderDashboardTable(rows){const tbody=document.getElementById('dashboardBody');tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.productName+'</td>'+renderSalesRemainTd(r)+renderStockTd(r,'weldStock','floor-3')+renderStockTd(r,'assyWorkStock','floor-2')+renderStockTd(r,'assyDoneStock','floor-2')+renderStockTd(r,'inspWorkStock','floor-2')+renderStockTd(r,'inspDoneStock','floor-2')+renderStockTd(r,'packWorkStock','floor-2')+renderStockTd(r,'packDoneStock','floor-2')+renderStockTd(r,'fgStock','floor-1 plus')+'<td>'+r.shippedQty+'</td>';tbody.appendChild(tr);});}
 
 function renderSalesTd(row, field) {
@@ -1235,6 +1255,51 @@ function renderSalesRemainTd(row) {
 }
 
 function renderStockTd(row,field,floorClass){const value=Number(row[field])||0;const cls=value<0?'minus':value===0?'zero-stock':'';return '<td class="'+floorClass+' '+cls+'">'+value+'</td>';}
+
+function findWorkProcessForLocation(productCode,locationName){
+  const flows=getFlowsByProduct(productCode);
+  let f=flows.find(function(x){return x.inputLocation===locationName;});
+  if(f)return f.process;
+  f=flows.find(function(x){return x.outputLocation===locationName;});
+  if(f)return f.process;
+  return '';
+}
+function selectWorkFromStock(productCode,locationName){
+  const process=findWorkProcessForLocation(productCode,locationName);
+  const qty=getStockByLocation(productCode,locationName);
+  if(!process){alert('이 위치는 작업일보 자동 선택 대상이 아닙니다. 입고/출하 화면을 이용하세요.');return;}
+  document.getElementById('workProduct').value=productCode;
+  updateWorkProcess();
+  document.getElementById('workProcess').value=process;
+  if(qty>0)document.getElementById('workQty').value=qty;
+  document.querySelectorAll('.work-stock-cell').forEach(function(td){td.classList.remove('work-stock-selected');});
+  const key=productCode+'|'+locationName;
+  document.querySelectorAll('.work-stock-cell').forEach(function(td){if(td.getAttribute('data-key')===key)td.classList.add('work-stock-selected');});
+  const msg=document.getElementById('workMsg');
+  if(msg){msg.style.color='#2563eb';msg.textContent='선택됨: '+locationName+' → '+process+' / 현재 수량 '+qty+'대';}
+  const qtyInput=document.getElementById('workQty');
+  if(qtyInput){qtyInput.focus();qtyInput.select();}
+}
+function renderWorkStockTable(rows){
+  const tbody=document.getElementById('workStockBody');
+  if(!tbody)return;
+  tbody.innerHTML='';
+  (rows||[]).forEach(function(r){
+    const tr=document.createElement('tr');
+    let html='<td>'+r.productName+'</td>';
+    STOCK_COLUMNS.forEach(function(col){
+      const value=Number(r[col.field])||0;
+      const process=findWorkProcessForLocation(r.productCode,col.location);
+      const clickable=!!process;
+      const cls=[col.floorClass,clickable?'work-stock-cell':'',value===0?'zero-stock':'',value<0?'minus':''].join(' ');
+      const title=clickable?('클릭 시 작업일보 '+process+' 선택'):'작업일보 자동선택 대상 아님';
+      html+='<td data-key="'+r.productCode+'|'+col.location+'" class="'+cls+'" title="'+title+'" '+(clickable?'onclick="selectWorkFromStock(\''+r.productCode+'\',\''+col.location+'\')"':'')+'>'+value+'</td>';
+    });
+    tr.innerHTML=html;
+    tbody.appendChild(tr);
+  });
+}
+
 function renderReceiptStockTable(rows){const tbody=document.getElementById('receiptStockBody');if(!tbody)return;tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');let html='<td>'+r.productName+'</td>'+renderSalesRemainTd(r);STOCK_COLUMNS.forEach(function(col){const value=Number(r[col.field])||0;const isFrom=APP.receiptSelection.productCode===r.productCode&&APP.receiptSelection.fromLocation===col.location;const isTo=APP.receiptSelection.productCode===r.productCode&&APP.receiptSelection.toLocation===col.location;const cls=[col.floorClass,'stock-cell',value===0?'zero-stock':'',value<0?'minus':'',isFrom?'selected-from':'',isTo?'selected-to':''].join(' ');html+='<td class="'+cls+'" onclick="selectReceiptFromStock(\''+r.productCode+'\', \''+col.location+'\')">'+value+'</td>';});tr.innerHTML=html;tbody.appendChild(tr);});}
 function renderShipmentStockTable(rows){const tbody=document.getElementById('shipmentStockBody');if(!tbody)return;tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');let html='<td>'+r.productName+'</td>'+renderSalesRemainTd(r);STOCK_COLUMNS.forEach(function(col){const value=Number(r[col.field])||0;const isSelected=APP.shipSelection.productCode===r.productCode&&APP.shipSelection.location===col.location;const cls=[col.floorClass,'stock-cell',value===0?'zero-stock':'',value<0?'minus':'',isSelected?'selected-from':''].join(' ');html+='<td class="'+cls+'" onclick="selectShipmentFromStock(\''+r.productCode+'\', \''+col.location+'\')">'+value+'</td>';});tr.innerHTML=html;tbody.appendChild(tr);});}
 function loadTodayWorkSummary(){const workDate=document.getElementById('workDate').value;google.script.run.withSuccessHandler(function(data){const sb=document.getElementById('todayWorkSummaryBody');const lb=document.getElementById('todayWorkLogBody');if(!sb||!lb)return;sb.innerHTML='';lb.innerHTML='';data.summary.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.productName+'</td><td>'+r.process+'</td><td class="plus">'+r.totalQty+'</td><td>'+r.totalBadQty+'</td>';sb.appendChild(tr);});data.logs.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.createdAt+'</td><td>'+r.productName+'</td><td>'+r.process+'</td><td>'+r.qty+'</td><td>'+r.worker+'</td><td>'+r.memo+'</td>';lb.appendChild(tr);});}).withFailureHandler(showError).getTodayWorkSummary(workDate);}
@@ -1580,7 +1645,7 @@ function saveImprovementAdmin(requestId, idx, btn) {
 }
 
 
-function showError(error){alert(error.message||error);}
+function showError(error){const raw=(error&&error.message)?error.message:String(error||'');let msg=raw;if(/is not defined|ReferenceError|TypeError|SyntaxError/i.test(raw)){msg='처리 중 화면 오류가 발생했습니다. 데이터 반영 여부를 새로고침 후 확인하세요.\n\n상세: '+raw;}alert(msg);}
 </script>
 </body>
 </html>

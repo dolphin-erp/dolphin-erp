@@ -28,6 +28,7 @@
     input,select,textarea,button{width:100%;box-sizing:border-box;padding:9px;font-size:14px;border-radius:7px;border:1px solid #cbd5e1}
     textarea{min-height:80px}.full{grid-column:1/-1}
     .submit-btn{margin-top:14px;background:#2563eb;color:white;border:none;cursor:pointer;font-weight:bold;min-height:42px}
+    .submit-btn:disabled{background:#94a3b8;cursor:not-allowed;opacity:.85}
     .small-btn{margin-top:6px;background:#111827;color:white;border:none;cursor:pointer;font-weight:bold;min-height:36px}
     .refresh-btn{width:160px;background:#111827;color:white;border:none;margin-bottom:12px;cursor:pointer;font-weight:bold}
     .message{margin-top:10px;color:#2563eb;font-size:13px;font-weight:bold;white-space:pre-line}
@@ -517,7 +518,7 @@
         <div><label>요청수량</label><input type="number" id="salesQty" min="1" value="1"></div>
         <div class="full"><label>비고</label><textarea id="salesMemo" placeholder="예: 긴급, 납기, 특이사항"></textarea></div>
       </div>
-      <button class="submit-btn" onclick="saveSalesRequest()">영업요청 등록</button>
+      <button class="submit-btn" id="salesSubmitBtn" onclick="saveSalesRequest()">영업요청 등록</button>
       <div class="message" id="salesMsg"></div>
     </div>
 
@@ -1031,7 +1032,53 @@ function printEditableReport() {
   window.print();
 }
 
-function saveSalesRequest(){const data={requestDate:document.getElementById('salesDate').value,customerName:document.getElementById('salesCustomer').value,productCode:document.getElementById('salesProduct').value,qty:document.getElementById('salesQty').value,memo:document.getElementById('salesMemo').value};google.script.run.withSuccessHandler(function(msg){document.getElementById('salesMsg').textContent=msg;document.getElementById('salesQty').value=1;document.getElementById('salesMemo').value='';loadSalesRequests();}).withFailureHandler(showError).addSalesRequest(data);}
+let salesRequestSaving=false;
+function saveSalesRequest(){
+  if(salesRequestSaving)return;
+  const btn=document.getElementById('salesSubmitBtn');
+  const msgEl=document.getElementById('salesMsg');
+  const data={
+    requestDate:document.getElementById('salesDate').value,
+    customerName:document.getElementById('salesCustomer').value,
+    productCode:document.getElementById('salesProduct').value,
+    qty:document.getElementById('salesQty').value,
+    memo:document.getElementById('salesMemo').value
+  };
+  salesRequestSaving=true;
+  if(btn){
+    btn.disabled=true;
+    btn.dataset.originalText=btn.dataset.originalText||btn.textContent;
+    btn.textContent='등록 중... 잠시만 기다려주세요';
+  }
+  if(msgEl){
+    msgEl.style.color='#2563eb';
+    msgEl.textContent='영업요청 등록 중입니다. 중복 등록 방지를 위해 버튼을 잠시 비활성화했습니다.';
+  }
+  google.script.run
+    .withSuccessHandler(function(msg){
+      if(msgEl){
+        msgEl.style.color='#2563eb';
+        msgEl.textContent=msg;
+      }
+      document.getElementById('salesQty').value=1;
+      document.getElementById('salesMemo').value='';
+      loadSalesRequests();
+      salesRequestSaving=false;
+      if(btn){
+        btn.disabled=false;
+        btn.textContent=btn.dataset.originalText||'영업요청 등록';
+      }
+    })
+    .withFailureHandler(function(err){
+      salesRequestSaving=false;
+      if(btn){
+        btn.disabled=false;
+        btn.textContent=btn.dataset.originalText||'영업요청 등록';
+      }
+      showError(err);
+    })
+    .addSalesRequest(data);
+}
 function loadSalesRequests(){google.script.run.withSuccessHandler(function(rows){APP.salesRequests=rows||[];renderSalesTables();fillSalesRequestSelect();}).withFailureHandler(showError).getSalesRequests();}
 function renderSalesTables(){renderSalesBody('salesBody',true);renderSalesBody('dashboardSalesBody',false);renderShipmentSalesBody();}
 function statusClass(st){if(st==='소진')return 'status-done';if(st==='마감')return 'status-closed';return 'status-active';}

@@ -15,7 +15,7 @@
   </script>
   <style>
     body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#222}
-    header{background:#1f2937;color:white;padding:16px 22px;font-size:22px;font-weight:bold}
+    header{background:#1f2937;color:white;padding:16px 22px;font-size:22px;font-weight:bold;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.version-badge{font-size:13px;font-weight:bold;background:#2563eb;color:white;padding:6px 10px;border-radius:999px;white-space:nowrap}
     main{padding:18px}
     .tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
     .tabs button{width:auto;padding:10px 16px;background:#e5e7eb;color:#111827;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-weight:bold}
@@ -224,7 +224,7 @@
       }
     }
 
-    @media(max-width:800px){main{padding:12px}header{font-size:18px}.form-grid{grid-template-columns:1fr}}
+    @media(max-width:800px){main{padding:12px}header{font-size:18px}.version-badge{font-size:11px;padding:4px 8px}.form-grid{grid-template-columns:1fr}}
   
     .master-stock-cell {
       cursor: pointer;
@@ -338,15 +338,11 @@
 #loadingOverlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:99999}
 #loadingOverlay .box{background:#fff;padding:24px 36px;border-radius:12px;font-size:20px;font-weight:bold;box-shadow:0 8px 30px rgba(0,0,0,.2)}
 
-
-#versionBadge{position:fixed;top:18px;right:100px;background:#0f172a;color:#fff;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.25)}
-
 </style>
 </head>
 <body>
 <div id="loadingOverlay"><div class="box">⏳ 등록 중입니다...<br><small>잠시만 기다려 주세요.</small></div></div>
-<header>돌핀 공정재고 웹앱</header>
-<div id="versionBadge">v13.6 | 2026-07-06 15:30</div>
+<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v13.7 · 2026-07-06 · 요청잔량/수주관리</span></header>
 <main>
   <datalist id="workerNameList"></datalist>
   <div class="tabs">
@@ -384,13 +380,13 @@
   <section id="dashboard" class="page active">
     <div class="card">
       <h2>제품별 공정재고 현황</h2>
-      <div class="note">영업요청은 요청수량 / 소진 / 요청잔량으로 표시됩니다. 완제품재고에서 영업요청을 선택해 출하하면 소진수량이 올라가고 요청잔량이 줄어듭니다. 층 구분: 용접 3층 / 조립·검사·포장 2층 / 완제품 1층입니다.</div>
+      <div class="note">요청잔량은 마감되지 않은 영업요청의 미출하 잔량 합계입니다. 출하하면 자동으로 줄어들고, 잔량이 0이면 해당 요청은 마감됩니다. 층 구분: 용접 3층 / 조립·검사·포장 2층 / 완제품 1층입니다.</div>
       <button class="refresh-btn" onclick="loadAll()">새로고침</button>
-      <div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th colspan="3">영업요청</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th><th rowspan="2">출하누계</th></tr><tr><th>요청수량</th><th>소진</th><th>요청잔량</th><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="dashboardBody"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th rowspan="2">요청잔량</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th><th rowspan="2">출하누계</th></tr><tr><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="dashboardBody"></tbody></table></div>
     </div>
     <div class="card">
       <h2>진행 중 영업요청</h2>
-      <div class="table-wrap"><table><thead><tr><th>요청일</th><th>납품처</th><th>제품명</th><th>요청</th><th>소진</th><th>잔량</th><th>완제품재고</th><th>상태</th><th>비고</th></tr></thead><tbody id="dashboardSalesBody"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>요청일</th><th>납품처</th><th>제품명</th><th>등록수량</th><th>출하누계</th><th>잔량</th><th>완제품재고</th><th>상태</th><th>비고</th></tr></thead><tbody id="dashboardSalesBody"></tbody></table></div>
     </div>
   </section>
 
@@ -473,8 +469,8 @@
       </div>
 
       <div class="print-summary-box" id="reportKpiBox">
-        <div class="print-kpi"><div class="print-kpi-title">영업요청</div><div class="print-kpi-value" id="kpiReq">0</div></div>
-        <div class="print-kpi"><div class="print-kpi-title">소진</div><div class="print-kpi-value" id="kpiDone">0</div></div>
+        <div class="print-kpi"><div class="print-kpi-title">요청잔량</div><div class="print-kpi-value" id="kpiReq">0</div></div>
+        <div class="print-kpi"><div class="print-kpi-title">출하누계</div><div class="print-kpi-value" id="kpiDone">0</div></div>
         <div class="print-kpi"><div class="print-kpi-title">요청잔량</div><div class="print-kpi-value" id="kpiRemain">0</div></div>
         <div class="print-kpi"><div class="print-kpi-title">생산중</div><div class="print-kpi-value" id="kpiWip">0</div></div>
         <div class="print-kpi"><div class="print-kpi-title">완제품</div><div class="print-kpi-value" id="kpiFg">0</div></div>
@@ -487,8 +483,8 @@
           <thead>
             <tr id="reportTableHeader">
               <th>제품명</th>
-              <th>영업요청</th>
-              <th>소진</th>
+              <th>요청잔량</th>
+              <th>출하누계</th>
               <th>요청잔량</th>
               <th>3층 용접</th>
               <th>2층 조립</th>
@@ -519,7 +515,7 @@
   <section id="sales" class="page">
     <div class="card">
       <h2>영업요청 등록</h2>
-      <div class="note">영업팀 요청수량을 등록합니다. LOT는 없으므로 출하증에서 영업요청을 선택해 완제품재고 출하하면 자동으로 소진됩니다.</div>
+      <div class="note">영업팀 요청수량을 수주번호 단위로 등록합니다. 등록수량은 고정되고, 출하증에서 선택해 출하하면 출하누계와 잔량이 자동 계산됩니다.</div>
       <div class="form-grid">
         <div><label>요청일</label><input type="date" id="salesDate"></div>
         <div><label>납품처</label><input type="text" id="salesCustomer" placeholder="예: 서울지사, 거래처명"></div>
@@ -532,9 +528,9 @@
     </div>
 
     <div class="card">
-      <h2>영업요청 현황</h2>
+      <h2>수주/영업요청 현황</h2>
       <button class="refresh-btn" onclick="loadSalesRequests()">새로고침</button>
-      <div class="table-wrap"><table><thead><tr><th>요청ID</th><th>요청일</th><th>납품처</th><th>제품명</th><th>요청</th><th>소진</th><th>잔량</th><th>완제품재고</th><th>상태</th><th>출하선택</th><th>마감</th><th>비고</th></tr></thead><tbody id="salesBody"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>수주번호</th><th>요청일</th><th>납품처</th><th>제품명</th><th>등록수량</th><th>출하누계</th><th>잔량</th><th>완제품재고</th><th>상태</th><th>출하선택</th><th>마감</th><th>비고</th></tr></thead><tbody id="salesBody"></tbody></table></div>
     </div>
   </section>
 
@@ -545,13 +541,13 @@
   </section>
 
   <section id="receipt" class="page">
-    <div class="card"><h2>입고 선택용 공정재고 현황</h2><div class="note">재고 숫자를 클릭하면 해당 위치가 FROM으로 선택됩니다. 빨간색은 FROM, 초록색은 TO입니다.</div><div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th colspan="3">영업요청</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th></tr><tr><th>요청수량</th><th>소진</th><th>요청잔량</th><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="receiptStockBody"></tbody></table></div></div>
+    <div class="card"><h2>입고 선택용 공정재고 현황</h2><div class="note">재고 숫자를 클릭하면 해당 위치가 FROM으로 선택됩니다. 빨간색은 FROM, 초록색은 TO입니다.</div><div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th rowspan="2">요청잔량</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th></tr><tr><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="receiptStockBody"></tbody></table></div></div>
     <div class="card"><h2>입고증 작성</h2><div class="form-grid"><div><label>입고일</label><input type="date" id="receiptDate"></div><div><label>입고방식</label><select id="receiptMode" onchange="changeReceiptMode()"><option value="auto">자동입고</option><option value="manual">수동입고/반송</option></select></div><div><label>제품</label><select id="receiptProduct" onchange="updateReceiptProcessAndQty()"></select></div><div id="autoProcessBox"><label>기준공정</label><select id="receiptProcess" onchange="setReceiptQtyToAvailable(); updateReceiptPreview();"></select></div><div id="manualTypeBox" class="hidden"><label>입고구분</label><input type="text" id="manualReceiptType" placeholder="예: 반송입고, 초기재고"></div><div id="manualFromBox" class="hidden"><label>FROM위치</label><select id="manualFromLocation" onchange="setReceiptQtyToAvailable(); updateReceiptPreview();"></select></div><div id="manualToBox" class="hidden"><label>TO위치</label><select id="manualToLocation" onchange="updateReceiptPreview()"></select></div><div id="autoManualToBox"><label>예외 TO위치</label><select id="autoManualToLocation" onchange="updateReceiptPreview()"><option value="">자동 노선 그대로 사용</option></select></div><div><label>수량</label><input type="number" id="receiptQty" min="1" value="1"><button type="button" class="small-btn" onclick="fillReceiptAllQty()">현재 FROM 재고 전량 입력</button></div><div><label>작성자</label><input type="text" id="receiptWriter" list="workerNameList"></div><div class="full"><div class="route-box" id="receiptPreview">자동 노선 미리보기</div></div><div class="full"><label>비고</label><textarea id="receiptMemo"></textarea></div></div><button class="submit-btn" id="receiptSubmitBtn" onclick="saveReceipt()">입고증 등록</button><div class="message" id="receiptMsg"></div></div>
   </section>
 
   <section id="shipment" class="page">
     <div class="card"><h2>영업요청 선택</h2><div class="note">요청을 선택하면 제품, 납품처, 수량이 자동으로 들어갑니다. 수량은 요청잔량과 완제품재고 중 작은 값으로 잡힙니다.</div><div class="table-wrap"><table><thead><tr><th>요청일</th><th>납품처</th><th>제품명</th><th>잔량</th><th>완제품재고</th><th>선택</th></tr></thead><tbody id="shipmentSalesBody"></tbody></table></div></div>
-    <div class="card"><h2>완제품 출하 가능 현황</h2><div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th colspan="3">영업요청</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th></tr><tr><th>요청수량</th><th>소진</th><th>요청잔량</th><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="shipmentStockBody"></tbody></table></div></div>
+    <div class="card"><h2>완제품 출하 가능 현황</h2><div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th rowspan="2">요청잔량</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th></tr><tr><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="shipmentStockBody"></tbody></table></div></div>
     <div class="card"><h2>출하증 작성</h2><div class="form-grid"><div><label>출하일</label><input type="date" id="shipDate"></div><div><label>영업요청</label><select id="shipSalesRequest" onchange="selectSalesRequestBySelect()"><option value="">일반 출하</option></select></div><div><label>출하구분</label><select id="shipType"><option value="출하">출하</option><option value="불량폐기">불량폐기</option><option value="샘플출하">샘플출하</option><option value="재고조정감소">재고조정감소</option></select></div><div class="hidden"><label>출하위치</label><select id="shipLocation" onchange="setShipQtyToAvailable(); updateShipStockPreview();"></select></div><div><label>제품</label><select id="shipProduct" onchange="setShipQtyToAvailable(); updateShipStockPreview();"></select></div><div><label>수량</label><input type="number" id="shipQty" min="1" value="1"><div class="route-box" id="shipStockPreview">현재 출하위치 재고: 0대</div><button type="button" class="small-btn" onclick="fillShipAllQty()">현재고 전량 출하</button></div><div><label>납품처</label><input type="text" id="customerName"></div><div><label>작성자</label><input type="text" id="shipWriter" list="workerNameList"></div><div class="full"><label>비고</label><textarea id="shipMemo"></textarea></div></div><button class="submit-btn" id="shipSubmitBtn" onclick="saveShipment()">출하증 등록</button><div class="message" id="shipMsg"></div></div>
   </section>
 
@@ -1135,7 +1131,7 @@ function renderSalesBody(id,withButtons){
       html+='<td data-label="납품처">'+(r.customerName||'')+'</td>';
       html+='<td data-label="제품명">'+(r.productName||'')+'</td>';
       html+='<td data-label="요청">'+(r.requestQty||0)+'</td>';
-      html+='<td data-label="소진">'+(r.shippedQty||0)+'</td>';
+      html+='<td data-label="출하누계">'+(r.shippedQty||0)+'</td>';
       html+='<td data-label="잔량" class="plus">'+(r.remainQty||0)+'</td>';
       html+='<td data-label="완제품재고">'+(r.fgStock||0)+'</td>';
       html+='<td data-label="상태" class="'+statusClass(r.status)+'">'+(r.status||'')+'</td>';
@@ -1146,7 +1142,7 @@ function renderSalesBody(id,withButtons){
       html+='<td data-label="납품처">'+(r.customerName||'')+'</td>';
       html+='<td data-label="제품명">'+(r.productName||'')+'</td>';
       html+='<td data-label="요청">'+(r.requestQty||0)+'</td>';
-      html+='<td data-label="소진">'+(r.shippedQty||0)+'</td>';
+      html+='<td data-label="출하누계">'+(r.shippedQty||0)+'</td>';
       html+='<td data-label="잔량" class="plus">'+(r.remainQty||0)+'</td>';
       html+='<td data-label="완제품재고">'+(r.fgStock||0)+'</td>';
       html+='<td data-label="상태" class="'+statusClass(r.status)+'">'+(r.status||'')+'</td>';
@@ -1163,7 +1159,7 @@ function renderSalesBody(id,withButtons){
 function renderShipmentSalesBody(){const tbody=document.getElementById('shipmentSalesBody');if(!tbody)return;tbody.innerHTML='';APP.salesRequests.forEach(function(r){if(!r.active)return;const tr=document.createElement('tr');tr.innerHTML='<td>'+r.requestDate+'</td><td>'+r.customerName+'</td><td>'+r.productName+'</td><td class="plus">'+r.remainQty+'</td><td>'+r.fgStock+'</td><td><button class="small-btn" onclick="selectSalesRequestForShipment(\''+r.requestId+'\')">선택</button></td>';tbody.appendChild(tr);});}
 function fillSalesRequestSelect(){const select=document.getElementById('shipSalesRequest');if(!select)return;const old=select.value;select.innerHTML='<option value="">일반 출하</option>';APP.salesRequests.forEach(function(r){if(!r.active)return;const o=document.createElement('option');o.value=r.requestId;o.textContent=r.requestDate+' / '+r.customerName+' / '+r.productName+' / 잔량 '+r.remainQty;select.appendChild(o);});select.value=old;}
 function selectSalesRequestBySelect(){const id=document.getElementById('shipSalesRequest').value;if(id)selectSalesRequestForShipment(id);}
-function selectSalesRequestForShipment(requestId){const r=APP.salesRequests.find(function(x){return x.requestId===requestId;});if(!r)return;openPage('shipment',document.querySelector('.tabs button:nth-child(6)')||document.querySelectorAll('.tabs button')[5]);document.getElementById('shipSalesRequest').value=r.requestId;document.getElementById('shipProduct').value=r.productCode;document.getElementById('shipLocation').value='완제품재고';document.getElementById('customerName').value=r.customerName;document.getElementById('shipQty').value=Math.min(Number(r.remainQty)||0,Number(r.fgStock)||0)||1;document.getElementById('shipMemo').value='영업요청 소진: '+r.requestId;updateShipStockPreview();}
+function selectSalesRequestForShipment(requestId){const r=APP.salesRequests.find(function(x){return x.requestId===requestId;});if(!r)return;openPage('shipment',document.querySelector('.tabs button:nth-child(6)')||document.querySelectorAll('.tabs button')[5]);document.getElementById('shipSalesRequest').value=r.requestId;document.getElementById('shipProduct').value=r.productCode;document.getElementById('shipLocation').value='완제품재고';document.getElementById('customerName').value=r.customerName;document.getElementById('shipQty').value=Math.min(Number(r.remainQty)||0,Number(r.fgStock)||0)||1;document.getElementById('shipMemo').value='영업요청 출하: '+r.requestId;updateShipStockPreview();}
 function closeSalesRequestUI(requestId, btn){
   const key='closeSales_'+requestId;
   if(ACTION_BUSY[key])return;
@@ -1225,7 +1221,7 @@ function saveShipment(){
 }
 
 function loadDashboard(){google.script.run.withSuccessHandler(function(rows){APP.dashboard=rows;renderDashboardTable(rows);renderReceiptStockTable(rows);renderShipmentStockTable(rows);updateReceiptPreview();updateShipStockPreview();renderPrintSummary();loadSalesRequests();}).withFailureHandler(showError).getDashboard();}
-function renderDashboardTable(rows){const tbody=document.getElementById('dashboardBody');tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.productName+'</td>'+renderSalesTd(r,'salesRequestQty')+renderSalesTd(r,'salesShippedQty')+renderSalesRemainTd(r)+renderStockTd(r,'weldStock','floor-3')+renderStockTd(r,'assyWorkStock','floor-2')+renderStockTd(r,'assyDoneStock','floor-2')+renderStockTd(r,'inspWorkStock','floor-2')+renderStockTd(r,'inspDoneStock','floor-2')+renderStockTd(r,'packWorkStock','floor-2')+renderStockTd(r,'packDoneStock','floor-2')+renderStockTd(r,'fgStock','floor-1 plus')+'<td>'+r.shippedQty+'</td>';tbody.appendChild(tr);});}
+function renderDashboardTable(rows){const tbody=document.getElementById('dashboardBody');tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.productName+'</td>'+renderSalesRemainTd(r)+renderStockTd(r,'weldStock','floor-3')+renderStockTd(r,'assyWorkStock','floor-2')+renderStockTd(r,'assyDoneStock','floor-2')+renderStockTd(r,'inspWorkStock','floor-2')+renderStockTd(r,'inspDoneStock','floor-2')+renderStockTd(r,'packWorkStock','floor-2')+renderStockTd(r,'packDoneStock','floor-2')+renderStockTd(r,'fgStock','floor-1 plus')+'<td>'+r.shippedQty+'</td>';tbody.appendChild(tr);});}
 
 function renderSalesTd(row, field) {
   const value = Number(row[field]) || 0;
@@ -1239,8 +1235,8 @@ function renderSalesRemainTd(row) {
 }
 
 function renderStockTd(row,field,floorClass){const value=Number(row[field])||0;const cls=value<0?'minus':value===0?'zero-stock':'';return '<td class="'+floorClass+' '+cls+'">'+value+'</td>';}
-function renderReceiptStockTable(rows){const tbody=document.getElementById('receiptStockBody');if(!tbody)return;tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');let html='<td>'+r.productName+'</td>'+renderSalesTd(r,'salesRequestQty')+renderSalesTd(r,'salesShippedQty')+renderSalesRemainTd(r);STOCK_COLUMNS.forEach(function(col){const value=Number(r[col.field])||0;const isFrom=APP.receiptSelection.productCode===r.productCode&&APP.receiptSelection.fromLocation===col.location;const isTo=APP.receiptSelection.productCode===r.productCode&&APP.receiptSelection.toLocation===col.location;const cls=[col.floorClass,'stock-cell',value===0?'zero-stock':'',value<0?'minus':'',isFrom?'selected-from':'',isTo?'selected-to':''].join(' ');html+='<td class="'+cls+'" onclick="selectReceiptFromStock(\''+r.productCode+'\', \''+col.location+'\')">'+value+'</td>';});tr.innerHTML=html;tbody.appendChild(tr);});}
-function renderShipmentStockTable(rows){const tbody=document.getElementById('shipmentStockBody');if(!tbody)return;tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');let html='<td>'+r.productName+'</td>'+renderSalesTd(r,'salesRequestQty')+renderSalesTd(r,'salesShippedQty')+renderSalesRemainTd(r);STOCK_COLUMNS.forEach(function(col){const value=Number(r[col.field])||0;const isSelected=APP.shipSelection.productCode===r.productCode&&APP.shipSelection.location===col.location;const cls=[col.floorClass,'stock-cell',value===0?'zero-stock':'',value<0?'minus':'',isSelected?'selected-from':''].join(' ');html+='<td class="'+cls+'" onclick="selectShipmentFromStock(\''+r.productCode+'\', \''+col.location+'\')">'+value+'</td>';});tr.innerHTML=html;tbody.appendChild(tr);});}
+function renderReceiptStockTable(rows){const tbody=document.getElementById('receiptStockBody');if(!tbody)return;tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');let html='<td>'+r.productName+'</td>'+renderSalesRemainTd(r);STOCK_COLUMNS.forEach(function(col){const value=Number(r[col.field])||0;const isFrom=APP.receiptSelection.productCode===r.productCode&&APP.receiptSelection.fromLocation===col.location;const isTo=APP.receiptSelection.productCode===r.productCode&&APP.receiptSelection.toLocation===col.location;const cls=[col.floorClass,'stock-cell',value===0?'zero-stock':'',value<0?'minus':'',isFrom?'selected-from':'',isTo?'selected-to':''].join(' ');html+='<td class="'+cls+'" onclick="selectReceiptFromStock(\''+r.productCode+'\', \''+col.location+'\')">'+value+'</td>';});tr.innerHTML=html;tbody.appendChild(tr);});}
+function renderShipmentStockTable(rows){const tbody=document.getElementById('shipmentStockBody');if(!tbody)return;tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');let html='<td>'+r.productName+'</td>'+renderSalesRemainTd(r);STOCK_COLUMNS.forEach(function(col){const value=Number(r[col.field])||0;const isSelected=APP.shipSelection.productCode===r.productCode&&APP.shipSelection.location===col.location;const cls=[col.floorClass,'stock-cell',value===0?'zero-stock':'',value<0?'minus':'',isSelected?'selected-from':''].join(' ');html+='<td class="'+cls+'" onclick="selectShipmentFromStock(\''+r.productCode+'\', \''+col.location+'\')">'+value+'</td>';});tr.innerHTML=html;tbody.appendChild(tr);});}
 function loadTodayWorkSummary(){const workDate=document.getElementById('workDate').value;google.script.run.withSuccessHandler(function(data){const sb=document.getElementById('todayWorkSummaryBody');const lb=document.getElementById('todayWorkLogBody');if(!sb||!lb)return;sb.innerHTML='';lb.innerHTML='';data.summary.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.productName+'</td><td>'+r.process+'</td><td class="plus">'+r.totalQty+'</td><td>'+r.totalBadQty+'</td>';sb.appendChild(tr);});data.logs.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.createdAt+'</td><td>'+r.productName+'</td><td>'+r.process+'</td><td>'+r.qty+'</td><td>'+r.worker+'</td><td>'+r.memo+'</td>';lb.appendChild(tr);});}).withFailureHandler(showError).getTodayWorkSummary(workDate);}
 function loadHistory(){google.script.run.withSuccessHandler(function(rows){const tbody=document.getElementById('historyBody');tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.date+'</td><td>'+r.kind+'</td><td>'+r.type+'</td><td>'+r.from+'</td><td>'+r.to+'</td><td>'+r.productName+'</td><td>'+r.qty+'</td><td>'+r.person+'</td><td>'+r.memo+'</td><td>'+r.createdAt+'</td>';tbody.appendChild(tr);});}).withFailureHandler(showError).getRecentHistory();}
 function loadFlowTable(){const tbody=document.getElementById('flowBody');tbody.innerHTML='';APP.flows.forEach(function(f){const tr=document.createElement('tr');tr.innerHTML='<td>'+f.productCode+'</td><td>'+f.step+'</td><td>'+f.process+'</td><td>'+f.inputLocation+'</td><td>'+f.outputLocation+'</td><td>'+f.nextReceiptType+'</td><td>'+f.nextInputLocation+'</td>';tbody.appendChild(tr);});}

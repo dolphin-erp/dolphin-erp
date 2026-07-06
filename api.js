@@ -6,6 +6,8 @@
 (function () {
   'use strict';
 
+  var pendingRequests = {};
+
   function buildApiUrl(action, args) {
     var url = new URL('/api', window.location.origin);
     url.searchParams.set('action', String(action || ''));
@@ -43,6 +45,9 @@
       .catch(function (err) {
         if (typeof onFailure === 'function') onFailure(err);
         else alert(err.message || String(err));
+      })
+      .finally(function () {
+        delete pendingRequests[requestKey];
       });
   }
 

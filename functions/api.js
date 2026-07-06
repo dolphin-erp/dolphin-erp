@@ -1,4 +1,4 @@
-// Dolphin ERP v13.1 Cloudflare Pages Function - backend Code.gs API와 세트
+// Dolphin ERP v13.2 Cloudflare Pages Function - backend Code.gs API와 세트
 // 수정: DEFAULT_APPS_SCRIPT_URL을 현재 활성 Apps Script 배포 URL로 교체함
 // 핵심: Apps Script를 JSONP callback 방식으로 호출한 뒤 Cloudflare가 JSON으로 변환합니다.
 // 이유: 현재 Apps Script는 직접 JSON보다 callback 응답이 가장 안정적입니다.
@@ -40,6 +40,8 @@ export async function onRequest(context) {
     });
 
     const text = await res.text();
+
+    // Google 로그인 HTML이 오면 Apps Script 배포/권한 문제 또는 URL 불일치입니다.
     const parsed = parseAppsScriptResponse(text, callbackName);
 
     return json(parsed, parsed && parsed.ok === false ? 502 : 200);

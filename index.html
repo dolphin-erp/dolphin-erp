@@ -338,11 +338,15 @@
 #loadingOverlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:99999}
 #loadingOverlay .box{background:#fff;padding:24px 36px;border-radius:12px;font-size:20px;font-weight:bold;box-shadow:0 8px 30px rgba(0,0,0,.2)}
 
+
+#versionBadge{position:fixed;top:18px;right:100px;background:#0f172a;color:#fff;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+
 </style>
 </head>
 <body>
 <div id="loadingOverlay"><div class="box">⏳ 등록 중입니다...<br><small>잠시만 기다려 주세요.</small></div></div>
 <header>돌핀 공정재고 웹앱</header>
+<div id="versionBadge">v13.6 | 2026-07-06 15:30</div>
 <main>
   <datalist id="workerNameList"></datalist>
   <div class="tabs">

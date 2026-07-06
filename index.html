@@ -342,13 +342,14 @@
 </head>
 <body>
 <div id="loadingOverlay"><div class="box">⏳ 등록 중입니다...<br><small>잠시만 기다려 주세요.</small></div></div>
-<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v14.0 · 2026-07-06 · 현장사용 개선</span></header>
+<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v14.1 · 2026-07-07 · 생산계획/공정모니터링</span></header>
 <main>
   <datalist id="workerNameList"></datalist>
   <div class="tabs">
     <button class="active" onclick="openPage('dashboard',this)">현황판</button>
     <button onclick="openPage('sales',this)">영업요청</button>
     <button onclick="openPage('worklog',this)">작업일보</button>
+    <button onclick="openPage('productionPlan',this)">생산계획</button>
     <button onclick="openPage('receipt',this)">입고증</button>
     <button onclick="openPage('shipment',this)">출하증</button>
     <button onclick="openPage('improvement',this)">개선요청</button>
@@ -509,6 +510,39 @@
         검사=검사대기+검사완료, 포장=포장대기+포장완료, 완제품=출하가능 완제품재고.<br>
         ※ 영업요청은 마감되지 않았고 요청잔량이 남은 건 기준입니다.
       </div>
+    </div>
+  </section>
+
+
+  <section id="productionPlan" class="page">
+    <div class="card">
+      <h2>생산계획 / 공정 모니터링</h2>
+      <div class="note">
+        반장용 계획 화면입니다. 용접은 계획 중심, 조립/검사/포장은 앞공정 재고와 금일 계획을 연결해서 봅니다.
+        계획수량을 입력한 뒤 저장하면 각 공정 모니터링 화면에 반영됩니다.
+      </div>
+      <div class="plan-toolbar">
+        <div><label>계획일</label><input type="date" id="planDate" onchange="loadProductionPlan()"></div>
+        <div><label>작성자</label><input type="text" id="planWriter" placeholder="예: 생산관리/조립반장" list="workerNameList"></div>
+        <div><label>&nbsp;</label><button class="refresh-btn" onclick="loadProductionPlan()">계획 새로고침</button></div>
+      </div>
+      <div class="process-tabs">
+        <button id="planTabWeld" class="active" onclick="selectPlanProcess('용접',this)">용접</button>
+        <button onclick="selectPlanProcess('조립',this)">조립</button>
+        <button onclick="selectPlanProcess('검사',this)">검사</button>
+        <button onclick="selectPlanProcess('포장',this)">포장</button>
+        <button onclick="selectPlanProcess('전체',this)">전체 모니터</button>
+      </div>
+      <div id="planMonitorBox" class="monitor-card"></div>
+      <div class="plan-kpi">
+        <div class="box"><div class="title">요청잔량</div><div class="value" id="planKpiRemain">0</div></div>
+        <div class="box"><div class="title">오늘계획</div><div class="value" id="planKpiPlan">0</div></div>
+        <div class="box"><div class="title">오늘실적</div><div class="value" id="planKpiActual">0</div></div>
+        <div class="box"><div class="title">달성률</div><div class="value" id="planKpiRate">0%</div></div>
+      </div>
+      <div class="table-wrap"><table><thead id="planHead"></thead><tbody id="planBody"></tbody></table></div>
+      <button class="submit-btn" id="planSaveBtn" onclick="saveProductionPlanBulkUI()">현재 공정 계획 저장</button>
+      <div class="message" id="planMsg"></div>
     </div>
   </section>
 
@@ -762,7 +796,7 @@
 </main>
 
 <script>
-let APP={products:[],flows:[],workers:[],locations:[],dashboard:[],salesRequests:[],receiptSelection:{productCode:'',fromLocation:'',toLocation:''},shipSelection:{productCode:'',location:''}};
+let APP={products:[],flows:[],workers:[],locations:[],dashboard:[],salesRequests:[],receiptSelection:{productCode:'',fromLocation:'',toLocation:''},shipSelection:{productCode:'',location:''},productionPlan:{date:'',process:'용접',rows:[]}};
 const STOCK_COLUMNS=[
 {location:'용접완료재고',field:'weldStock',floorClass:'floor-3'},
 {location:'조립현장재고',field:'assyWorkStock',floorClass:'floor-2'},
@@ -845,7 +879,7 @@ function displayLocationName(name){
 document.addEventListener('DOMContentLoaded',function(){setToday();initDropZone();loadReportSettings();applyAdminSession();loadAll();startDashboardAutoRefresh();});
 
 function getTodayString(){const d=new Date();const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);return local.toISOString().slice(0,10);}
-function setToday(){const today=getTodayString();['workDate','receiptDate','shipDate','salesDate','masterDate','improveDate'].forEach(function(id){const el=document.getElementById(id);if(el)el.value=today;});}
+function setToday(){const today=getTodayString();['workDate','receiptDate','shipDate','salesDate','masterDate','improveDate','planDate'].forEach(function(id){const el=document.getElementById(id);if(el)el.value=today;});}
 
 let DASHBOARD_AUTO_TIMER=null;
 function startDashboardAutoRefresh(){
@@ -865,8 +899,8 @@ function refreshAfterSave(){
   loadHistory();
   loadTodayWorkSummary();
 }
-function openPage(pageId,button){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('active');});document.getElementById(pageId).classList.add('active');button.classList.add('active');if(pageId==='dashboard')loadDashboard();if(pageId==='history')loadHistory();if(pageId==='flow')loadFlowTable();if(pageId==='worklog')loadTodayWorkSummary();if(pageId==='sales')loadSalesRequests();if(pageId==='improvement')loadImprovementRequests();if(pageId==='improvementAdmin')loadImprovementRequests();if(pageId==='master'){fillMasterSelects();renderMasterStockTable();}if(pageId==='printSummary')renderPrintSummary();}
-function loadAll(){google.script.run.withSuccessHandler(function(data){APP.products=data.products||[];APP.flows=data.flows||[];APP.workers=data.workers||[];APP.locations=data.locations||[];APP.salesRequests=data.salesRequests||[];['workProduct','receiptProduct','shipProduct','salesProduct','masterProduct'].forEach(fillProductSelect);fillLocationSelect('manualFromLocation',true);fillLocationSelect('manualToLocation',false);fillLocationSelect('autoManualToLocation',true,'자동 노선 그대로 사용');fillWorkerDatalist();fillLocationSelect('shipLocation',false);fillLocationSelect('masterLocation',false);updateWorkProcess();updateReceiptProcess();loadDashboard();loadSalesRequests();loadFlowTable();loadTodayWorkSummary();}).withFailureHandler(showError).getInitialData();}
+function openPage(pageId,button){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('active');});document.getElementById(pageId).classList.add('active');button.classList.add('active');if(pageId==='dashboard')loadDashboard();if(pageId==='history')loadHistory();if(pageId==='flow')loadFlowTable();if(pageId==='worklog')loadTodayWorkSummary();if(pageId==='productionPlan')loadProductionPlan();if(pageId==='sales')loadSalesRequests();if(pageId==='improvement')loadImprovementRequests();if(pageId==='improvementAdmin')loadImprovementRequests();if(pageId==='master'){fillMasterSelects();renderMasterStockTable();}if(pageId==='printSummary')renderPrintSummary();}
+function loadAll(){google.script.run.withSuccessHandler(function(data){APP.products=data.products||[];APP.flows=data.flows||[];APP.workers=data.workers||[];APP.locations=data.locations||[];APP.salesRequests=data.salesRequests||[];['workProduct','receiptProduct','shipProduct','salesProduct','masterProduct'].forEach(fillProductSelect);fillLocationSelect('manualFromLocation',true);fillLocationSelect('manualToLocation',false);fillLocationSelect('autoManualToLocation',true,'자동 노선 그대로 사용');fillWorkerDatalist();fillLocationSelect('shipLocation',false);fillLocationSelect('masterLocation',false);updateWorkProcess();updateReceiptProcess();loadDashboard();loadSalesRequests();loadFlowTable();loadTodayWorkSummary();loadProductionPlan();}).withFailureHandler(showError).getInitialData();}
 function fillProductSelect(id){const select=document.getElementById(id);if(!select)return;select.innerHTML='';APP.products.forEach(function(p){const o=document.createElement('option');o.value=p.code;o.textContent=p.name;select.appendChild(o);});}
 function fillLocationSelect(id,allowBlank,blankText){const select=document.getElementById(id);if(!select)return;select.innerHTML='';if(allowBlank){const o=document.createElement('option');o.value='';o.textContent=blankText||'선택 안 함';select.appendChild(o);}APP.locations.forEach(function(loc){const o=document.createElement('option');o.value=loc.name;o.textContent=loc.floor+' - '+displayLocationName(loc.name);select.appendChild(o);});}
 function getFlowsByProduct(productCode){return APP.flows.filter(function(f){return f.productCode===productCode;});}
@@ -876,6 +910,145 @@ function updateReceiptProcess(){const productCode=document.getElementById('recei
 function getStockByLocation(productCode,locationName){const row=APP.dashboard.find(function(r){return r.productCode===productCode;});if(!row)return 0;const col=STOCK_COLUMNS.find(function(c){return c.location===locationName;});if(!col)return 0;return Number(row[col.field])||0;}
 function getFinishedGoods(productCode){return getStockByLocation(productCode,'완제품재고');}
 
+
+
+let CURRENT_PLAN_PROCESS='용접';
+function selectPlanProcess(process,btn){
+  CURRENT_PLAN_PROCESS=process;
+  document.querySelectorAll('.process-tabs button').forEach(function(b){b.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  renderProductionPlan();
+}
+function loadProductionPlan(){
+  const date=(document.getElementById('planDate')&&document.getElementById('planDate').value)||getTodayString();
+  google.script.run.withSuccessHandler(function(data){
+    APP.productionPlan=data||{rows:[]};
+    renderProductionPlan();
+  }).withFailureHandler(showError).getProductionPlanData(date);
+}
+function planObj(row,process){
+  if(!row.plans)return null;
+  if(process==='용접')return row.plans.welding;
+  if(process==='조립')return row.plans.assembly;
+  if(process==='검사')return row.plans.inspection;
+  if(process==='포장')return row.plans.packing;
+  return null;
+}
+function planActual(row,process){
+  if(process==='용접')return Number(row.weldingActualQty)||0;
+  if(process==='조립')return Number(row.assemblyActualQty)||0;
+  if(process==='검사')return Number(row.inspectionActualQty)||0;
+  if(process==='포장')return Number(row.packingActualQty)||0;
+  return 0;
+}
+function planQty(row,process){const p=planObj(row,process);return p?Number(p.planQty)||0:0;}
+function planMemo(row,process){const p=planObj(row,process);return p?String(p.memo||''):'';}
+function planPriority(row,process){const p=planObj(row,process);return p?String(p.priority||'보통'):'보통';}
+function renderProductionPlan(){
+  const data=APP.productionPlan||{rows:[]};
+  const rows=data.rows||[];
+  const process=CURRENT_PLAN_PROCESS||'용접';
+  renderPlanMonitor(rows,process);
+  if(process==='전체')return renderPlanAll(rows);
+  const head=document.getElementById('planHead');
+  const body=document.getElementById('planBody');
+  if(!head||!body)return;
+  let header='<tr><th>제품</th><th>요청잔량</th>';
+  if(process==='용접') header+='<th>완제품</th>';
+  if(process==='조립') header+='<th>용접완료</th><th>조립대기</th>';
+  if(process==='검사') header+='<th>용접완료</th><th>조립대기</th><th>조립완료</th><th>검사대기</th><th>오늘 조립계획</th><th>오늘 검사 가능</th>';
+  if(process==='포장') header+='<th>용접완료</th><th>조립대기</th><th>조립완료</th><th>검사대기</th><th>검사완료</th><th>포장대기</th><th>오늘 검사계획</th><th>오늘 포장 가능</th>';
+  header+='<th>오늘계획</th><th>실적</th><th>달성률</th><th>우선</th><th>메모</th></tr>';
+  head.innerHTML=header;
+  body.innerHTML='';
+  rows.forEach(function(r){
+    const pq=planQty(r,process); const act=planActual(r,process); const rate=pq>0?Math.round(act/pq*100):0;
+    let html='<td>'+r.productName+'</td><td class="plus">'+(r.requestRemainQty||0)+'</td>';
+    if(process==='용접') html+='<td>'+(r.fgStock||0)+'</td>';
+    if(process==='조립') html+='<td>'+(r.weldStock||0)+'</td><td>'+(r.assyWorkStock||0)+'</td>';
+    if(process==='검사') html+='<td>'+(r.weldStock||0)+'</td><td>'+(r.assyWorkStock||0)+'</td><td>'+(r.assyDoneStock||0)+'</td><td>'+(r.inspWorkStock||0)+'</td><td>'+(r.assemblyPlanQty||0)+'</td><td class="plus">'+(r.inspectionAvailableToday||0)+'</td>';
+    if(process==='포장') html+='<td>'+(r.weldStock||0)+'</td><td>'+(r.assyWorkStock||0)+'</td><td>'+(r.assyDoneStock||0)+'</td><td>'+(r.inspWorkStock||0)+'</td><td>'+(r.inspDoneStock||0)+'</td><td>'+(r.packWorkStock||0)+'</td><td>'+(r.inspectionPlanQty||0)+'</td><td class="plus">'+(r.packingAvailableToday||0)+'</td>';
+    html+='<td><input class="plan-input" type="number" min="0" data-product="'+r.productCode+'" value="'+pq+'"></td>';
+    html+='<td>'+act+'</td><td>'+(pq>0?rate+'%':'-')+'</td>';
+    html+='<td><select class="priority-select" data-product-priority="'+r.productCode+'"><option '+(planPriority(r,process)==='긴급'?'selected':'')+'>긴급</option><option '+(planPriority(r,process)==='보통'?'selected':'')+'>보통</option><option '+(planPriority(r,process)==='여유'?'selected':'')+'>여유</option></select></td>';
+    html+='<td><textarea class="plan-memo" data-product-memo="'+r.productCode+'">'+escapeHtml(planMemo(r,process))+'</textarea></td>';
+    const tr=document.createElement('tr'); tr.innerHTML=html; body.appendChild(tr);
+  });
+  updatePlanKpi(rows,process);
+}
+function renderPlanAll(rows){
+  const head=document.getElementById('planHead'); const body=document.getElementById('planBody');
+  if(!head||!body)return;
+  head.innerHTML='<tr><th>제품</th><th>요청잔량</th><th>용접계획/실적</th><th>조립계획/실적</th><th>검사계획/실적</th><th>포장계획/실적</th><th>예상 완제품 추가</th></tr>';
+  body.innerHTML='';
+  rows.forEach(function(r){
+    const fgAdd=Math.min(planQty(r,'포장'), (r.packingAvailableToday||0));
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+r.productName+'</td><td class="plus">'+(r.requestRemainQty||0)+'</td>'+ 
+      '<td>'+planQty(r,'용접')+' / '+planActual(r,'용접')+'</td>'+ 
+      '<td>'+planQty(r,'조립')+' / '+planActual(r,'조립')+'</td>'+ 
+      '<td>'+planQty(r,'검사')+' / '+planActual(r,'검사')+'</td>'+ 
+      '<td>'+planQty(r,'포장')+' / '+planActual(r,'포장')+'</td>'+ 
+      '<td class="plus">'+fgAdd+'</td>';
+    body.appendChild(tr);
+  });
+  updatePlanKpi(rows,'전체');
+}
+function renderPlanMonitor(rows,process){
+  const box=document.getElementById('planMonitorBox'); if(!box)return;
+  if(process==='전체'){
+    const totalFgAdd=rows.reduce(function(s,r){return s+Math.min(planQty(r,'포장'),(r.packingAvailableToday||0));},0);
+    box.innerHTML='<h3>전체 생산계획 모니터링</h3><div class="monitor-grid">'+
+      '<div class="monitor-box"><div class="label">오늘 예상 완제품 추가</div><div class="num">'+totalFgAdd+'</div></div>'+ 
+      '<div class="monitor-box"><div class="label">조립계획</div><div class="num">'+sumPlan(rows,'조립')+'</div></div>'+ 
+      '<div class="monitor-box"><div class="label">검사계획</div><div class="num">'+sumPlan(rows,'검사')+'</div></div>'+ 
+      '<div class="monitor-box"><div class="label">포장계획</div><div class="num">'+sumPlan(rows,'포장')+'</div></div></div>';
+    return;
+  }
+  let availLabel='참고수량';
+  let avail=0;
+  if(process==='용접'){availLabel='요청잔량';avail=rows.reduce(function(s,r){return s+(Number(r.requestRemainQty)||0);},0);}
+  if(process==='조립'){availLabel='용접완료+조립대기';avail=rows.reduce(function(s,r){return s+(Number(r.weldStock)||0)+(Number(r.assyWorkStock)||0);},0);}
+  if(process==='검사'){availLabel='오늘 검사 가능';avail=rows.reduce(function(s,r){return s+(Number(r.inspectionAvailableToday)||0);},0);}
+  if(process==='포장'){availLabel='오늘 포장 가능';avail=rows.reduce(function(s,r){return s+(Number(r.packingAvailableToday)||0);},0);}
+  const plan=sumPlan(rows,process); const actual=sumActual(rows,process); const rate=plan>0?Math.round(actual/plan*100):0;
+  box.innerHTML='<h3>'+process+' 공정 모니터링</h3><div class="monitor-grid">'+
+    '<div class="monitor-box"><div class="label">'+availLabel+'</div><div class="num">'+avail+'</div></div>'+ 
+    '<div class="monitor-box"><div class="label">오늘계획</div><div class="num">'+plan+'</div></div>'+ 
+    '<div class="monitor-box"><div class="label">오늘실적</div><div class="num">'+actual+'</div></div>'+ 
+    '<div class="monitor-box"><div class="label">달성률</div><div class="num">'+rate+'%</div></div></div>';
+}
+function updatePlanKpi(rows,process){
+  const remain=rows.reduce(function(s,r){return s+(Number(r.requestRemainQty)||0);},0);
+  let plan=0,actual=0;
+  if(process==='전체'){plan=sumPlan(rows,'용접')+sumPlan(rows,'조립')+sumPlan(rows,'검사')+sumPlan(rows,'포장');actual=sumActual(rows,'용접')+sumActual(rows,'조립')+sumActual(rows,'검사')+sumActual(rows,'포장');}
+  else{plan=sumPlan(rows,process);actual=sumActual(rows,process);}
+  const rate=plan>0?Math.round(actual/plan*100):0;
+  if(document.getElementById('planKpiRemain'))document.getElementById('planKpiRemain').textContent=remain;
+  if(document.getElementById('planKpiPlan'))document.getElementById('planKpiPlan').textContent=plan;
+  if(document.getElementById('planKpiActual'))document.getElementById('planKpiActual').textContent=actual;
+  if(document.getElementById('planKpiRate'))document.getElementById('planKpiRate').textContent=rate+'%';
+}
+function sumPlan(rows,process){return rows.reduce(function(s,r){return s+planQty(r,process);},0);}
+function sumActual(rows,process){return rows.reduce(function(s,r){return s+planActual(r,process);},0);}
+function saveProductionPlanBulkUI(){
+  if(CURRENT_PLAN_PROCESS==='전체'){alert('전체 모니터에서는 저장할 수 없습니다. 공정을 선택하세요.');return;}
+  if(!beginAction('savePlan','planSaveBtn','planMsg','저장 중...','생산계획 저장 중입니다.'))return;
+  const rows=[];
+  document.querySelectorAll('.plan-input').forEach(function(input){
+    const code=input.getAttribute('data-product');
+    const memoEl=document.querySelector('[data-product-memo="'+code+'"]');
+    const prEl=document.querySelector('[data-product-priority="'+code+'"]');
+    rows.push({productCode:code,planQty:input.value,priority:prEl?prEl.value:'보통',memo:memoEl?memoEl.value:''});
+  });
+  const payload={planDate:document.getElementById('planDate').value,process:CURRENT_PLAN_PROCESS,writer:document.getElementById('planWriter').value,rows:rows};
+  google.script.run.withSuccessHandler(function(msg){
+    document.getElementById('planMsg').textContent=msg;
+    endAction('savePlan','planSaveBtn','현재 공정 계획 저장');
+    loadProductionPlan();
+  }).withFailureHandler(function(err){endAction('savePlan','planSaveBtn','현재 공정 계획 저장');showError(err);}).saveProductionPlanBulk(payload);
+}
+function escapeHtml(str){return String(str||'').replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
 
 function getPrintNowText() {
   const d = new Date();

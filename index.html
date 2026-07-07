@@ -367,13 +367,35 @@
     .progress-wrap{margin-top:12px}.progress-text{display:flex;justify-content:space-between;font-size:12px;color:#475569;font-weight:bold;margin-bottom:5px}.progress-bar{height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden}.progress-fill{height:100%;background:#2563eb;border-radius:999px}.progress-fill.ok{background:#10b981}.progress-fill.warn{background:#f59e0b}.progress-fill.bad{background:#ef4444}
     .plan-input-table input,.plan-input-table select,.plan-input-table textarea{min-height:42px}.plan-input-table textarea{min-height:58px}
     .monitor-note{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;padding:10px;color:#475569;font-size:13px;margin-top:10px}
+
+    /* v14.4 process monitor table view */
+    .monitor-table-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;margin-top:12px;box-shadow:0 8px 22px rgba(15,23,42,.06)}
+    .monitor-table-title{display:flex;justify-content:space-between;align-items:center;font-size:17px;font-weight:900;color:#0f172a;margin:0 0 10px}
+    .monitor-table{width:100%;border-collapse:collapse;font-size:14px}
+    .monitor-table th{background:#eaf1fb;color:#0f172a;font-weight:900;position:sticky;top:0;z-index:1}
+    .monitor-table td,.monitor-table th{border:1px solid #e5e7eb;padding:9px 8px;text-align:center;white-space:nowrap}
+    .monitor-table td.product{text-align:left;font-weight:900;color:#111827}
+    .monitor-table .num-strong{font-size:17px;font-weight:900;color:#047857}
+    .monitor-table .num-plan{font-size:17px;font-weight:900;color:#1d4ed8}
+    .monitor-table .num-bad{font-weight:900;color:#dc2626}
+    .monitor-table .memo{text-align:left;white-space:normal;min-width:220px;color:#334155}
+    .monitor-table tr.priority-긴급 td:first-child{border-left:6px solid #ef4444}
+    .monitor-table tr.priority-보통 td:first-child{border-left:6px solid #3b82f6}
+    .monitor-table tr.priority-여유 td:first-child{border-left:6px solid #10b981}
+    .status-chip{display:inline-block;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:900}
+    .status-chip.긴급{background:#fee2e2;color:#991b1b}
+    .status-chip.보통{background:#dbeafe;color:#1d4ed8}
+    .status-chip.여유{background:#dcfce7;color:#166534}
+    .rate-pill{display:inline-block;min-width:58px;border-radius:999px;padding:5px 8px;font-weight:900;background:#fee2e2;color:#991b1b}
+    .rate-pill.warn{background:#fef3c7;color:#92400e}
+    .rate-pill.ok{background:#dcfce7;color:#166534}
     @media(max-width:900px){.plan-toolbar{grid-template-columns:1fr}.plan-kpi{grid-template-columns:repeat(2,1fr)}.monitor-grid{grid-template-columns:repeat(2,1fr)}.process-card-grid{grid-template-columns:1fr}.segmented-tabs button{min-width:auto;flex:1 0 auto}}
 
   </style>
 </head>
 <body>
 <div id="loadingOverlay"><div class="box">⏳ 등록 중입니다...<br><small>잠시만 기다려 주세요.</small></div></div>
-<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v14.3 · 2026-07-07 · 공정 가능수량 계산 개선</span></header>
+<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v14.4 · 2026-07-07 · 공정모니터 표형식 개선</span></header>
 <main>
   <datalist id="workerNameList"></datalist>
   <div class="tabs">
@@ -1081,10 +1103,48 @@ function renderMonitorCards(rows,process){
     }).join('')+'</div>';
     return;
   }
-  box.innerHTML='<div class="process-card-grid">'+rows.map(function(r){
-    const p=planQty(r,process); const a=planActual(r,process); const rate=p>0?Math.round(a/p*100):0; const pr=planPriority(r,process);
-    return '<div class="process-card '+cardStatus(rate,p)+'"><div class="process-card-head"><div class="process-card-title">'+r.productName+'</div><span class="priority-badge '+pr+'">'+pr+'</span></div>'+monitorMetrics(r,process)+progress(rate)+memoBlock(planMemo(r,process))+'</div>';
-  }).join('')+'</div>';
+  box.innerHTML=renderProcessMonitorTable(rows,process);
+}
+
+function renderProcessMonitorTable(rows,process){
+  const title=process+' 공정 상세 모니터링';
+  let head='<tr><th>우선</th><th>제품</th><th>요청잔량</th>';
+  if(process==='용접') head+='<th>완제품</th><th>오늘계획</th><th>실적</th><th>달성률</th><th>메모</th>';
+  if(process==='조립') head+='<th>용접완료</th><th>조립대기</th><th>현재가능</th><th>오늘계획</th><th>실적</th><th>달성률</th><th>메모</th>';
+  if(process==='검사') head+='<th>조립완료</th><th>검사대기</th><th>현재가능</th><th>오늘 조립계획</th><th>오늘 최대가능</th><th>오늘계획</th><th>실적</th><th>달성률</th><th>메모</th>';
+  if(process==='포장') head+='<th>검사완료</th><th>포장대기</th><th>현재가능</th><th>오늘 검사계획</th><th>오늘 최대가능</th><th>오늘계획</th><th>실적</th><th>달성률</th><th>메모</th>';
+  head+='</tr>';
+  const body=rows.map(function(r){
+    const p=planQty(r,process);
+    const a=planActual(r,process);
+    const rate=p>0?Math.round(a/p*100):0;
+    const pr=planPriority(r,process);
+    let html='<tr class="priority-'+pr+'"><td><span class="status-chip '+pr+'">'+pr+'</span></td><td class="product">'+r.productName+'</td><td class="num-strong">'+(r.requestRemainQty||0)+'</td>';
+    if(process==='용접'){
+      html+='<td>'+(r.fgStock||0)+'</td><td class="num-plan">'+p+'</td><td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
+    }else if(process==='조립'){
+      const current=assemblyAvailableQty(r);
+      html+='<td>'+(r.weldStock||0)+'</td><td>'+(r.assyWorkStock||0)+'</td><td class="num-strong">'+current+'</td><td class="num-plan">'+p+'</td><td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
+    }else if(process==='검사'){
+      const current=(qtyVal(r.assyDoneStock)+qtyVal(r.inspWorkStock));
+      const add=qtyVal(r.assemblyPlanQty);
+      const max=current+add;
+      html+='<td>'+(r.assyDoneStock||0)+'</td><td>'+(r.inspWorkStock||0)+'</td><td class="num-strong">'+current+'</td><td>'+add+'</td><td class="num-strong">'+max+'</td><td class="num-plan">'+p+'</td><td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
+    }else{
+      const current=(qtyVal(r.inspDoneStock)+qtyVal(r.packWorkStock));
+      const add=qtyVal(r.inspectionPlanQty);
+      const max=current+add;
+      html+='<td>'+(r.inspDoneStock||0)+'</td><td>'+(r.packWorkStock||0)+'</td><td class="num-strong">'+current+'</td><td>'+add+'</td><td class="num-strong">'+max+'</td><td class="num-plan">'+p+'</td><td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
+    }
+    return html+'</tr>';
+  }).join('');
+  return '<div class="monitor-table-card"><div class="monitor-table-title"><span>'+title+'</span><span style="font-size:12px;color:#64748b;">카드형 대신 제품별 표로 표시</span></div><div class="table-wrap"><table class="monitor-table"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div></div>';
+}
+
+function ratePill(rate,plan){
+  if(!plan)return '<span class="rate-pill">-</span>';
+  const cls=rate>=80?'ok':rate>=40?'warn':'';
+  return '<span class="rate-pill '+cls+'">'+rate+'%</span>';
 }
 function monitorMetrics(r,process){
   if(process==='용접')return '<div class="metric-grid">'+metric('요청잔량',r.requestRemainQty||0,'highlight')+metric('완제품',r.fgStock||0,'')+metric('오늘계획',planQty(r,process),'highlight')+metric('실적',planActual(r,process),'')+'</div>';

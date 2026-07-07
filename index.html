@@ -145,83 +145,168 @@
 
     @media print {
       @page {
-        size: A4 portrait;
-        margin: 10mm;
+        size: A4 landscape;
+        margin: 7mm;
       }
 
-      body {
-        background: white;
+      html, body {
+        width: 100%;
+        background: white !important;
+        color: #111827 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
 
       header,
       .tabs,
       .no-print,
-      button {
+      button,
+      .segmented-tabs,
+      .plan-toolbar,
+      .plan-help,
+      .submit-btn,
+      .refresh-btn,
+      .small-btn,
+      .message {
         display: none !important;
       }
 
       main {
-        padding: 0;
+        padding: 0 !important;
+        margin: 0 !important;
       }
 
       .page {
         display: none !important;
       }
 
-      #printSummary {
+      body.print-report #printSummary,
+      body:not(.print-production-plan) #printSummary {
         display: block !important;
       }
 
-      .card {
-        box-shadow: none;
-        border-radius: 0;
-        padding: 0;
-        margin: 0;
+      body.print-production-plan #productionPlan {
+        display: block !important;
       }
 
-      h2 {
-        font-size: 14px;
-        margin: 8px 0 6px 0;
-        padding-bottom: 4px;
+      body.print-production-plan #planInputPanel,
+      body.print-production-plan #planMonitorPanel {
+        display: block !important;
+      }
+
+      body.print-production-plan .plan-panel {
+        border: 0 !important;
+        padding: 0 !important;
+        margin: 0 0 6px 0 !important;
+      }
+
+      .card,
+      .report-paper,
+      .monitor-hero,
+      .monitor-table-card,
+      .process-card {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        border: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+      }
+
+      h2, h3 {
+        font-size: 13px !important;
+        margin: 5px 0 4px 0 !important;
+        padding-bottom: 3px !important;
+      }
+
+      .table-wrap {
+        overflow: visible !important;
+        max-width: none !important;
+        width: 100% !important;
       }
 
       table {
-        font-size: 10.5px;
+        width: 100% !important;
+        table-layout: fixed !important;
+        border-collapse: collapse !important;
+        font-size: 8.2px !important;
       }
 
       th, td {
-        padding: 4px 5px;
+        padding: 3px 3px !important;
+        word-break: keep-all !important;
+        overflow-wrap: anywhere !important;
+        line-height: 1.25 !important;
+      }
+
+      input, select, textarea {
+        border: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        font-size: 8.2px !important;
+      }
+
+      .print-header {
+        display: grid !important;
+        grid-template-columns: 1fr 1.4fr 1fr !important;
+        gap: 6px !important;
+        align-items: start !important;
       }
 
       .print-title {
-        font-size: 20px;
+        font-size: 18px !important;
       }
 
       .print-meta {
-        font-size: 10px;
+        font-size: 9px !important;
       }
 
       .print-summary-box {
-        grid-template-columns: repeat(6, 1fr);
-        gap: 4px;
-        margin: 6px 0 8px 0;
+        grid-template-columns: repeat(6, 1fr) !important;
+        gap: 3px !important;
+        margin: 5px 0 6px 0 !important;
       }
 
       .print-kpi {
-        padding: 5px;
-        border-radius: 0;
+        padding: 4px !important;
+        border-radius: 0 !important;
       }
 
       .print-kpi-title {
-        font-size: 9.5px;
+        font-size: 8px !important;
       }
 
       .print-kpi-value {
-        font-size: 14px;
+        font-size: 13px !important;
       }
 
-      .print-only-note {
-        font-size: 9.5px;
+      .print-only-note,
+      .note,
+      .desc {
+        font-size: 8px !important;
+        line-height: 1.25 !important;
+      }
+
+      .monitor-grid,
+      .plan-kpi {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 4px !important;
+        margin: 4px 0 !important;
+      }
+
+      .monitor-box,
+      .plan-kpi .box,
+      .metric {
+        padding: 4px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 0 !important;
+      }
+
+      .monitor-table-title {
+        font-size: 11px !important;
+        margin: 4px 0 !important;
       }
     }
 
@@ -396,7 +481,7 @@
 </head>
 <body>
 <div id="loadingOverlay"><div class="box">⏳ 등록 중입니다...<br><small>잠시만 기다려 주세요.</small></div></div>
-<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v14.7 · 2026-07-07 · 출하가능/긴급도</span></header>
+<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v14.8 · 2026-07-07 · 설정시트/인쇄개선</span></header>
 <main>
   <datalist id="workerNameList"></datalist>
   <div class="tabs">
@@ -502,7 +587,7 @@
         </div>
       </div>
 
-      <button class="submit-btn" onclick="printEditableReport()">인쇄</button>
+      <button class="submit-btn" onclick="printEditableReport()">A4 가로 인쇄</button>
       <button class="small-btn" onclick="resetReportSettings()">보고용 설정 초기화</button>
     </div>
 
@@ -578,6 +663,7 @@
         <div><label>계획일</label><input type="date" id="planDate" onchange="loadProductionPlan()"></div>
         <div><label>작성자</label><input type="text" id="planWriter" placeholder="예: 생산관리/조립반장" list="workerNameList"></div>
         <div><label>&nbsp;</label><button class="refresh-btn" onclick="loadProductionPlan()">계획 새로고침</button></div>
+        <div><label>&nbsp;</label><button class="small-btn" onclick="printProductionPlan()">생산계획 인쇄</button></div>
       </div>
 
       <div class="segmented-tabs" id="planModeTabs">
@@ -607,7 +693,7 @@
 
       <div id="planMonitorPanel" class="plan-panel">
         <div class="plan-subtitle">공정모니터링</div>
-        <div class="plan-help">현장 모니터에 띄워두는 조회 전용 화면입니다. 공정별로 필요한 앞공정 재고, 오늘계획, 실적, 달성률을 카드형으로 보여줍니다.</div>
+        <div class="plan-help">현장 모니터에 띄워두는 조회 전용 화면입니다. 공정별로 필요한 앞공정 재고, 오늘계획, 실적, 달성률을 표형식으로 보여줍니다. 제품 수가 많아도 한눈에 비교할 수 있게 구성했습니다.</div>
         <div class="segmented-tabs" id="planMonitorProcessTabs">
           <button class="active" onclick="selectMonitorProcess('용접',this)">용접</button>
           <button onclick="selectMonitorProcess('조립',this)">조립</button>
@@ -1475,8 +1561,21 @@ function printReport() {
 
 function printEditableReport() {
   renderEditableReport();
-  window.print();
+  document.body.classList.remove('print-production-plan');
+  document.body.classList.add('print-report');
+  setTimeout(function(){ window.print(); }, 50);
 }
+
+function printProductionPlan() {
+  document.body.classList.remove('print-report');
+  document.body.classList.add('print-production-plan');
+  setTimeout(function(){ window.print(); }, 50);
+}
+
+window.addEventListener('afterprint', function(){
+  document.body.classList.remove('print-report');
+  document.body.classList.remove('print-production-plan');
+});
 
 let salesRequestSaving=false;
 function saveSalesRequest(){

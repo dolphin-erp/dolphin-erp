@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dolphin ERP v14.3</title>
+  <title>Dolphin ERP v14.5</title>
   <!-- Dolphin ERP v12: Cloudflare/GitHub frontend -->
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -395,7 +395,7 @@
 </head>
 <body>
 <div id="loadingOverlay"><div class="box">⏳ 등록 중입니다...<br><small>잠시만 기다려 주세요.</small></div></div>
-<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v14.4 · 2026-07-07 · 공정모니터 표형식 개선</span></header>
+<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v14.5 · 2026-07-07 · 작업일보 선택값 유지</span></header>
 <main>
   <datalist id="workerNameList"></datalist>
   <div class="tabs">
@@ -974,11 +974,67 @@ function refreshAfterSave(){
   loadTodayWorkSummary();
 }
 function openPage(pageId,button){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('active');});document.getElementById(pageId).classList.add('active');button.classList.add('active');if(pageId==='dashboard')loadDashboard();if(pageId==='history')loadHistory();if(pageId==='flow')loadFlowTable();if(pageId==='worklog')loadTodayWorkSummary();if(pageId==='productionPlan')loadProductionPlan();if(pageId==='sales')loadSalesRequests();if(pageId==='improvement')loadImprovementRequests();if(pageId==='improvementAdmin')loadImprovementRequests();if(pageId==='master'){fillMasterSelects();renderMasterStockTable();}if(pageId==='printSummary')renderPrintSummary();}
-function loadAll(){google.script.run.withSuccessHandler(function(data){APP.products=data.products||[];APP.flows=data.flows||[];APP.workers=data.workers||[];APP.locations=data.locations||[];APP.salesRequests=data.salesRequests||[];['workProduct','receiptProduct','shipProduct','salesProduct','masterProduct'].forEach(fillProductSelect);fillLocationSelect('manualFromLocation',true);fillLocationSelect('manualToLocation',false);fillLocationSelect('autoManualToLocation',true,'자동 노선 그대로 사용');fillWorkerDatalist();fillLocationSelect('shipLocation',false);fillLocationSelect('masterLocation',false);updateWorkProcess();updateReceiptProcess();loadDashboard();loadSalesRequests();loadFlowTable();loadTodayWorkSummary();loadProductionPlan();}).withFailureHandler(showError).getInitialData();}
+function loadAll(){google.script.run.withSuccessHandler(function(data){APP.products=data.products||[];APP.flows=data.flows||[];APP.workers=data.workers||[];APP.locations=data.locations||[];APP.salesRequests=data.salesRequests||[];['workProduct','receiptProduct','shipProduct','salesProduct','masterProduct'].forEach(fillProductSelect);fillLocationSelect('manualFromLocation',true);fillLocationSelect('manualToLocation',false);fillLocationSelect('autoManualToLocation',true,'자동 노선 그대로 사용');fillWorkerDatalist();fillLocationSelect('shipLocation',false);fillLocationSelect('masterLocation',false);updateWorkProcess();restoreWorkLogState();bindWorkLogStateEvents();updateReceiptProcess();loadDashboard();loadSalesRequests();loadFlowTable();loadTodayWorkSummary();loadProductionPlan();}).withFailureHandler(showError).getInitialData();}
 function fillProductSelect(id){const select=document.getElementById(id);if(!select)return;select.innerHTML='';APP.products.forEach(function(p){const o=document.createElement('option');o.value=p.code;o.textContent=p.name;select.appendChild(o);});}
 function fillLocationSelect(id,allowBlank,blankText){const select=document.getElementById(id);if(!select)return;select.innerHTML='';if(allowBlank){const o=document.createElement('option');o.value='';o.textContent=blankText||'선택 안 함';select.appendChild(o);}APP.locations.forEach(function(loc){const o=document.createElement('option');o.value=loc.name;o.textContent=loc.floor+' - '+displayLocationName(loc.name);select.appendChild(o);});}
 function getFlowsByProduct(productCode){return APP.flows.filter(function(f){return f.productCode===productCode;});}
-function updateWorkProcess(){const productCode=document.getElementById('workProduct').value;const select=document.getElementById('workProcess');select.innerHTML='';getFlowsByProduct(productCode).forEach(function(f){const o=document.createElement('option');o.value=f.process;o.textContent=f.process;select.appendChild(o);});}
+const WORKLOG_STATE_KEY='dolphinWorkLogLastState.v145';
+function readWorkLogState(){
+  try{return JSON.parse(localStorage.getItem(WORKLOG_STATE_KEY)||'{}')||{};}catch(e){return {};}
+}
+function saveWorkLogState(){
+  const product=document.getElementById('workProduct');
+  const process=document.getElementById('workProcess');
+  const qty=document.getElementById('workQty');
+  const badQty=document.getElementById('badQty');
+  const worker=document.getElementById('worker');
+  const state={
+    productCode:product?product.value:'',
+    process:process?process.value:'',
+    qty:qty?qty.value:'',
+    badQty:badQty?badQty.value:'',
+    worker:worker?worker.value:''
+  };
+  try{localStorage.setItem(WORKLOG_STATE_KEY,JSON.stringify(state));}catch(e){}
+}
+function bindWorkLogStateEvents(){
+  ['workProduct','workProcess','workQty','badQty','worker'].forEach(function(id){
+    const el=document.getElementById(id);
+    if(!el||el.dataset.workStateBound==='Y')return;
+    el.dataset.workStateBound='Y';
+    el.addEventListener('change',function(){saveWorkLogState();});
+    el.addEventListener('input',function(){saveWorkLogState();});
+  });
+}
+function restoreWorkLogState(){
+  const state=readWorkLogState();
+  const product=document.getElementById('workProduct');
+  if(product&&state.productCode&&Array.from(product.options).some(function(o){return o.value===state.productCode;})){
+    product.value=state.productCode;
+  }
+  updateWorkProcess(state.process||'');
+  if(state.qty&&document.getElementById('workQty'))document.getElementById('workQty').value=state.qty;
+  if(state.badQty!==undefined&&state.badQty!==''&&document.getElementById('badQty'))document.getElementById('badQty').value=state.badQty;
+  if(state.worker&&document.getElementById('worker'))document.getElementById('worker').value=state.worker;
+}
+function updateWorkProcess(preferredProcess){
+  const product=document.getElementById('workProduct');
+  const select=document.getElementById('workProcess');
+  if(!product||!select)return;
+  const previous=preferredProcess||select.value||readWorkLogState().process||'';
+  const productCode=product.value;
+  select.innerHTML='';
+  let matched=false;
+  getFlowsByProduct(productCode).forEach(function(f){
+    const o=document.createElement('option');
+    o.value=f.process;
+    o.textContent=f.process;
+    select.appendChild(o);
+    if(f.process===previous)matched=true;
+  });
+  if(matched)select.value=previous;
+  saveWorkLogState();
+}
 function updateReceiptProcessAndQty(){updateReceiptProcess();setReceiptQtyToAvailable();updateReceiptPreview();}
 function updateReceiptProcess(){const productCode=document.getElementById('receiptProduct').value;const select=document.getElementById('receiptProcess');select.innerHTML='';getFlowsByProduct(productCode).filter(function(f){return f.nextInputLocation;}).forEach(function(f){const o=document.createElement('option');o.value=f.process;o.textContent=f.process;select.appendChild(o);});}
 function getStockByLocation(productCode,locationName){const row=APP.dashboard.find(function(r){return r.productCode===productCode;});if(!row)return 0;const col=STOCK_COLUMNS.find(function(c){return c.location===locationName;});if(!col)return 0;return Number(row[col.field])||0;}
@@ -1523,7 +1579,7 @@ function saveWorkLog(){
   if(!document.getElementById('worker').value.trim()){alert('작업자명을 입력하세요.');return;}
   const data={workDate:document.getElementById('workDate').value,process:document.getElementById('workProcess').value,productCode:document.getElementById('workProduct').value,qty:document.getElementById('workQty').value,badQty:document.getElementById('badQty').value,worker:document.getElementById('worker').value,memo:document.getElementById('workMemo').value};
   if(!beginAction(key,'workSubmitBtn','workMsg','등록 중...','작업일보 등록 중입니다. 중복 등록 방지를 위해 버튼을 잠시 비활성화했습니다.'))return;
-  google.script.run.withSuccessHandler(function(msg){document.getElementById('workMsg').textContent=msg;document.getElementById('workQty').value=1;document.getElementById('badQty').value=0;document.getElementById('workMemo').value='';refreshAfterSave();endAction(key,'workSubmitBtn','작업일보 등록');}).withFailureHandler(function(err){endAction(key,'workSubmitBtn','작업일보 등록');showError(err);}).addWorkLog(data);
+  google.script.run.withSuccessHandler(function(msg){document.getElementById('workMsg').textContent=msg;document.getElementById('workMemo').value='';saveWorkLogState();refreshAfterSave();endAction(key,'workSubmitBtn','작업일보 등록');}).withFailureHandler(function(err){endAction(key,'workSubmitBtn','작업일보 등록');showError(err);}).addWorkLog(data);
 }
 function setShipQtyToAvailable(){const productCode=document.getElementById('shipProduct').value;const location=document.getElementById('shipLocation').value;const qty=getStockByLocation(productCode,location);if(qty>0)document.getElementById('shipQty').value=qty;}
 function updateShipStockPreview(){const productCode=document.getElementById('shipProduct').value;const location=document.getElementById('shipLocation').value;const qty=getStockByLocation(productCode,location);APP.shipSelection={productCode:productCode,location:location};const box=document.getElementById('shipStockPreview');if(box)box.textContent='현재 출하위치 재고: '+qty+'대';renderShipmentStockTable(APP.dashboard);}
@@ -1580,9 +1636,10 @@ function selectWorkFromStock(productCode,locationName){
   const qty=getStockByLocation(productCode,locationName);
   if(!process){alert('이 위치는 작업일보 자동 선택 대상이 아닙니다. 입고/출하 화면을 이용하세요.');return;}
   document.getElementById('workProduct').value=productCode;
-  updateWorkProcess();
+  updateWorkProcess(process);
   document.getElementById('workProcess').value=process;
   if(qty>0)document.getElementById('workQty').value=qty;
+  saveWorkLogState();
   document.querySelectorAll('.work-stock-cell').forEach(function(td){td.classList.remove('work-stock-selected');});
   const key=productCode+'|'+locationName;
   document.querySelectorAll('.work-stock-cell').forEach(function(td){if(td.getAttribute('data-key')===key)td.classList.add('work-stock-selected');});

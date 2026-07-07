@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dolphin ERP v12.0</title>
+  <title>Dolphin ERP v14.3</title>
   <!-- Dolphin ERP v12: Cloudflare/GitHub frontend -->
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -373,7 +373,7 @@
 </head>
 <body>
 <div id="loadingOverlay"><div class="box">⏳ 등록 중입니다...<br><small>잠시만 기다려 주세요.</small></div></div>
-<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v14.2 · 2026-07-07 · 생산계획 UI 개선</span></header>
+<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v14.3 · 2026-07-07 · 공정 가능수량 계산 개선</span></header>
 <main>
   <datalist id="workerNameList"></datalist>
   <div class="tabs">
@@ -564,7 +564,7 @@
 
       <div id="planInputPanel" class="plan-panel active">
         <div class="plan-subtitle">계획입력</div>
-        <div class="plan-help">상단에서 공정을 선택하면 바로 아래에 해당 공정의 계획입력창이 표시됩니다. 용접은 계획 중심, 조립/검사/포장은 앞공정 재고와 금일 계획을 참고해 입력합니다.</div>
+        <div class="plan-help">상단에서 공정을 선택하면 바로 아래에 해당 공정의 계획입력창이 표시됩니다. 용접은 계획 중심, 조립/검사/포장은 앞공정 재고와 금일 계획을 참고해 입력합니다. 가능수량 기준: 조립=용접완료+조립대기, 검사=조립완료+검사대기+오늘조립계획, 포장=검사완료+포장대기+오늘검사계획입니다.</div>
         <div class="segmented-tabs" id="planInputProcessTabs">
           <button id="planTabWeld" class="active" onclick="selectPlanProcess('용접',this)">용접</button>
           <button onclick="selectPlanProcess('조립',this)">조립</button>
@@ -1014,6 +1014,10 @@ function planActual(row,process){
 function planQty(row,process){const p=planObj(row,process);return p?Number(p.planQty)||0:0;}
 function planMemo(row,process){const p=planObj(row,process);return p?String(p.memo||''):'';}
 function planPriority(row,process){const p=planObj(row,process);return p?String(p.priority||'보통'):'보통';}
+function qtyVal(v){return Number(v)||0;}
+function assemblyAvailableQty(r){return qtyVal(r.weldStock)+qtyVal(r.assyWorkStock);}
+function inspectionAvailableQty(r){return qtyVal(r.assyDoneStock)+qtyVal(r.inspWorkStock)+qtyVal(r.assemblyPlanQty);}
+function packingAvailableQty(r){return qtyVal(r.inspDoneStock)+qtyVal(r.packWorkStock)+qtyVal(r.inspectionPlanQty);}
 function renderProductionPlan(){
   const rows=((APP.productionPlan||{}).rows)||[];
   renderPlanInputTable(rows,CURRENT_PLAN_PROCESS||'용접');
@@ -1035,9 +1039,9 @@ function renderPlanInputTable(rows,process){
     const pq=planQty(r,process); const act=planActual(r,process); const rate=pq>0?Math.round(act/pq*100):0;
     let html='<td>'+r.productName+'</td><td class="plus">'+(r.requestRemainQty||0)+'</td>';
     if(process==='용접') html+='<td>'+(r.fgStock||0)+'</td>';
-    if(process==='조립') html+='<td>'+(r.weldStock||0)+'</td><td>'+(r.assyWorkStock||0)+'</td><td class="plus">'+((Number(r.weldStock)||0)+(Number(r.assyWorkStock)||0))+'</td>';
-    if(process==='검사') html+='<td>'+(r.weldStock||0)+'</td><td>'+(r.assyWorkStock||0)+'</td><td>'+(r.assyDoneStock||0)+'</td><td>'+(r.inspWorkStock||0)+'</td><td>'+(r.assemblyPlanQty||0)+'</td><td class="plus">'+(r.inspectionAvailableToday||0)+'</td>';
-    if(process==='포장') html+='<td>'+(r.weldStock||0)+'</td><td>'+(r.assyWorkStock||0)+'</td><td>'+(r.assyDoneStock||0)+'</td><td>'+(r.inspWorkStock||0)+'</td><td>'+(r.inspDoneStock||0)+'</td><td>'+(r.packWorkStock||0)+'</td><td>'+(r.inspectionPlanQty||0)+'</td><td class="plus">'+(r.packingAvailableToday||0)+'</td>';
+    if(process==='조립') html+='<td>'+(r.weldStock||0)+'</td><td>'+(r.assyWorkStock||0)+'</td><td class="plus">'+assemblyAvailableQty(r)+'</td>';
+    if(process==='검사') html+='<td>'+(r.weldStock||0)+'</td><td>'+(r.assyWorkStock||0)+'</td><td>'+(r.assyDoneStock||0)+'</td><td>'+(r.inspWorkStock||0)+'</td><td>'+(r.assemblyPlanQty||0)+'</td><td class="plus">'+inspectionAvailableQty(r)+'</td>';
+    if(process==='포장') html+='<td>'+(r.weldStock||0)+'</td><td>'+(r.assyWorkStock||0)+'</td><td>'+(r.assyDoneStock||0)+'</td><td>'+(r.inspWorkStock||0)+'</td><td>'+(r.inspDoneStock||0)+'</td><td>'+(r.packWorkStock||0)+'</td><td>'+(r.inspectionPlanQty||0)+'</td><td class="plus">'+packingAvailableQty(r)+'</td>';
     html+='<td><input class="plan-input" type="number" min="0" data-product="'+r.productCode+'" value="'+pq+'"></td>';
     html+='<td>'+act+'</td><td>'+(pq>0?rate+'%':'-')+'</td>';
     html+='<td><select class="priority-select" data-product-priority="'+r.productCode+'"><option '+(planPriority(r,process)==='긴급'?'selected':'')+'>긴급</option><option '+(planPriority(r,process)==='보통'?'selected':'')+'>보통</option><option '+(planPriority(r,process)==='여유'?'selected':'')+'>여유</option></select></td>';
@@ -1055,7 +1059,7 @@ function renderMonitorHero(rows,process){
   if(process==='전체'){
     const totalPlan=sumPlan(rows,'용접')+sumPlan(rows,'조립')+sumPlan(rows,'검사')+sumPlan(rows,'포장');
     const totalActual=sumActual(rows,'용접')+sumActual(rows,'조립')+sumActual(rows,'검사')+sumActual(rows,'포장');
-    const totalFgAdd=rows.reduce(function(s,r){return s+Math.min(planQty(r,'포장'),(Number(r.packingAvailableToday)||0));},0);
+    const totalFgAdd=rows.reduce(function(s,r){return s+Math.min(planQty(r,'포장'),packingAvailableQty(r));},0);
     const rate=totalPlan>0?Math.round(totalActual/totalPlan*100):0;
     box.innerHTML='<div class="monitor-hero"><h3>전체 공정 모니터링</h3><div class="desc">전체 공정의 금일 계획, 실적, 예상 완제품 증가량을 한눈에 확인합니다.</div><div class="monitor-grid">'+
       monitorBox('오늘 총계획',totalPlan)+monitorBox('오늘 총실적',totalActual)+monitorBox('총 달성률',rate+'%')+monitorBox('예상 완제품 추가',totalFgAdd)+'</div></div>';
@@ -1084,9 +1088,9 @@ function renderMonitorCards(rows,process){
 }
 function monitorMetrics(r,process){
   if(process==='용접')return '<div class="metric-grid">'+metric('요청잔량',r.requestRemainQty||0,'highlight')+metric('완제품',r.fgStock||0,'')+metric('오늘계획',planQty(r,process),'highlight')+metric('실적',planActual(r,process),'')+'</div>';
-  if(process==='조립')return '<div class="metric-grid">'+metric('용접완료',r.weldStock||0,'highlight')+metric('조립대기',r.assyWorkStock||0,'')+metric('오늘 조립 가능',monitorAvailableQty(r,process),'highlight')+metric('오늘계획',planQty(r,process),'highlight')+metric('실적',planActual(r,process),'')+metric('요청잔량',r.requestRemainQty||0,'')+'</div>';
-  if(process==='검사')return '<div class="metric-grid">'+metric('조립완료',r.assyDoneStock||0,'highlight')+metric('검사대기',r.inspWorkStock||0,'')+metric('오늘 조립계획',r.assemblyPlanQty||0,'highlight')+metric('오늘 검사 가능',r.inspectionAvailableToday||0,'highlight')+metric('오늘계획',planQty(r,process),'highlight')+metric('실적',planActual(r,process),'')+'</div>';
-  return '<div class="metric-grid">'+metric('검사완료',r.inspDoneStock||0,'highlight')+metric('포장대기',r.packWorkStock||0,'')+metric('오늘 검사계획',r.inspectionPlanQty||0,'highlight')+metric('오늘 포장 가능',r.packingAvailableToday||0,'highlight')+metric('오늘계획',planQty(r,process),'highlight')+metric('실적',planActual(r,process),'')+'</div>';
+  if(process==='조립')return '<div class="metric-grid">'+metric('용접완료',r.weldStock||0,'highlight')+metric('조립대기',r.assyWorkStock||0,'')+metric('오늘 조립 가능',assemblyAvailableQty(r),'highlight')+metric('오늘계획',planQty(r,process),'highlight')+metric('실적',planActual(r,process),'')+metric('요청잔량',r.requestRemainQty||0,'')+'</div>';
+  if(process==='검사')return '<div class="metric-grid">'+metric('조립완료',r.assyDoneStock||0,'highlight')+metric('검사대기',r.inspWorkStock||0,'')+metric('오늘 조립계획',r.assemblyPlanQty||0,'highlight')+metric('오늘 검사 가능',inspectionAvailableQty(r),'highlight')+metric('오늘계획',planQty(r,process),'highlight')+metric('실적',planActual(r,process),'')+'</div>';
+  return '<div class="metric-grid">'+metric('검사완료',r.inspDoneStock||0,'highlight')+metric('포장대기',r.packWorkStock||0,'')+metric('오늘 검사계획',r.inspectionPlanQty||0,'highlight')+metric('오늘 포장 가능',packingAvailableQty(r),'highlight')+metric('오늘계획',planQty(r,process),'highlight')+metric('실적',planActual(r,process),'')+'</div>';
 }
 function metric(label,value,extra){return '<div class="metric '+(extra||'')+'"><div class="m-label">'+label+'</div><div class="m-value">'+(value||0)+'</div></div>';}
 function progress(rate){const r=Math.max(0,Math.min(100,rate||0)); const cls=r>=80?'ok':r>=40?'warn':'bad';return '<div class="progress-wrap"><div class="progress-text"><span>달성률</span><span>'+r+'%</span></div><div class="progress-bar"><div class="progress-fill '+cls+'" style="width:'+r+'%"></div></div></div>';}
@@ -1094,7 +1098,7 @@ function memoBlock(memo){return memo?'<div class="monitor-note">'+escapeHtml(mem
 function cardStatus(rate,plan){if(!plan)return 'warn'; if(rate>=80)return 'ok'; if(rate>=40)return 'warn'; return 'urgent';}
 function monitorAvailableLabel(process){if(process==='용접')return '요청잔량'; if(process==='조립')return '용접완료+조립대기'; if(process==='검사')return '오늘 검사 가능'; if(process==='포장')return '오늘 포장 가능'; return '참고수량';}
 function monitorDescription(process){if(process==='용접')return '용접은 재고 판단보다 금일 계획과 우선순위 중심으로 확인합니다.'; if(process==='조립')return '조립은 용접완료와 조립대기를 함께 보고 금일 계획을 확인합니다.'; if(process==='검사')return '검사는 조립완료 전 단계와 금일 조립계획까지 함께 보고 검사 가능량을 확인합니다.'; return '포장은 검사완료 전 단계와 금일 검사계획까지 함께 보고 포장 가능량을 확인합니다.';}
-function monitorAvailableQty(r,process){if(process==='용접')return Number(r.requestRemainQty)||0; if(process==='조립')return (Number(r.weldStock)||0)+(Number(r.assyWorkStock)||0); if(process==='검사')return Number(r.inspectionAvailableToday)||0; if(process==='포장')return Number(r.packingAvailableToday)||0; return 0;}
+function monitorAvailableQty(r,process){if(process==='용접')return Number(r.requestRemainQty)||0; if(process==='조립')return assemblyAvailableQty(r); if(process==='검사')return inspectionAvailableQty(r); if(process==='포장')return packingAvailableQty(r); return 0;}
 function sumAvailable(rows,process){return rows.reduce(function(s,r){return s+monitorAvailableQty(r,process);},0);}
 function updatePlanKpi(rows,process){
   const remain=rows.reduce(function(s,r){return s+(Number(r.requestRemainQty)||0);},0);

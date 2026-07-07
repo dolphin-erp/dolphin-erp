@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dolphin ERP v15.1</title>
+  <title>Dolphin ERP v15.3</title>
   <!-- Dolphin ERP v12: Cloudflare/GitHub frontend -->
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -544,11 +544,81 @@
     @media(max-width:1100px){.v15-hero{grid-template-columns:1fr}.v15-kpi-grid{grid-template-columns:repeat(2,1fr)}.v15-flow{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:720px){.v15-kpi-grid{grid-template-columns:1fr}.v15-flow{grid-template-columns:1fr}.tabs{top:62px}.v15-hero-big{font-size:34px}}
 
-  </style>
+  
+
+    /* v15.3 Dark Mode */
+    .header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .theme-toggle{width:auto;border:1px solid rgba(255,255,255,.35);background:rgba(15,23,42,.35);color:#fff;border-radius:999px;padding:7px 12px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(15,23,42,.18);transition:all .2s ease;white-space:nowrap}
+    .theme-toggle:hover{transform:translateY(-1px);background:rgba(37,99,235,.45)}
+    body, header, main, .card, .tabs, .tabs button, table, th, td, input, select, textarea, button, .route-box, .drop-zone, .table-wrap, .v15-flow-step, .v15-section-title, .plan-panel, .monitor-card, .report-paper{transition:background-color .22s ease,color .22s ease,border-color .22s ease,box-shadow .22s ease}
+    body.dark-mode{--bg:#0b1220;--card:#111827;--card2:#172033;--line:#334155;--text:#e5e7eb;--muted:#94a3b8;background:linear-gradient(180deg,#07111f 0%,#0f172a 54%,#111827 100%)!important;color:#e5e7eb!important}
+    body.dark-mode header{background:linear-gradient(135deg,#020617 0%,#0f172a 52%,#1e3a8a 100%)!important;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+    body.dark-mode .theme-toggle{background:rgba(255,255,255,.08);border-color:rgba(148,163,184,.45);color:#f8fafc}
+    body.dark-mode main{background:transparent!important}
+    body.dark-mode .card,
+    body.dark-mode .v15-flow-step,
+    body.dark-mode .plan-panel,
+    body.dark-mode .monitor-card,
+    body.dark-mode .report-paper{background:rgba(17,24,39,.92)!important;border:1px solid rgba(51,65,85,.95)!important;box-shadow:0 14px 34px rgba(0,0,0,.34)!important;color:#e5e7eb!important}
+    body.dark-mode h2,
+    body.dark-mode h3,
+    body.dark-mode .v15-section-title,
+    body.dark-mode label{color:#f8fafc!important;border-color:#334155!important}
+    body.dark-mode .note,
+    body.dark-mode .v15-flow-name,
+    body.dark-mode .v15-kpi-caption,
+    body.dark-mode .print-kpi-title{color:#94a3b8!important}
+    body.dark-mode .tabs{background:rgba(15,23,42,.86)!important;border-color:#334155!important;box-shadow:0 12px 30px rgba(0,0,0,.24)}
+    body.dark-mode .tabs button{background:#111827!important;color:#dbeafe!important;border-color:#334155!important}
+    body.dark-mode .tabs button.active{background:linear-gradient(135deg,#2563eb,#1d4ed8)!important;color:white!important;border-color:#3b82f6!important;box-shadow:0 12px 24px rgba(37,99,235,.28)!important}
+    body.dark-mode input,
+    body.dark-mode select,
+    body.dark-mode textarea{background:#0f172a!important;color:#e5e7eb!important;border-color:#475569!important;box-shadow:none!important}
+    body.dark-mode input::placeholder,
+    body.dark-mode textarea::placeholder{color:#64748b!important}
+    body.dark-mode .submit-btn,
+    body.dark-mode .small-btn,
+    body.dark-mode .refresh-btn{background:#020617!important;color:#f8fafc!important;border:1px solid #334155!important}
+    body.dark-mode .submit-btn{background:linear-gradient(135deg,#2563eb,#1d4ed8)!important;border-color:#3b82f6!important}
+    body.dark-mode .message{color:#93c5fd!important}
+    body.dark-mode .route-box{background:#0f1b32!important;border-color:#334155!important;color:#bfdbfe!important}
+    body.dark-mode .drop-zone{background:#0f172a!important;border-color:#475569!important;color:#cbd5e1!important}
+    body.dark-mode table{background:#111827!important;color:#e5e7eb!important;border-color:#334155!important}
+    body.dark-mode th{background:#1f2937!important;color:#f8fafc!important;border-color:#334155!important}
+    body.dark-mode td{background:#111827!important;color:#e5e7eb!important;border-color:#334155!important}
+    body.dark-mode tbody tr:nth-child(even) td{background:#172033!important}
+    body.dark-mode tbody tr:hover td{background:#1e293b!important}
+    body.dark-mode .floor-3{background:#3a2a18!important;color:#fed7aa!important}
+    body.dark-mode .floor-2{background:#12243d!important;color:#bfdbfe!important}
+    body.dark-mode .floor-1{background:#103226!important;color:#bbf7d0!important}
+    body.dark-mode .zero-stock{color:#64748b!important}
+    body.dark-mode .plus{color:#34d399!important}
+    body.dark-mode .minus{color:#f87171!important}
+    body.dark-mode .v15-flow-bar{background:#334155!important}
+    body.dark-mode .v15-flow-fill{background:linear-gradient(90deg,#3b82f6,#22d3ee)!important}
+    body.dark-mode .v15-flow-status{background:#0f2a4f!important;color:#bfdbfe!important;border:1px solid #1e40af}
+    body.dark-mode .print-kpi{background:#0f172a!important;border-color:#334155!important;color:#e5e7eb!important}
+    body.dark-mode .urgency-긴급생산,
+    body.dark-mode .urgency-긴급{background:#7f1d1d!important;color:#fecaca!important}
+    body.dark-mode .urgency-생산필요,
+    body.dark-mode .urgency-주의{background:#78350f!important;color:#fde68a!important}
+    body.dark-mode .urgency-출하가능{background:#14532d!important;color:#bbf7d0!important}
+    body.dark-mode .urgency-여유{background:#164e63!important;color:#a5f3fc!important}
+    body.dark-mode .urgency-납기없음,
+    body.dark-mode .urgency-미지정,
+    body.dark-mode .urgency-마감{background:#374151!important;color:#d1d5db!important}
+    @media(max-width:800px){.header-actions{width:100%;justify-content:flex-start}.theme-toggle{font-size:12px;padding:6px 10px}}
+</style>
 </head>
 <body>
 <div id="loadingOverlay"><div class="box">⏳ 등록 중입니다...<br><small>잠시만 기다려 주세요.</small></div></div>
-<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v15.2 · 2026-07-07 · 현황판 정리</span></header>
+<header>
+  <span>돌핀 공정재고 웹앱</span>
+  <span class="header-actions">
+    <span class="version-badge">v15.3 · 2026-07-07 · 다크모드</span>
+    <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
+  </span>
+</header>
 <main>
   <datalist id="workerNameList"></datalist>
   <div class="tabs">
@@ -1106,7 +1176,28 @@ function displayLocationName(name){
   return map[name]||name;
 }
 
-document.addEventListener('DOMContentLoaded',function(){setToday();initDropZone();loadReportSettings();applyAdminSession();loadAll();startDashboardAutoRefresh();});
+
+const THEME_STORAGE_KEY='dolphinERPThemeMode';
+function applyThemeMode(mode){
+  const isDark=mode==='dark';
+  document.body.classList.toggle('dark-mode',isDark);
+  const btn=document.getElementById('themeToggleBtn');
+  if(btn){btn.textContent=isDark?'☀ 라이트모드':'🌙 다크모드';btn.setAttribute('aria-pressed',isDark?'true':'false');}
+}
+function initThemeMode(){
+  let saved='';
+  try{saved=localStorage.getItem(THEME_STORAGE_KEY)||'';}catch(e){}
+  if(saved!=='dark'&&saved!=='light'){
+    saved=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
+  }
+  applyThemeMode(saved);
+}
+function toggleDarkMode(){
+  const next=document.body.classList.contains('dark-mode')?'light':'dark';
+  try{localStorage.setItem(THEME_STORAGE_KEY,next);}catch(e){}
+  applyThemeMode(next);
+}
+document.addEventListener('DOMContentLoaded',function(){initThemeMode();setToday();initDropZone();loadReportSettings();applyAdminSession();loadAll();startDashboardAutoRefresh();});
 
 function getTodayString(){const d=new Date();const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);return local.toISOString().slice(0,10);}
 function setToday(){const today=getTodayString();['workDate','receiptDate','shipDate','salesDate','masterDate','improveDate','planDate'].forEach(function(id){const el=document.getElementById(id);if(el)el.value=today;});}

@@ -1,4 +1,4 @@
-/* Dolphin ERP v13.2 API shim
+/* Dolphin ERP v14.6 API shim
  * Cloudflare Pages 전용.
  * 중요: 브라우저는 Apps Script를 직접 호출하지 않습니다.
  * 검증된 /api?action=... GET 경로만 사용합니다.
@@ -47,7 +47,7 @@
         else alert(err.message || String(err));
       })
       .finally(function () {
-        delete pendingRequests[requestKey];
+        // no-op: 중복요청 관리는 화면별 beginAction에서 처리합니다.
       });
   }
 

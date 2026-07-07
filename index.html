@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dolphin ERP v14.5</title>
+  <title>Dolphin ERP v14.6</title>
   <!-- Dolphin ERP v12: Cloudflare/GitHub frontend -->
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -46,6 +46,7 @@
     .drop-zone{border:2px dashed #94a3b8;background:#f8fafc;padding:24px;border-radius:12px;text-align:center;color:#475569;cursor:pointer;margin-bottom:12px}
     .drop-zone.dragover{background:#dbeafe;border-color:#2563eb;color:#1d4ed8}
     .status-active{color:#2563eb;font-weight:bold}.status-done{color:#059669;font-weight:bold}.status-closed{color:#6b7280;font-weight:bold}
+    .urgency-chip{display:inline-block;padding:4px 8px;border-radius:999px;font-weight:900;font-size:12px;white-space:nowrap}.urgency-긴급{background:#fee2e2;color:#991b1b}.urgency-주의{background:#fef3c7;color:#92400e}.urgency-여유{background:#dcfce7;color:#166534}.urgency-미지정{background:#e5e7eb;color:#374151}.urgency-출하완료{background:#dbeafe;color:#1d4ed8}.urgency-마감{background:#e5e7eb;color:#6b7280}
 
     .print-header {
       display: flex;
@@ -395,7 +396,7 @@
 </head>
 <body>
 <div id="loadingOverlay"><div class="box">⏳ 등록 중입니다...<br><small>잠시만 기다려 주세요.</small></div></div>
-<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v14.5 · 2026-07-07 · 작업일보 선택값 유지</span></header>
+<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v14.6 · 2026-07-07 · 납기일/긴급도</span></header>
 <main>
   <datalist id="workerNameList"></datalist>
   <div class="tabs">
@@ -440,7 +441,7 @@
     </div>
     <div class="card">
       <h2>진행 중 영업요청</h2>
-      <div class="table-wrap"><table><thead><tr><th>요청일</th><th>납품처</th><th>제품명</th><th>등록수량</th><th>출하누계</th><th>잔량</th><th>완제품재고</th><th>상태</th><th>비고</th></tr></thead><tbody id="dashboardSalesBody"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>요청일</th><th>납기일</th><th>긴급도</th><th>납품처</th><th>제품명</th><th>등록수량</th><th>출하누계</th><th>잔량</th><th>완제품재고</th><th>상태</th><th>비고</th></tr></thead><tbody id="dashboardSalesBody"></tbody></table></div>
     </div>
   </section>
 
@@ -626,6 +627,7 @@
       <div class="note">영업팀 요청수량을 수주번호 단위로 등록합니다. 등록수량은 고정되고, 출하증에서 선택해 출하하면 출하누계와 잔량이 자동 계산됩니다.</div>
       <div class="form-grid">
         <div><label>요청일</label><input type="date" id="salesDate"></div>
+        <div><label>납기일 <span style="color:#64748b;font-size:12px;">선택</span></label><input type="date" id="salesDueDate"></div>
         <div><label>납품처</label><input type="text" id="salesCustomer" placeholder="예: 서울지사, 거래처명"></div>
         <div><label>제품</label><select id="salesProduct"></select></div>
         <div><label>요청수량</label><input type="number" id="salesQty" min="1" value="1"></div>
@@ -638,7 +640,7 @@
     <div class="card">
       <h2>수주/영업요청 현황</h2>
       <button class="refresh-btn" onclick="loadSalesRequests()">새로고침</button>
-      <div class="table-wrap"><table><thead><tr><th>수주번호</th><th>요청일</th><th>납품처</th><th>제품명</th><th>등록수량</th><th>출하누계</th><th>잔량</th><th>완제품재고</th><th>상태</th><th>출하선택</th><th>마감</th><th>비고</th></tr></thead><tbody id="salesBody"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>수주번호</th><th>요청일</th><th>납기일</th><th>긴급도</th><th>납품처</th><th>제품명</th><th>등록수량</th><th>출하누계</th><th>잔량</th><th>완제품재고</th><th>상태</th><th>출하선택</th><th>마감</th><th>비고</th></tr></thead><tbody id="salesBody"></tbody></table></div>
     </div>
   </section>
 
@@ -655,7 +657,7 @@
   </section>
 
   <section id="shipment" class="page">
-    <div class="card"><h2>영업요청 선택</h2><div class="note">요청을 선택하면 제품, 납품처, 수량이 자동으로 들어갑니다. 수량은 요청잔량과 완제품재고 중 작은 값으로 잡힙니다.</div><div class="table-wrap"><table><thead><tr><th>요청일</th><th>납품처</th><th>제품명</th><th>잔량</th><th>완제품재고</th><th>선택</th></tr></thead><tbody id="shipmentSalesBody"></tbody></table></div></div>
+    <div class="card"><h2>영업요청 선택</h2><div class="note">요청을 선택하면 제품, 납품처, 수량이 자동으로 들어갑니다. 수량은 요청잔량과 완제품재고 중 작은 값으로 잡힙니다.</div><div class="table-wrap"><table><thead><tr><th>요청일</th><th>납기일</th><th>긴급도</th><th>납품처</th><th>제품명</th><th>잔량</th><th>완제품재고</th><th>선택</th></tr></thead><tbody id="shipmentSalesBody"></tbody></table></div></div>
     <div class="card"><h2>완제품 출하 가능 현황</h2><div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th rowspan="2">요청잔량</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th></tr><tr><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="shipmentStockBody"></tbody></table></div></div>
     <div class="card"><h2>출하증 작성</h2><div class="form-grid"><div><label>출하일</label><input type="date" id="shipDate"></div><div><label>영업요청</label><select id="shipSalesRequest" onchange="selectSalesRequestBySelect()"><option value="">일반 출하</option></select></div><div><label>출하구분</label><select id="shipType"><option value="출하">출하</option><option value="불량폐기">불량폐기</option><option value="샘플출하">샘플출하</option><option value="재고조정감소">재고조정감소</option></select></div><div class="hidden"><label>출하위치</label><select id="shipLocation" onchange="setShipQtyToAvailable(); updateShipStockPreview();"></select></div><div><label>제품</label><select id="shipProduct" onchange="setShipQtyToAvailable(); updateShipStockPreview();"></select></div><div><label>수량</label><input type="number" id="shipQty" min="1" value="1"><div class="route-box" id="shipStockPreview">현재 출하위치 재고: 0대</div><button type="button" class="small-btn" onclick="fillShipAllQty()">현재고 전량 출하</button></div><div><label>납품처</label><input type="text" id="customerName"></div><div><label>작성자</label><input type="text" id="shipWriter" list="workerNameList"></div><div class="full"><label>비고</label><textarea id="shipMemo"></textarea></div></div><button class="submit-btn" id="shipSubmitBtn" onclick="saveShipment()">출하증 등록</button><div class="message" id="shipMsg"></div></div>
   </section>
@@ -1105,7 +1107,7 @@ function renderPlanInputTable(rows,process){
   const head=document.getElementById('planHead');
   const body=document.getElementById('planBody');
   if(!head||!body)return;
-  let header='<tr><th>제품</th><th>요청잔량</th>';
+  let header='<tr><th>제품</th><th>납기</th><th>긴급도</th><th>요청잔량</th>';
   if(process==='용접') header+='<th>완제품</th>';
   if(process==='조립') header+='<th>용접완료</th><th>조립대기</th><th>오늘 조립 가능</th>';
   if(process==='검사') header+='<th>용접완료</th><th>조립대기</th><th>조립완료</th><th>검사대기</th><th>오늘 조립계획</th><th>오늘 검사 가능</th>';
@@ -1115,7 +1117,7 @@ function renderPlanInputTable(rows,process){
   body.innerHTML='';
   rows.forEach(function(r){
     const pq=planQty(r,process); const act=planActual(r,process); const rate=pq>0?Math.round(act/pq*100):0;
-    let html='<td>'+r.productName+'</td><td class="plus">'+(r.requestRemainQty||0)+'</td>';
+    let html='<td>'+r.productName+'</td><td>'+(r.dueDate||'-')+'</td><td>'+urgencyChip(r.urgency)+'</td><td class="plus">'+(r.requestRemainQty||0)+'</td>';
     if(process==='용접') html+='<td>'+(r.fgStock||0)+'</td>';
     if(process==='조립') html+='<td>'+(r.weldStock||0)+'</td><td>'+(r.assyWorkStock||0)+'</td><td class="plus">'+assemblyAvailableQty(r)+'</td>';
     if(process==='검사') html+='<td>'+(r.weldStock||0)+'</td><td>'+(r.assyWorkStock||0)+'</td><td>'+(r.assyDoneStock||0)+'</td><td>'+(r.inspWorkStock||0)+'</td><td>'+(r.assemblyPlanQty||0)+'</td><td class="plus">'+inspectionAvailableQty(r)+'</td>';
@@ -1482,6 +1484,7 @@ function saveSalesRequest(){
   if(ACTION_BUSY[key])return;
   const data={
     requestDate:document.getElementById('salesDate').value,
+    dueDate:document.getElementById('salesDueDate')?document.getElementById('salesDueDate').value:'',
     customerName:document.getElementById('salesCustomer').value,
     productCode:document.getElementById('salesProduct').value,
     qty:document.getElementById('salesQty').value,
@@ -1503,6 +1506,7 @@ function saveSalesRequest(){
 function loadSalesRequests(){google.script.run.withSuccessHandler(function(rows){APP.salesRequests=rows||[];renderSalesTables();fillSalesRequestSelect();}).withFailureHandler(showError).getSalesRequests();}
 function renderSalesTables(){renderSalesBody('salesBody',true);renderSalesBody('dashboardSalesBody',false);renderShipmentSalesBody();}
 function statusClass(st){if(st==='소진')return 'status-done';if(st==='마감')return 'status-closed';return 'status-active';}
+function urgencyChip(u){const v=String(u||'미지정');return '<span class="urgency-chip urgency-'+v+'">'+v+'</span>';}
 function renderSalesBody(id,withButtons){
   const tbody=document.getElementById(id);
   if(!tbody)return;
@@ -1513,8 +1517,9 @@ function renderSalesBody(id,withButtons){
     let html='';
 
     if(id==='dashboardSalesBody'){
-      // 현황판 표 헤더는 9칸이므로 데이터도 9칸만 출력한다.
       html+='<td data-label="요청일">'+(r.requestDate||'')+'</td>';
+      html+='<td data-label="납기일">'+(r.dueDate||'-')+'</td>';
+      html+='<td data-label="긴급도">'+urgencyChip(r.urgency)+'</td>';
       html+='<td data-label="납품처">'+(r.customerName||'')+'</td>';
       html+='<td data-label="제품명">'+(r.productName||'')+'</td>';
       html+='<td data-label="요청">'+(r.requestQty||0)+'</td>';
@@ -1526,6 +1531,8 @@ function renderSalesBody(id,withButtons){
     } else {
       html+='<td data-label="요청ID">'+(r.requestId||'')+'</td>';
       html+='<td data-label="요청일">'+(r.requestDate||'')+'</td>';
+      html+='<td data-label="납기일">'+(r.dueDate||'-')+'</td>';
+      html+='<td data-label="긴급도">'+urgencyChip(r.urgency)+'</td>';
       html+='<td data-label="납품처">'+(r.customerName||'')+'</td>';
       html+='<td data-label="제품명">'+(r.productName||'')+'</td>';
       html+='<td data-label="요청">'+(r.requestQty||0)+'</td>';
@@ -1543,8 +1550,8 @@ function renderSalesBody(id,withButtons){
     tbody.appendChild(tr);
   });
 }
-function renderShipmentSalesBody(){const tbody=document.getElementById('shipmentSalesBody');if(!tbody)return;tbody.innerHTML='';APP.salesRequests.forEach(function(r){if(!r.active)return;const tr=document.createElement('tr');tr.innerHTML='<td>'+r.requestDate+'</td><td>'+r.customerName+'</td><td>'+r.productName+'</td><td class="plus">'+r.remainQty+'</td><td>'+r.fgStock+'</td><td><button class="small-btn" onclick="selectSalesRequestForShipment(\''+r.requestId+'\')">선택</button></td>';tbody.appendChild(tr);});}
-function fillSalesRequestSelect(){const select=document.getElementById('shipSalesRequest');if(!select)return;const old=select.value;select.innerHTML='<option value="">일반 출하</option>';APP.salesRequests.forEach(function(r){if(!r.active)return;const o=document.createElement('option');o.value=r.requestId;o.textContent=r.requestDate+' / '+r.customerName+' / '+r.productName+' / 잔량 '+r.remainQty;select.appendChild(o);});select.value=old;}
+function renderShipmentSalesBody(){const tbody=document.getElementById('shipmentSalesBody');if(!tbody)return;tbody.innerHTML='';APP.salesRequests.forEach(function(r){if(!r.active)return;const tr=document.createElement('tr');tr.innerHTML='<td>'+r.requestDate+'</td><td>'+(r.dueDate||'-')+'</td><td>'+urgencyChip(r.urgency)+'</td><td>'+r.customerName+'</td><td>'+r.productName+'</td><td class="plus">'+r.remainQty+'</td><td>'+r.fgStock+'</td><td><button class="small-btn" onclick="selectSalesRequestForShipment(\''+r.requestId+'\')">선택</button></td>';tbody.appendChild(tr);});}
+function fillSalesRequestSelect(){const select=document.getElementById('shipSalesRequest');if(!select)return;const old=select.value;select.innerHTML='<option value="">일반 출하</option>';APP.salesRequests.forEach(function(r){if(!r.active)return;const o=document.createElement('option');o.value=r.requestId;o.textContent=(r.dueDate?('납기 '+r.dueDate+' / '):'')+r.requestDate+' / '+r.customerName+' / '+r.productName+' / 잔량 '+r.remainQty;select.appendChild(o);});select.value=old;}
 function selectSalesRequestBySelect(){const id=document.getElementById('shipSalesRequest').value;if(id)selectSalesRequestForShipment(id);}
 function selectSalesRequestForShipment(requestId){const r=APP.salesRequests.find(function(x){return x.requestId===requestId;});if(!r)return;openPage('shipment',document.querySelector('.tabs button:nth-child(6)')||document.querySelectorAll('.tabs button')[5]);document.getElementById('shipSalesRequest').value=r.requestId;document.getElementById('shipProduct').value=r.productCode;document.getElementById('shipLocation').value='완제품재고';document.getElementById('customerName').value=r.customerName;document.getElementById('shipQty').value=Math.min(Number(r.remainQty)||0,Number(r.fgStock)||0)||1;document.getElementById('shipMemo').value='영업요청 출하: '+r.requestId;updateShipStockPreview();}
 function closeSalesRequestUI(requestId, btn){

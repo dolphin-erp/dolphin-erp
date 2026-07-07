@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dolphin ERP v15.0</title>
+  <title>Dolphin ERP v15.1</title>
   <!-- Dolphin ERP v12: Cloudflare/GitHub frontend -->
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -534,27 +534,13 @@
     .v15-flow-fill{height:100%;width:var(--w,30%);background:linear-gradient(90deg,#2563eb,#60a5fa);border-radius:99px;}
     .v15-section-title{font-size:17px;font-weight:900;margin:18px 0 10px;display:flex;align-items:center;gap:8px;}
     .v15-section-title:before{content:'●';color:#2563eb;font-size:12px;}
+    .v15-flow-status{display:inline-flex;align-items:center;gap:4px;margin-top:8px;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900;background:#eff6ff;color:#1d4ed8;}
+    .v15-flow-status.ok{background:#dcfce7;color:#047857;}
+    .v15-flow-status.warn{background:#fef3c7;color:#b45309;}
+    .v15-flow-status.hot{background:#fee2e2;color:#b91c1c;}
     .urgency-pill,.status-pill{display:inline-block;padding:4px 9px;border-radius:999px;font-size:12px;font-weight:900;white-space:nowrap;}
     .urgency-pill.ready{background:#dcfce7;color:#047857}.urgency-pill.urgent{background:#fee2e2;color:#b91c1c}.urgency-pill.warn{background:#fef3c7;color:#b45309}.urgency-pill.normal{background:#dbeafe;color:#1d4ed8}.urgency-pill.none{background:#f1f5f9;color:#64748b}
     .process-monitor-table th{position:sticky;top:0;z-index:2;}
-
-    /* v15.1 production notice */
-    .notice-card{border:1px solid #dbeafe;background:linear-gradient(135deg,#ffffff,#f8fbff);border-radius:16px;box-shadow:0 10px 26px rgba(15,23,42,.08);padding:16px;margin:14px 0}
-    .notice-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
-    .notice-title{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-.3px}
-    .notice-meta{font-size:12px;color:#64748b;text-align:right;white-space:nowrap}
-    .notice-ticker{display:flex;align-items:center;gap:10px;background:#0f172a;color:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;overflow:hidden}
-    .notice-badge{background:#2563eb;color:#fff;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:800;white-space:nowrap}
-    .notice-text{font-size:15px;font-weight:700;line-height:1.55;white-space:pre-wrap;word-break:keep-all}
-    .notice-edit{display:grid;grid-template-columns:170px 1fr 160px;gap:10px;align-items:end;margin-top:12px}
-    .notice-edit textarea{min-height:72px;resize:vertical}
-    .notice-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:10px;flex-wrap:wrap}
-    .notice-actions button{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}
-    .notice-actions .draft-btn{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
-    .notice-actions .save-btn{background:#111827;color:#fff}
-    .notice-msg{font-size:13px;color:#2563eb;font-weight:700;margin-left:auto}
-    @media(max-width:900px){.notice-head{align-items:flex-start;flex-direction:column}.notice-meta{text-align:left}.notice-edit{grid-template-columns:1fr}.notice-actions{justify-content:stretch}.notice-actions button{width:100%}}
-
     @media(max-width:1100px){.v15-hero{grid-template-columns:1fr}.v15-kpi-grid{grid-template-columns:repeat(2,1fr)}.v15-flow{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:720px){.v15-kpi-grid{grid-template-columns:1fr}.v15-flow{grid-template-columns:1fr}.tabs{top:62px}.v15-hero-big{font-size:34px}}
 
@@ -562,7 +548,7 @@
 </head>
 <body>
 <div id="loadingOverlay"><div class="box">⏳ 등록 중입니다...<br><small>잠시만 기다려 주세요.</small></div></div>
-<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v15.1 · 2026-07-07 · 생산공지</span></header>
+<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v15.1 · 2026-07-07 · 작업일보/UI 정리</span></header>
 <main>
   <datalist id="workerNameList"></datalist>
   <div class="tabs">
@@ -600,40 +586,6 @@
 
   <section id="dashboard" class="page active">
     <div id="v15DashboardHero" class="v15-dashboard-hero"></div>
-
-    <div class="notice-card" id="dashboardNoticeCard">
-      <div class="notice-head">
-        <div class="notice-title">📢 생산공지</div>
-        <div class="notice-meta" id="noticeMeta">공지 불러오는 중...</div>
-      </div>
-      <div class="notice-ticker">
-        <span class="notice-badge">TODAY</span>
-        <div class="notice-text" id="noticeViewText">공지 불러오는 중...</div>
-      </div>
-      <div class="notice-edit">
-        <div>
-          <label>작성자</label>
-          <input type="text" id="noticeWriter" placeholder="예: 생산관리">
-        </div>
-        <div>
-          <label>공지내용</label>
-          <textarea id="noticeContent" placeholder="현황판에 띄울 공지사항을 입력하세요."></textarea>
-        </div>
-        <div>
-          <label>표시상태</label>
-          <select id="noticeStatus">
-            <option value="사용">사용</option>
-            <option value="숨김">숨김</option>
-          </select>
-        </div>
-      </div>
-      <div class="notice-actions">
-        <button class="draft-btn" type="button" onclick="fillDashboardNoticeDraft()">자동요약 작성</button>
-        <button class="save-btn" type="button" id="noticeSaveBtn" onclick="saveDashboardNotice()">공지 저장</button>
-        <span class="notice-msg" id="noticeMsg"></span>
-      </div>
-    </div>
-
     <div class="card">
       <h2>제품별 공정재고 현황</h2>
       <div class="note">요청잔량은 마감되지 않은 영업요청의 미출하 잔량 합계입니다. 출하하면 자동으로 줄어들고, 잔량이 0이면 해당 요청은 마감됩니다. 층 구분: 용접 3층 / 조립·검사·포장 2층 / 완제품 1층입니다.</div>
@@ -847,10 +799,10 @@
   </section>
 
   <section id="worklog" class="page">
+    <div class="card"><h2>작업일보 작성</h2><div class="note">작업일·제품·공정·작업자·수량은 이 PC에 마지막 선택값으로 저장됩니다. 제품을 바꿔도 선택한 공정이 가능한 경우 그대로 유지됩니다.</div><div class="form-grid"><div><label>작업일</label><input type="date" id="workDate" onchange="loadTodayWorkSummary()"></div><div><label>제품</label><select id="workProduct" onchange="updateWorkProcess()"></select></div><div><label>공정</label><select id="workProcess"></select></div><div><label>완료수량</label><input type="number" id="workQty" min="1" value="1"></div><div><label>불량수량</label><input type="number" id="badQty" min="0" value="0"></div><div><label>작업자</label><input type="text" id="worker" placeholder="예: 홍길동" list="workerNameList"></div><div class="full"><label>비고</label><textarea id="workMemo"></textarea></div></div><button class="submit-btn" id="workSubmitBtn" onclick="saveWorkLog()">작업일보 등록</button><div class="message" id="workMsg"></div></div>
     <div class="card"><h2>작업일보 입력용 공정재고 현황</h2><div class="note">재고 숫자를 클릭하면 해당 제품/공정/수량이 작업일보 작성란에 자동 세팅됩니다. 조립대기→조립완료, 검사대기→검사완료, 포장대기→포장완료 기준입니다.</div><div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th></tr><tr><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="workStockBody"></tbody></table></div></div>
     <div class="card"><h2>금일 작업일보 요약</h2><button class="refresh-btn" onclick="loadTodayWorkSummary()">새로고침</button><div class="table-wrap"><table><thead><tr><th>제품명</th><th>공정</th><th>완료수량 합계</th><th>불량수량 합계</th></tr></thead><tbody id="todayWorkSummaryBody"></tbody></table></div></div>
     <div class="card"><h2>금일 작업일보 입력 로그</h2><div class="table-wrap"><table><thead><tr><th>등록일시</th><th>제품명</th><th>공정</th><th>수량</th><th>작업자</th><th>비고</th></tr></thead><tbody id="todayWorkLogBody"></tbody></table></div></div>
-    <div class="card"><h2>작업일보 작성</h2><div class="form-grid"><div><label>작업일</label><input type="date" id="workDate" onchange="loadTodayWorkSummary()"></div><div><label>제품</label><select id="workProduct" onchange="updateWorkProcess()"></select></div><div><label>공정</label><select id="workProcess"></select></div><div><label>완료수량</label><input type="number" id="workQty" min="1" value="1"></div><div><label>불량수량</label><input type="number" id="badQty" min="0" value="0"></div><div><label>작업자</label><input type="text" id="worker" placeholder="예: 홍길동" list="workerNameList"></div><div class="full"><label>비고</label><textarea id="workMemo"></textarea></div></div><button class="submit-btn" id="workSubmitBtn" onclick="saveWorkLog()">작업일보 등록</button><div class="message" id="workMsg"></div></div>
   </section>
 
   <section id="receipt" class="page">
@@ -1177,8 +1129,8 @@ function refreshAfterSave(){
   loadHistory();
   loadTodayWorkSummary();
 }
-function openPage(pageId,button){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('active');});document.getElementById(pageId).classList.add('active');button.classList.add('active');if(pageId==='dashboard'){loadDashboard();loadDashboardNotice();}if(pageId==='history')loadHistory();if(pageId==='flow')loadFlowTable();if(pageId==='worklog')loadTodayWorkSummary();if(pageId==='productionPlan')loadProductionPlan();if(pageId==='sales')loadSalesRequests();if(pageId==='improvement')loadImprovementRequests();if(pageId==='improvementAdmin')loadImprovementRequests();if(pageId==='master'){fillMasterSelects();renderMasterStockTable();}if(pageId==='printSummary')renderPrintSummary();}
-function loadAll(){google.script.run.withSuccessHandler(function(data){APP.products=data.products||[];APP.flows=data.flows||[];APP.workers=data.workers||[];APP.locations=data.locations||[];APP.salesRequests=data.salesRequests||[];['workProduct','receiptProduct','shipProduct','salesProduct','masterProduct'].forEach(fillProductSelect);fillLocationSelect('manualFromLocation',true);fillLocationSelect('manualToLocation',false);fillLocationSelect('autoManualToLocation',true,'자동 노선 그대로 사용');fillWorkerDatalist();fillLocationSelect('shipLocation',false);fillLocationSelect('masterLocation',false);updateWorkProcess();restoreWorkLogState();bindWorkLogStateEvents();updateReceiptProcess();loadDashboard();loadSalesRequests();loadFlowTable();loadTodayWorkSummary();loadProductionPlan();loadDashboardNotice();}).withFailureHandler(showError).getInitialData();}
+function openPage(pageId,button){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('active');});document.getElementById(pageId).classList.add('active');button.classList.add('active');if(pageId==='dashboard')loadDashboard();if(pageId==='history')loadHistory();if(pageId==='flow')loadFlowTable();if(pageId==='worklog')loadTodayWorkSummary();if(pageId==='productionPlan')loadProductionPlan();if(pageId==='sales')loadSalesRequests();if(pageId==='improvement')loadImprovementRequests();if(pageId==='improvementAdmin')loadImprovementRequests();if(pageId==='master'){fillMasterSelects();renderMasterStockTable();}if(pageId==='printSummary')renderPrintSummary();}
+function loadAll(){google.script.run.withSuccessHandler(function(data){APP.products=data.products||[];APP.flows=data.flows||[];APP.workers=data.workers||[];APP.locations=data.locations||[];APP.salesRequests=data.salesRequests||[];['workProduct','receiptProduct','shipProduct','salesProduct','masterProduct'].forEach(fillProductSelect);fillLocationSelect('manualFromLocation',true);fillLocationSelect('manualToLocation',false);fillLocationSelect('autoManualToLocation',true,'자동 노선 그대로 사용');fillWorkerDatalist();fillLocationSelect('shipLocation',false);fillLocationSelect('masterLocation',false);updateWorkProcess();restoreWorkLogState();bindWorkLogStateEvents();updateReceiptProcess();loadDashboard();loadSalesRequests();loadFlowTable();loadTodayWorkSummary();loadProductionPlan();}).withFailureHandler(showError).getInitialData();}
 function fillProductSelect(id){const select=document.getElementById(id);if(!select)return;select.innerHTML='';APP.products.forEach(function(p){const o=document.createElement('option');o.value=p.code;o.textContent=p.name;select.appendChild(o);});}
 function fillLocationSelect(id,allowBlank,blankText){const select=document.getElementById(id);if(!select)return;select.innerHTML='';if(allowBlank){const o=document.createElement('option');o.value='';o.textContent=blankText||'선택 안 함';select.appendChild(o);}APP.locations.forEach(function(loc){const o=document.createElement('option');o.value=loc.name;o.textContent=loc.floor+' - '+displayLocationName(loc.name);select.appendChild(o);});}
 function getFlowsByProduct(productCode){return APP.flows.filter(function(f){return f.productCode===productCode;});}
@@ -1829,77 +1781,7 @@ function saveShipment(){
   google.script.run.withSuccessHandler(function(msg){document.getElementById('shipMsg').textContent=msg;document.getElementById('shipMemo').value='';document.getElementById('shipSalesRequest').value='';refreshAfterSave();endAction(key,'shipSubmitBtn','출하증 등록');}).withFailureHandler(function(err){endAction(key,'shipSubmitBtn','출하증 등록');showError(err);}).addShipment(data);
 }
 
-
-function loadDashboardNotice(){
-  google.script.run.withSuccessHandler(function(n){
-    n=n||{};
-    const content=String(n.content||'').trim() || '등록된 생산공지 없음';
-    const writer=String(n.writer||'').trim();
-    const updated=String(n.updatedAt||'').trim();
-    const status=String(n.status||'사용').trim() || '사용';
-    const view=document.getElementById('noticeViewText');
-    const meta=document.getElementById('noticeMeta');
-    const writerEl=document.getElementById('noticeWriter');
-    const contentEl=document.getElementById('noticeContent');
-    const statusEl=document.getElementById('noticeStatus');
-    if(view) view.textContent = status==='숨김' ? '공지 숨김 상태입니다.' : content;
-    if(meta) meta.textContent = (writer?('작성자: '+writer+' · '):'') + (updated?('수정: '+updated):'수정 이력 없음');
-    if(writerEl && !writerEl.value) writerEl.value=writer;
-    if(contentEl && !contentEl.value) contentEl.value=content==='등록된 생산공지 없음'?'':content;
-    if(statusEl) statusEl.value=status;
-  }).withFailureHandler(function(err){
-    const view=document.getElementById('noticeViewText');
-    if(view) view.textContent='공지 불러오기 실패: '+(err && err.message ? err.message : String(err));
-  }).getDashboardNotice();
-}
-
-function fillDashboardNoticeDraft(){
-  const rows=APP.dashboard||[];
-  const sales=APP.salesRequests||[];
-  const urgent=(sales||[]).filter(function(r){return r.active!==false && String(r.urgency||r.priority||'').indexOf('긴급')>=0;});
-  const requestTotal=rows.reduce(function(s,r){return s+(Number(r.salesRemainQty)||0);},0);
-  const fgTotal=rows.reduce(function(s,r){return s+(Number(r.fgStock)||0);},0);
-  let bottleneck='';
-  if(rows.length){
-    const sums={조립:0,검사:0,포장:0};
-    rows.forEach(function(r){sums.조립+=(Number(r.assyWorkStock)||0)+(Number(r.assyDoneStock)||0);sums.검사+=(Number(r.inspWorkStock)||0)+(Number(r.inspDoneStock)||0);sums.포장+=(Number(r.packWorkStock)||0)+(Number(r.packDoneStock)||0);});
-    bottleneck=Object.keys(sums).sort(function(a,b){return sums[b]-sums[a];})[0];
-  }
-  const lines=[];
-  lines.push('오늘 요청잔량 '+requestTotal+'대, 완제품 '+fgTotal+'대 기준으로 현황을 확인해 주세요.');
-  if(urgent.length>0){lines.push('긴급 확인 필요: '+urgent.slice(0,3).map(function(r){return (r.productName||'')+' '+(r.remainQty||0)+'대';}).join(', '));}
-  if(bottleneck){lines.push('공정 확인: '+bottleneck+' 쪽 재고 흐름을 우선 점검해 주세요.');}
-  lines.push('특이사항은 생산관리자가 수정하여 공지 바랍니다.');
-  const contentEl=document.getElementById('noticeContent');
-  if(contentEl) contentEl.value=lines.join('
-');
-  const msg=document.getElementById('noticeMsg');
-  if(msg) msg.textContent='자동요약 초안을 작성했습니다. 확인 후 저장하세요.';
-}
-
-function saveDashboardNotice(){
-  const key='dashboardNoticeSave';
-  if(!beginAction(key,'noticeSaveBtn','noticeMsg','저장 중...','생산공지 저장 중입니다.'))return;
-  const data={
-    writer:document.getElementById('noticeWriter')?document.getElementById('noticeWriter').value:'',
-    content:document.getElementById('noticeContent')?document.getElementById('noticeContent').value:'',
-    status:document.getElementById('noticeStatus')?document.getElementById('noticeStatus').value:'사용'
-  };
-  google.script.run.withSuccessHandler(function(msg){
-    const m=document.getElementById('noticeMsg');
-    if(m)m.textContent=msg;
-    const c=document.getElementById('noticeContent');
-    const v=document.getElementById('noticeViewText');
-    if(c&&v)v.textContent=data.status==='숨김'?'공지 숨김 상태입니다.':c.value;
-    loadDashboardNotice();
-    endAction(key,'noticeSaveBtn','공지 저장');
-  }).withFailureHandler(function(err){
-    endAction(key,'noticeSaveBtn','공지 저장');
-    showError(err);
-  }).saveDashboardNotice(data);
-}
-
-function loadDashboard(done){google.script.run.withSuccessHandler(function(rows){APP.dashboard=rows||[];renderDashboardTable(APP.dashboard);renderReceiptStockTable(APP.dashboard);renderShipmentStockTable(APP.dashboard);renderWorkStockTable(APP.dashboard);updateReceiptPreview();updateShipStockPreview();renderPrintSummary();loadSalesRequests();loadDashboardNotice();if(typeof done==='function')done();}).withFailureHandler(function(err){if(typeof done==='function')done();showError(err);}).getDashboard();}
+function loadDashboard(done){google.script.run.withSuccessHandler(function(rows){APP.dashboard=rows||[];renderDashboardTable(APP.dashboard);renderReceiptStockTable(APP.dashboard);renderShipmentStockTable(APP.dashboard);renderWorkStockTable(APP.dashboard);updateReceiptPreview();updateShipStockPreview();renderPrintSummary();loadSalesRequests();if(typeof done==='function')done();}).withFailureHandler(function(err){if(typeof done==='function')done();showError(err);}).getDashboard();}
 function renderDashboardTable(rows){const tbody=document.getElementById('dashboardBody');tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.productName+'</td>'+renderSalesRemainTd(r)+renderStockTd(r,'weldStock','floor-3')+renderStockTd(r,'assyWorkStock','floor-2')+renderStockTd(r,'assyDoneStock','floor-2')+renderStockTd(r,'inspWorkStock','floor-2')+renderStockTd(r,'inspDoneStock','floor-2')+renderStockTd(r,'packWorkStock','floor-2')+renderStockTd(r,'packDoneStock','floor-2')+renderStockTd(r,'fgStock','floor-1 plus')+'<td>'+r.shippedQty+'</td>';tbody.appendChild(tr);});renderV15DashboardHero(rows);}
 function v15Num(n){return Number(n)||0;}
 function renderV15DashboardHero(rows){
@@ -1912,10 +1794,16 @@ function renderV15DashboardHero(rows){
   const assy=v15Num(rows.reduce((a,r)=>a+v15Num(r.assyWorkStock)+v15Num(r.assyDoneStock),0));
   const insp=v15Num(rows.reduce((a,r)=>a+v15Num(r.inspWorkStock)+v15Num(r.inspDoneStock),0));
   const pack=v15Num(rows.reduce((a,r)=>a+v15Num(r.packWorkStock)+v15Num(r.packDoneStock),0));
-  const shortage=Math.max(0,request-fg);
-  const totalProc=weld+assy+insp+pack+fg;
-  function pct(n){return Math.min(100,Math.round((n/Math.max(1,totalProc))*100));}
-  box.innerHTML=`<div class="v15-hero"><div class="v15-hero-panel"><div class="v15-hero-title">오늘 생산재고 상황판</div><div class="v15-hero-sub">요청잔량, 완제품, 병목 흐름을 한눈에 보는 v15 대시보드입니다.</div><div class="v15-hero-big">${shortage>0?'부족 '+shortage:'출하가능'}</div></div><div class="v15-kpi-grid"><div class="v15-kpi red"><div class="v15-kpi-label">요청잔량</div><div class="v15-kpi-value">${request}</div><div class="v15-kpi-caption">미출하 잔량 합계</div></div><div class="v15-kpi green"><div class="v15-kpi-label">완제품</div><div class="v15-kpi-value">${fg}</div><div class="v15-kpi-caption">즉시 출하 가능</div></div><div class="v15-kpi amber"><div class="v15-kpi-label">부족수량</div><div class="v15-kpi-value">${shortage}</div><div class="v15-kpi-caption">요청잔량 - 완제품</div></div><div class="v15-kpi violet"><div class="v15-kpi-label">출하누계</div><div class="v15-kpi-value">${shipped}</div><div class="v15-kpi-caption">누적 출하</div></div></div></div><div class="v15-section-title">공정 흐름</div><div class="v15-flow"><div class="v15-flow-step"><div class="v15-flow-name">용접</div><div class="v15-flow-num">${weld}</div><div class="v15-flow-bar"><div class="v15-flow-fill" style="--w:${pct(weld)}%"></div></div></div><div class="v15-flow-step"><div class="v15-flow-name">조립</div><div class="v15-flow-num">${assy}</div><div class="v15-flow-bar"><div class="v15-flow-fill" style="--w:${pct(assy)}%"></div></div></div><div class="v15-flow-step"><div class="v15-flow-name">검사</div><div class="v15-flow-num">${insp}</div><div class="v15-flow-bar"><div class="v15-flow-fill" style="--w:${pct(insp)}%"></div></div></div><div class="v15-flow-step"><div class="v15-flow-name">포장</div><div class="v15-flow-num">${pack}</div><div class="v15-flow-bar"><div class="v15-flow-fill" style="--w:${pct(pack)}%"></div></div></div><div class="v15-flow-step"><div class="v15-flow-name">완제품</div><div class="v15-flow-num">${fg}</div><div class="v15-flow-bar"><div class="v15-flow-fill" style="--w:${pct(fg)}%"></div></div></div></div>`;
+  const max=Math.max(weld,assy,insp,pack,fg,1);
+  const pct=n=>Math.min(100,Math.round((n/max)*100));
+  function flowStatus(name,n){
+    if(name==='포장' && n===0)return {t:'여유',c:'ok'};
+    if(n>=40)return {t:'적체',c:'hot'};
+    if(n>=20)return {t:'주의',c:'warn'};
+    return {t:'정상',c:'ok'};
+  }
+  function flowCard(name,n){const st=flowStatus(name,n);return `<div class="v15-flow-step"><div class="v15-flow-name">${name}</div><div class="v15-flow-num">${n}</div><div class="v15-flow-bar"><div class="v15-flow-fill" style="--w:${pct(n)}%"></div></div><div class="v15-flow-status ${st.c}">${st.t}</div></div>`;}
+  box.innerHTML=`<div class="v15-hero"><div class="v15-hero-panel"><div class="v15-hero-title">오늘 생산재고 상황판</div><div class="v15-hero-sub">요청잔량, 완제품, 공정 흐름을 한눈에 보는 v15 대시보드입니다.</div><div class="v15-hero-big">${fg>=request?'출하가능':'생산필요'}</div></div><div class="v15-kpi-grid"><div class="v15-kpi red"><div class="v15-kpi-label">요청잔량</div><div class="v15-kpi-value">${request}</div><div class="v15-kpi-caption">미출하 잔량 합계</div></div><div class="v15-kpi green"><div class="v15-kpi-label">완제품</div><div class="v15-kpi-value">${fg}</div><div class="v15-kpi-caption">즉시 출하 가능</div></div><div class="v15-kpi amber"><div class="v15-kpi-label">진행수주</div><div class="v15-kpi-value">${rows.filter(r=>v15Num(r.salesRemainQty)>0).length}</div><div class="v15-kpi-caption">요청잔량 있는 제품</div></div><div class="v15-kpi violet"><div class="v15-kpi-label">출하누계</div><div class="v15-kpi-value">${shipped}</div><div class="v15-kpi-caption">누적 출하</div></div></div></div><div class="v15-section-title">공정 흐름</div><div class="note">공정 흐름은 현재 공정재고가 어디에 많이 쌓였는지 보는 용도입니다. 적체/주의 표시는 임시 기준이며 실제 기준은 추후 조정할 수 있습니다.</div><div class="v15-flow">${flowCard('용접',weld)}${flowCard('조립',assy)}${flowCard('검사',insp)}${flowCard('포장',pack)}${flowCard('완제품',fg)}</div>`;
 }
 
 

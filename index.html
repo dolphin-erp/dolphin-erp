@@ -548,7 +548,7 @@
 </head>
 <body>
 <div id="loadingOverlay"><div class="box">⏳ 등록 중입니다...<br><small>잠시만 기다려 주세요.</small></div></div>
-<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v15.1 · 2026-07-07 · 작업일보/UI 정리</span></header>
+<header><span>돌핀 공정재고 웹앱</span><span class="version-badge">v15.2 · 2026-07-07 · 현황판 정리</span></header>
 <main>
   <datalist id="workerNameList"></datalist>
   <div class="tabs">
@@ -585,13 +585,13 @@
   </div>
 
   <section id="dashboard" class="page active">
-    <div id="v15DashboardHero" class="v15-dashboard-hero"></div>
     <div class="card">
       <h2>제품별 공정재고 현황</h2>
       <div class="note">요청잔량은 마감되지 않은 영업요청의 미출하 잔량 합계입니다. 출하하면 자동으로 줄어들고, 잔량이 0이면 해당 요청은 마감됩니다. 층 구분: 용접 3층 / 조립·검사·포장 2층 / 완제품 1층입니다.</div>
       <button class="refresh-btn" onclick="loadAll()">새로고침</button><span class="auto-refresh-badge" id="autoRefreshText">현황판 30초 자동갱신</span>
       <div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th rowspan="2">요청잔량</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th><th rowspan="2">출하누계</th></tr><tr><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="dashboardBody"></tbody></table></div>
     </div>
+    <div id="v15DashboardHero" class="v15-dashboard-hero"></div>
     <div class="card">
       <h2>진행 중 영업요청</h2>
       <div class="table-wrap"><table><thead><tr><th>요청일</th><th>납기일</th><th>판단</th><th>납품처</th><th>제품명</th><th>등록수량</th><th>출하누계</th><th>잔량</th><th>완제품재고</th><th>상태</th><th>비고</th></tr></thead><tbody id="dashboardSalesBody"></tbody></table></div>
@@ -1781,14 +1781,14 @@ function saveShipment(){
   google.script.run.withSuccessHandler(function(msg){document.getElementById('shipMsg').textContent=msg;document.getElementById('shipMemo').value='';document.getElementById('shipSalesRequest').value='';refreshAfterSave();endAction(key,'shipSubmitBtn','출하증 등록');}).withFailureHandler(function(err){endAction(key,'shipSubmitBtn','출하증 등록');showError(err);}).addShipment(data);
 }
 
-function loadDashboard(done){google.script.run.withSuccessHandler(function(rows){APP.dashboard=rows||[];renderDashboardTable(APP.dashboard);renderReceiptStockTable(APP.dashboard);renderShipmentStockTable(APP.dashboard);renderWorkStockTable(APP.dashboard);updateReceiptPreview();updateShipStockPreview();renderPrintSummary();loadSalesRequests();if(typeof done==='function')done();}).withFailureHandler(function(err){if(typeof done==='function')done();showError(err);}).getDashboard();}
+function setRefreshStatus(msg,isError){const el=document.getElementById('autoRefreshText');if(!el)return;el.textContent=msg||'현황판 30초 자동갱신';el.style.color=isError?'#b45309':'';el.style.fontWeight=isError?'800':'';}
+function isTransientFetchError(err){const raw=(err&&err.message)?err.message:String(err||'');return /524|timeout|타임아웃|일시적|temporarily|fetch|network/i.test(raw);}
+function loadDashboard(done){google.script.run.withSuccessHandler(function(rows){setRefreshStatus('현황판 30초 자동갱신',false);APP.dashboard=rows||[];renderDashboardTable(APP.dashboard);renderReceiptStockTable(APP.dashboard);renderShipmentStockTable(APP.dashboard);renderWorkStockTable(APP.dashboard);updateReceiptPreview();updateShipStockPreview();renderPrintSummary();loadSalesRequests();if(typeof done==='function')done();}).withFailureHandler(function(err){if(typeof done==='function')done();if(isTransientFetchError(err)){setRefreshStatus('연결 지연, 자동 재시도 중...',true);return;}showError(err);}).getDashboard();}
 function renderDashboardTable(rows){const tbody=document.getElementById('dashboardBody');tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.productName+'</td>'+renderSalesRemainTd(r)+renderStockTd(r,'weldStock','floor-3')+renderStockTd(r,'assyWorkStock','floor-2')+renderStockTd(r,'assyDoneStock','floor-2')+renderStockTd(r,'inspWorkStock','floor-2')+renderStockTd(r,'inspDoneStock','floor-2')+renderStockTd(r,'packWorkStock','floor-2')+renderStockTd(r,'packDoneStock','floor-2')+renderStockTd(r,'fgStock','floor-1 plus')+'<td>'+r.shippedQty+'</td>';tbody.appendChild(tr);});renderV15DashboardHero(rows);}
 function v15Num(n){return Number(n)||0;}
 function renderV15DashboardHero(rows){
   const box=document.getElementById('v15DashboardHero');if(!box)return;
   rows=rows||[];
-  const request=rows.reduce((a,r)=>a+v15Num(r.salesRemainQty),0);
-  const shipped=rows.reduce((a,r)=>a+v15Num(r.shippedQty),0);
   const fg=rows.reduce((a,r)=>a+v15Num(r.fgStock),0);
   const weld=rows.reduce((a,r)=>a+v15Num(r.weldStock),0);
   const assy=v15Num(rows.reduce((a,r)=>a+v15Num(r.assyWorkStock)+v15Num(r.assyDoneStock),0));
@@ -1803,7 +1803,7 @@ function renderV15DashboardHero(rows){
     return {t:'정상',c:'ok'};
   }
   function flowCard(name,n){const st=flowStatus(name,n);return `<div class="v15-flow-step"><div class="v15-flow-name">${name}</div><div class="v15-flow-num">${n}</div><div class="v15-flow-bar"><div class="v15-flow-fill" style="--w:${pct(n)}%"></div></div><div class="v15-flow-status ${st.c}">${st.t}</div></div>`;}
-  box.innerHTML=`<div class="v15-hero"><div class="v15-hero-panel"><div class="v15-hero-title">오늘 생산재고 상황판</div><div class="v15-hero-sub">요청잔량, 완제품, 공정 흐름을 한눈에 보는 v15 대시보드입니다.</div><div class="v15-hero-big">${fg>=request?'출하가능':'생산필요'}</div></div><div class="v15-kpi-grid"><div class="v15-kpi red"><div class="v15-kpi-label">요청잔량</div><div class="v15-kpi-value">${request}</div><div class="v15-kpi-caption">미출하 잔량 합계</div></div><div class="v15-kpi green"><div class="v15-kpi-label">완제품</div><div class="v15-kpi-value">${fg}</div><div class="v15-kpi-caption">즉시 출하 가능</div></div><div class="v15-kpi amber"><div class="v15-kpi-label">진행수주</div><div class="v15-kpi-value">${rows.filter(r=>v15Num(r.salesRemainQty)>0).length}</div><div class="v15-kpi-caption">요청잔량 있는 제품</div></div><div class="v15-kpi violet"><div class="v15-kpi-label">출하누계</div><div class="v15-kpi-value">${shipped}</div><div class="v15-kpi-caption">누적 출하</div></div></div></div><div class="v15-section-title">공정 흐름</div><div class="note">공정 흐름은 현재 공정재고가 어디에 많이 쌓였는지 보는 용도입니다. 적체/주의 표시는 임시 기준이며 실제 기준은 추후 조정할 수 있습니다.</div><div class="v15-flow">${flowCard('용접',weld)}${flowCard('조립',assy)}${flowCard('검사',insp)}${flowCard('포장',pack)}${flowCard('완제품',fg)}</div>`;
+  box.innerHTML=`<div class="card"><h2>공정흐름</h2><div class="note">공정흐름은 제품별 공정재고 현황을 보조해서 현재 물량이 어느 공정에 많이 쌓였는지 확인하는 용도입니다.</div><div class="v15-flow">${flowCard('용접',weld)}${flowCard('조립',assy)}${flowCard('검사',insp)}${flowCard('포장',pack)}${flowCard('완제품',fg)}</div></div>`;
 }
 
 

@@ -655,8 +655,9 @@
     @keyframes dolphinRefreshSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
     body.dark-mode .global-refresh-toggle{background:rgba(255,255,255,.08);border-color:rgba(148,163,184,.45);color:#f8fafc}
     .page .refresh-btn{display:none!important}
-    .plan-reason-select,.plan-reason-custom{min-width:120px;font-size:13px;padding:7px!important;min-height:34px!important}
-    .plan-reason-custom{margin-top:5px}
+    .plan-reason-cell{display:flex;flex-direction:column;gap:6px;min-width:180px;max-width:280px;margin:0 auto;}
+    .plan-reason-select,.plan-reason-custom{width:100%;box-sizing:border-box;font-size:13px;padding:7px!important;min-height:34px!important}
+    .plan-reason-custom{margin-top:0}
     .plan-reason-select:disabled,.plan-reason-custom:disabled{opacity:.45;background:#f1f5f9!important;color:#94a3b8!important}
     body.dark-mode .plan-reason-select:disabled,body.dark-mode .plan-reason-custom:disabled{background:#111827!important;color:#64748b!important}
 
@@ -841,7 +842,7 @@
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v15.13 · 2026-07-08 · 새로고침/계획사유</span>
+    <span class="version-badge">v15.14 · 2026-07-08 · 계획사유 보강</span>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
     <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
   </span>
@@ -1644,7 +1645,12 @@ function urgencyRank(urgency){
   return 5;
 }
 
-const PLAN_REASON_OPTIONS=['','자재부족','작업자부족','설비고장','긴급작업','품질문제','기타'];
+const PLAN_REASON_OPTIONS=['','자재부족','작업자부족','설비고장','품질문제','생산여유','앞공정 조기완료','긴급생산 대응','재고확보','생산성 향상','기타'];
+const PLAN_REASON_GROUPS=[
+  {label:'계획 감소 사유',items:['자재부족','작업자부족','설비고장','품질문제']},
+  {label:'계획 증가 사유',items:['생산여유','앞공정 조기완료','긴급생산 대응','재고확보','생산성 향상']},
+  {label:'공통',items:['기타']}
+];
 function normalizePlanReasonText(text){
   return String(text||'').trim();
 }
@@ -1658,13 +1664,19 @@ function renderPlanReasonControl(r,process,productCode,rec,pq){
   const saved=selectedReasonFromMemo(planMemo(r,process));
   const diff=(Number(pq)||0)-(Number(rec)||0);
   const disabled=diff===0;
-  let html='<select class="plan-reason-select" data-product-reason="'+productCode+'" onchange="togglePlanReasonCustom(this)" '+(disabled?'disabled':'')+'>';
-  PLAN_REASON_OPTIONS.forEach(function(opt){
-    const label=opt||'사유 선택';
-    html+='<option value="'+escapeHtml(opt)+'" '+(saved.reason===opt?'selected':'')+'>'+label+'</option>';
+  let html='<div class="plan-reason-cell">';
+  html+='<select class="plan-reason-select" data-product-reason="'+productCode+'" onchange="togglePlanReasonCustom(this)" '+(disabled?'disabled':'')+'>';
+  html+='<option value="" '+(!saved.reason?'selected':'')+'>사유 선택</option>';
+  PLAN_REASON_GROUPS.forEach(function(group){
+    html+='<optgroup label="'+escapeHtml(group.label)+'">';
+    group.items.forEach(function(opt){
+      html+='<option value="'+escapeHtml(opt)+'" '+(saved.reason===opt?'selected':'')+'>'+opt+'</option>';
+    });
+    html+='</optgroup>';
   });
   html+='</select>';
-  html+='<input class="plan-reason-custom '+(saved.reason==='기타'?'':'hidden')+'" data-product-reason-custom="'+productCode+'" placeholder="사유 직접입력" value="'+escapeHtml(saved.custom)+'" '+(disabled?'disabled':'')+'>';
+  html+='<input class="plan-reason-custom '+(saved.reason==='기타'?'':'hidden')+'" data-product-reason-custom="'+productCode+'" placeholder="기타 사유 입력" value="'+escapeHtml(saved.custom)+'" '+(disabled?'disabled':'')+'>';
+  html+='</div>';
   return html;
 }
 function togglePlanReasonCustom(select){
@@ -1968,26 +1980,11 @@ function saveProductionPlanBulkUI(){
   }
   if(!beginAction('savePlan','planSaveBtn','planMsg','저장 중...','생산계획 저장 중입니다.'))return;
   const rows=[];
-  let reasonMissing=false;
   document.querySelectorAll('.plan-input').forEach(function(input){
     const code=input.getAttribute('data-product');
-    const rec=Number(input.getAttribute('data-recommend'))||0;
-    const val=Number(input.value)||0;
     const reason=readPlanReason(code);
-    if(val!==rec && !reason){
-      reasonMissing=true;
-      const row=input.closest('tr');
-      const sel=row?row.querySelector('.plan-reason-select'):null;
-      if(sel)sel.focus();
-    }
     rows.push({productCode:code,planQty:input.value,priority:'보통',memo:reason});
   });
-  if(reasonMissing){
-    endAction('savePlan','planSaveBtn','현재 공정 계획 저장');
-    const msg=document.getElementById('planMsg');
-    if(msg)msg.textContent='ERP추천과 오늘계획이 다른 항목은 사유를 선택하세요.';
-    return;
-  }
   const payload={planDate:document.getElementById('planDate').value,process:CURRENT_PLAN_PROCESS,writer:document.getElementById('planWriter').value,rows:rows};
   google.script.run.withSuccessHandler(function(msg){
     document.getElementById('planMsg').textContent=msg;

@@ -830,7 +830,7 @@
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v15.11 · 2026-07-08 · 생산계획 자동추천</span>
+    <span class="version-badge">v15.12 · 2026-07-08 · 계획 자동추천 보강</span>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
   </span>
 </header>
@@ -1026,7 +1026,7 @@
 
       <div id="planInputPanel" class="plan-panel active">
         <div class="plan-subtitle">계획입력</div>
-        <div class="plan-help">상단에서 공정을 선택하면 해당 공정의 계획입력표가 표시됩니다. 계획표는 반장이 실제로 보는 정보만 남겼습니다. 납기와 필요수량으로 우선순위를 판단하고, 앞공정 재고와 가능수량을 참고해 오늘계획을 입력합니다.</div>
+        <div class="plan-help">상단에서 공정을 선택하면 해당 공정의 계획입력표가 표시됩니다. 계획표는 ERP가 자동 추천한 오늘계획을 먼저 보여주고, 반장이 현장 상황에 맞게 필요한 부분만 수정하는 방식입니다. 필요수량이 0인 제품도 회색으로 표시되어 선행 생산 계획을 잡을 수 있습니다.</div>
         <div class="segmented-tabs" id="planInputProcessTabs">
           <button class="placeholder-process" onclick="selectPlanProcess('가공',this)">가공</button>
           <button class="placeholder-process" onclick="selectPlanProcess('선반',this)">선반</button>
@@ -1618,16 +1618,16 @@ function planRecommendQty(r,process){
   return Math.max(0, Math.min(need, avail));
 }
 function planDisplayRows(rows,process){
-  const list=(rows||[]).filter(function(r){
-    const need=planNeedQty(r,process);
-    const saved=planQty(r,process);
-    const rec=planRecommendQty(r,process);
-    const actual=planActual(r,process);
-    return need>0 || saved>0 || rec>0 || actual>0;
-  });
+  // v15.12: 생산계획은 제품을 숨기지 않는다.
+  // 필요수량 0도 회색으로 표시하여 용접 등 선행공정에서 미리 계획을 잡을 수 있게 한다.
+  const list=(rows||[]).slice();
   list.sort(function(a,b){
     const needA=planNeedQty(a,process), needB=planNeedQty(b,process);
-    const activeA=needA>0?0:1, activeB=needB>0?0:1;
+    const savedA=planQty(a,process), savedB=planQty(b,process);
+    const recA=planRecommendQty(a,process), recB=planRecommendQty(b,process);
+    const actualA=planActual(a,process), actualB=planActual(b,process);
+    const activeA=(needA>0||savedA>0||recA>0||actualA>0)?0:1;
+    const activeB=(needB>0||savedB>0||recB>0||actualB>0)?0:1;
     if(activeA!==activeB)return activeA-activeB;
     const ur=urgencyRank(a.urgency)-urgencyRank(b.urgency);
     if(ur!==0)return ur;
@@ -1725,7 +1725,7 @@ function renderPlanInputTable(rows,process){
   body.innerHTML='';
 
   if(displayRows.length===0){
-    body.innerHTML='<tr><td colspan="'+(6+sourceSpan)+'" style="padding:28px;text-align:center;color:#64748b;font-weight:800;">현재 계획이 필요한 제품이 없습니다.</td></tr>';
+    body.innerHTML='<tr><td colspan="'+(6+sourceSpan)+'" style="padding:28px;text-align:center;color:#64748b;font-weight:800;">표시할 제품이 없습니다.</td></tr>';
     updatePlanKpi([],process);
     return;
   }
@@ -1756,7 +1756,7 @@ function renderPlanInputTable(rows,process){
     }
 
     html+='<td class="group-plan"><span class="plan-num-recommend">'+rec+'</span></td>';
-    html+='<td class="group-plan"><input class="plan-input" type="number" min="0" data-product="'+r.productCode+'" data-recommend="'+rec+'" value="'+pq+'" oninput="updatePlanDiff(this)" title="ERP 추천은 납기, 필요수량, 공정 가능수량 기준입니다. 반장이 현장 상황에 맞게 수정할 수 있습니다."></td>';
+    html+='<td class="group-plan"><input class="plan-input" type="number" min="0" data-product="'+r.productCode+'" data-recommend="'+rec+'" value="'+pq+'" oninput="updatePlanDiff(this)" title="ERP 추천값이 오늘계획에 자동 세팅됩니다. 반장은 현장 상황에 맞게 필요한 부분만 수정하면 됩니다."></td>';
     html+='<td class="group-plan"><span class="plan-diff '+(diff<0?'minus':diff>0?'plus':'same')+'">'+(diff>0?'+':'')+diff+'</span></td>';
     html+='<td class="group-result"><span class="plan-num-result">'+act+'</span></td><td class="group-result">'+(pq>0?rate+'%':'-')+'</td>';
     const tr=document.createElement('tr');

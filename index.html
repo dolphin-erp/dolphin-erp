@@ -649,6 +649,17 @@
     .header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
     .theme-toggle{width:auto;border:1px solid rgba(255,255,255,.35);background:rgba(15,23,42,.35);color:#fff;border-radius:999px;padding:7px 12px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(15,23,42,.18);transition:all .2s ease;white-space:nowrap}
     .theme-toggle:hover{transform:translateY(-1px);background:rgba(37,99,235,.45)}
+    .global-refresh-toggle{width:38px!important;height:38px!important;border:1px solid rgba(255,255,255,.35);background:rgba(15,23,42,.35);color:#fff;border-radius:999px;padding:0!important;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(15,23,42,.18);transition:all .2s ease;display:inline-flex;align-items:center;justify-content:center;font-size:22px;line-height:1}
+    .global-refresh-toggle:hover{transform:translateY(-1px);background:rgba(37,99,235,.45)}
+    .global-refresh-toggle.spinning{animation:dolphinRefreshSpin .75s linear infinite;background:rgba(37,99,235,.65)}
+    @keyframes dolphinRefreshSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    body.dark-mode .global-refresh-toggle{background:rgba(255,255,255,.08);border-color:rgba(148,163,184,.45);color:#f8fafc}
+    .page .refresh-btn{display:none!important}
+    .plan-reason-select,.plan-reason-custom{min-width:120px;font-size:13px;padding:7px!important;min-height:34px!important}
+    .plan-reason-custom{margin-top:5px}
+    .plan-reason-select:disabled,.plan-reason-custom:disabled{opacity:.45;background:#f1f5f9!important;color:#94a3b8!important}
+    body.dark-mode .plan-reason-select:disabled,body.dark-mode .plan-reason-custom:disabled{background:#111827!important;color:#64748b!important}
+
     body, header, main, .card, .tabs, .tabs button, table, th, td, input, select, textarea, button, .route-box, .drop-zone, .table-wrap, .v15-flow-step, .v15-section-title, .plan-panel, .monitor-card, .report-paper{transition:background-color .22s ease,color .22s ease,border-color .22s ease,box-shadow .22s ease}
     body.dark-mode{--bg:#0b1220;--card:#111827;--card2:#172033;--line:#334155;--text:#e5e7eb;--muted:#94a3b8;background:linear-gradient(180deg,#07111f 0%,#0f172a 54%,#111827 100%)!important;color:#e5e7eb!important}
     body.dark-mode header{background:linear-gradient(135deg,#020617 0%,#0f172a 52%,#1e3a8a 100%)!important;box-shadow:0 10px 30px rgba(0,0,0,.45)}
@@ -830,8 +841,9 @@
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v15.12 · 2026-07-08 · 계획 자동추천 보강</span>
+    <span class="version-badge">v15.13 · 2026-07-08 · 새로고침/계획사유</span>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
+    <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
   </span>
 </header>
 <main>
@@ -1015,7 +1027,6 @@
       <div class="plan-toolbar">
         <div><label>계획일</label><input type="date" id="planDate" onchange="loadProductionPlan()"></div>
         <div><label>작성자</label><input type="text" id="planWriter" placeholder="예: 생산관리/조립반장" list="workerNameList"></div>
-        <div><label>&nbsp;</label><button class="refresh-btn" onclick="loadProductionPlan()">계획 새로고침</button></div>
         <div><label>&nbsp;</label><button class="small-btn" onclick="printProductionPlan()">생산계획 인쇄</button></div>
       </div>
 
@@ -1026,7 +1037,7 @@
 
       <div id="planInputPanel" class="plan-panel active">
         <div class="plan-subtitle">계획입력</div>
-        <div class="plan-help">상단에서 공정을 선택하면 해당 공정의 계획입력표가 표시됩니다. 계획표는 ERP가 자동 추천한 오늘계획을 먼저 보여주고, 반장이 현장 상황에 맞게 필요한 부분만 수정하는 방식입니다. 필요수량이 0인 제품도 회색으로 표시되어 선행 생산 계획을 잡을 수 있습니다.</div>
+        <div class="plan-help">상단에서 공정을 선택하면 해당 공정의 계획입력표가 표시됩니다. 계획표는 ERP가 자동 추천한 오늘계획을 먼저 보여주고, 반장이 현장 상황에 맞게 필요한 부분만 수정하는 방식입니다. 필요수량이 0인 제품도 회색으로 표시되어 선행 생산 계획을 잡을 수 있습니다. ERP추천과 오늘계획이 다르면 사유를 선택해 기록합니다.</div>
         <div class="segmented-tabs" id="planInputProcessTabs">
           <button class="placeholder-process" onclick="selectPlanProcess('가공',this)">가공</button>
           <button class="placeholder-process" onclick="selectPlanProcess('선반',this)">선반</button>
@@ -1449,6 +1460,31 @@ function handleQueryFailure(err,label,retryFn){
   setRefreshStatus((label||'조회')+' 실패 - 수동 새로고침 가능',true);
 }
 function safeLoad(fn){try{if(typeof fn==='function')fn();}catch(e){console.warn(e);}}
+function getActivePageId(){
+  const active=document.querySelector('.page.active');
+  return active?active.id:'';
+}
+function globalRefreshCurrentPage(){
+  const btn=document.getElementById('globalRefreshBtn');
+  if(btn)btn.classList.add('spinning');
+  const done=function(){setTimeout(function(){if(btn)btn.classList.remove('spinning');},450);};
+  try{
+    const page=getActivePageId();
+    if(page==='dashboard')return loadDashboard(done,{silent:true});
+    if(page==='sales'){loadSalesRequests(); return done();}
+    if(page==='worklog'){loadDashboard(null,{silent:true}); loadTodayWorkSummary(); return done();}
+    if(page==='productionPlan'){loadProductionPlan(); return done();}
+    if(page==='receipt'){loadDashboard(done,{silent:true}); return;}
+    if(page==='shipment'){loadDashboard(null,{silent:true}); loadSalesRequests(); return done();}
+    if(page==='history'){loadHistory(); return done();}
+    if(page==='flow'){loadFlowTable(); return done();}
+    if(page==='improvement'||page==='improvementAdmin'){loadImprovementRequests(); return done();}
+    if(page==='master'){loadDashboard(null,{silent:true}); renderMasterStockTable(); return done();}
+    loadAll();
+    return done();
+  }catch(e){console.warn(e);done();}
+}
+
 
 let DASHBOARD_AUTO_TIMER=null;
 function startDashboardAutoRefresh(){
@@ -1607,6 +1643,58 @@ function urgencyRank(urgency){
   if(u.indexOf('여유')>=0)return 4;
   return 5;
 }
+
+const PLAN_REASON_OPTIONS=['','자재부족','작업자부족','설비고장','긴급작업','품질문제','기타'];
+function normalizePlanReasonText(text){
+  return String(text||'').trim();
+}
+function selectedReasonFromMemo(memo){
+  const t=normalizePlanReasonText(memo);
+  if(!t)return {reason:'',custom:''};
+  if(PLAN_REASON_OPTIONS.indexOf(t)>=0)return {reason:t,custom:''};
+  return {reason:'기타',custom:t};
+}
+function renderPlanReasonControl(r,process,productCode,rec,pq){
+  const saved=selectedReasonFromMemo(planMemo(r,process));
+  const diff=(Number(pq)||0)-(Number(rec)||0);
+  const disabled=diff===0;
+  let html='<select class="plan-reason-select" data-product-reason="'+productCode+'" onchange="togglePlanReasonCustom(this)" '+(disabled?'disabled':'')+'>';
+  PLAN_REASON_OPTIONS.forEach(function(opt){
+    const label=opt||'사유 선택';
+    html+='<option value="'+escapeHtml(opt)+'" '+(saved.reason===opt?'selected':'')+'>'+label+'</option>';
+  });
+  html+='</select>';
+  html+='<input class="plan-reason-custom '+(saved.reason==='기타'?'':'hidden')+'" data-product-reason-custom="'+productCode+'" placeholder="사유 직접입력" value="'+escapeHtml(saved.custom)+'" '+(disabled?'disabled':'')+'>';
+  return html;
+}
+function togglePlanReasonCustom(select){
+  if(!select)return;
+  const code=select.getAttribute('data-product-reason');
+  const custom=document.querySelector('[data-product-reason-custom="'+code+'"]');
+  if(!custom)return;
+  const show=select.value==='기타';
+  custom.classList.toggle('hidden',!show);
+  custom.disabled=select.disabled || !show;
+  if(show)custom.focus();
+}
+function setPlanReasonEnabled(row,enabled){
+  if(!row)return;
+  const select=row.querySelector('.plan-reason-select');
+  const custom=row.querySelector('.plan-reason-custom');
+  if(select)select.disabled=!enabled;
+  if(custom){
+    const show=select&&select.value==='기타';
+    custom.disabled=!enabled || !show;
+    custom.classList.toggle('hidden',!show);
+  }
+}
+function readPlanReason(code){
+  const select=document.querySelector('[data-product-reason="'+code+'"]');
+  const custom=document.querySelector('[data-product-reason-custom="'+code+'"]');
+  if(!select||select.disabled)return '';
+  if(select.value==='기타')return normalizePlanReasonText(custom?custom.value:'');
+  return normalizePlanReasonText(select.value);
+}
 function planRecommendQty(r,process){
   const need=planNeedQty(r,process);
   let avail=0;
@@ -1643,10 +1731,12 @@ function updatePlanDiff(input){
   const rec=Number(input.getAttribute('data-recommend'))||0;
   const val=Number(input.value)||0;
   const diff=val-rec;
-  const cell=input.closest('tr')?input.closest('tr').querySelector('.plan-diff'):null;
+  const row=input.closest('tr');
+  const cell=row?row.querySelector('.plan-diff'):null;
   if(!cell)return;
   cell.textContent=(diff>0?'+':'')+diff;
   cell.className='plan-diff '+(diff<0?'minus':diff>0?'plus':'same');
+  setPlanReasonEnabled(row,diff!==0);
 }
 function assemblyAvailableQty(r){return qtyVal(r.weldStock)+qtyVal(r.assyWorkStock);}
 function inspectionAvailableQty(r){return qtyVal(r.assyDoneStock)+qtyVal(r.inspWorkStock)+qtyVal(r.assemblyPlanQty);}
@@ -1716,11 +1806,11 @@ function renderPlanInputTable(rows,process){
 
   let group='<tr class="group-row"><th rowspan="2">제품</th><th colspan="2" class="group-due">납기</th><th class="group-target">목표</th>';
   group+='<th colspan="'+sourceSpan+'" class="group-source">투입가능</th>';
-  group+='<th colspan="3" class="group-plan">계획</th><th colspan="2" class="group-result">결과</th></tr>';
+  group+='<th colspan="4" class="group-plan">계획</th><th colspan="2" class="group-result">결과</th></tr>';
 
   let sub='<tr><th class="group-due">납기일</th><th class="group-due">판단</th><th class="group-target">필요수량</th>';
   sourceCols.forEach(function(c){sub+='<th class="group-source">'+c+'</th>';});
-  sub+='<th class="group-plan">ERP추천</th><th class="group-plan">오늘계획</th><th class="group-plan">차이</th><th class="group-result">실적</th><th class="group-result">달성률</th></tr>';
+  sub+='<th class="group-plan">ERP추천</th><th class="group-plan">오늘계획</th><th class="group-plan">차이</th><th class="group-plan">사유</th><th class="group-result">실적</th><th class="group-result">달성률</th></tr>';
   head.innerHTML=group+sub;
   body.innerHTML='';
 
@@ -1758,6 +1848,7 @@ function renderPlanInputTable(rows,process){
     html+='<td class="group-plan"><span class="plan-num-recommend">'+rec+'</span></td>';
     html+='<td class="group-plan"><input class="plan-input" type="number" min="0" data-product="'+r.productCode+'" data-recommend="'+rec+'" value="'+pq+'" oninput="updatePlanDiff(this)" title="ERP 추천값이 오늘계획에 자동 세팅됩니다. 반장은 현장 상황에 맞게 필요한 부분만 수정하면 됩니다."></td>';
     html+='<td class="group-plan"><span class="plan-diff '+(diff<0?'minus':diff>0?'plus':'same')+'">'+(diff>0?'+':'')+diff+'</span></td>';
+    html+='<td class="group-plan">'+renderPlanReasonControl(r,process,r.productCode,rec,pq)+'</td>';
     html+='<td class="group-result"><span class="plan-num-result">'+act+'</span></td><td class="group-result">'+(pq>0?rate+'%':'-')+'</td>';
     const tr=document.createElement('tr');
     if(need<=0)tr.classList.add('plan-row-low');
@@ -1877,12 +1968,26 @@ function saveProductionPlanBulkUI(){
   }
   if(!beginAction('savePlan','planSaveBtn','planMsg','저장 중...','생산계획 저장 중입니다.'))return;
   const rows=[];
+  let reasonMissing=false;
   document.querySelectorAll('.plan-input').forEach(function(input){
     const code=input.getAttribute('data-product');
-    const memoEl=document.querySelector('[data-product-memo="'+code+'"]');
-    const prEl=document.querySelector('[data-product-priority="'+code+'"]');
-    rows.push({productCode:code,planQty:input.value,priority:prEl?prEl.value:'보통',memo:memoEl?memoEl.value:''});
+    const rec=Number(input.getAttribute('data-recommend'))||0;
+    const val=Number(input.value)||0;
+    const reason=readPlanReason(code);
+    if(val!==rec && !reason){
+      reasonMissing=true;
+      const row=input.closest('tr');
+      const sel=row?row.querySelector('.plan-reason-select'):null;
+      if(sel)sel.focus();
+    }
+    rows.push({productCode:code,planQty:input.value,priority:'보통',memo:reason});
   });
+  if(reasonMissing){
+    endAction('savePlan','planSaveBtn','현재 공정 계획 저장');
+    const msg=document.getElementById('planMsg');
+    if(msg)msg.textContent='ERP추천과 오늘계획이 다른 항목은 사유를 선택하세요.';
+    return;
+  }
   const payload={planDate:document.getElementById('planDate').value,process:CURRENT_PLAN_PROCESS,writer:document.getElementById('planWriter').value,rows:rows};
   google.script.run.withSuccessHandler(function(msg){
     document.getElementById('planMsg').textContent=msg;

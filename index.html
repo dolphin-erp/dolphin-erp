@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dolphin ERP v15.7</title>
+  <title>Dolphin ERP v15.8</title>
   <!-- Dolphin ERP v12: Cloudflare/GitHub frontend -->
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -468,6 +468,27 @@
     .monitor-table tr.priority-긴급 td:first-child{border-left:6px solid #ef4444}
     .monitor-table tr.priority-보통 td:first-child{border-left:6px solid #3b82f6}
     .monitor-table tr.priority-여유 td:first-child{border-left:6px solid #10b981}
+
+    /* v15.8 production plan simplified grouped table */
+    .plan-input-table table{border-collapse:separate;border-spacing:0;width:100%;}
+    .plan-input-table thead tr.group-row th{font-size:12px;letter-spacing:.02em;border-bottom:0;color:#334155;}
+    .plan-input-table th.group-due,.plan-input-table td.group-due{background:#f3e8ff!important;color:#581c87!important;}
+    .plan-input-table th.group-target,.plan-input-table td.group-target{background:#fee2e2!important;color:#991b1b!important;}
+    .plan-input-table th.group-source,.plan-input-table td.group-source{background:#dbeafe!important;color:#1e3a8a!important;}
+    .plan-input-table th.group-plan,.plan-input-table td.group-plan{background:#fef3c7!important;color:#92400e!important;}
+    .plan-input-table th.group-result,.plan-input-table td.group-result{background:#dcfce7!important;color:#14532d!important;}
+    .plan-input-table td.product-main{font-weight:900;text-align:left;color:#0f172a;}
+    .plan-input-table .plan-input{background:#fffef2;border:1px solid #facc15;font-weight:900;text-align:center;}
+    .plan-input-table .plan-num-need{font-size:17px;font-weight:900;color:#dc2626;}
+    .plan-input-table .plan-num-avail{font-size:17px;font-weight:900;color:#2563eb;}
+    .plan-input-table .plan-num-result{font-weight:900;color:#059669;}
+    body.dark-mode .plan-input-table th.group-due,body.dark-mode .plan-input-table td.group-due{background:rgba(88,28,135,.28)!important;color:#e9d5ff!important;}
+    body.dark-mode .plan-input-table th.group-target,body.dark-mode .plan-input-table td.group-target{background:rgba(127,29,29,.28)!important;color:#fecaca!important;}
+    body.dark-mode .plan-input-table th.group-source,body.dark-mode .plan-input-table td.group-source{background:rgba(30,64,175,.28)!important;color:#bfdbfe!important;}
+    body.dark-mode .plan-input-table th.group-plan,body.dark-mode .plan-input-table td.group-plan{background:rgba(146,64,14,.30)!important;color:#fde68a!important;}
+    body.dark-mode .plan-input-table th.group-result,body.dark-mode .plan-input-table td.group-result{background:rgba(20,83,45,.32)!important;color:#bbf7d0!important;}
+    body.dark-mode .plan-input-table td.product-main{color:#f8fafc!important;}
+    body.dark-mode .plan-input-table .plan-input{background:#0f172a!important;border-color:#f59e0b!important;color:#f8fafc!important;}
     .status-chip{display:inline-block;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:900}
     .status-chip.긴급{background:#fee2e2;color:#991b1b}
     .status-chip.보통{background:#dbeafe;color:#1d4ed8}
@@ -731,7 +752,7 @@
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v15.7 · 2026-07-08 · 생산계획 필요수량</span>
+    <span class="version-badge">v15.8 · 2026-07-08 · 생산계획 단순화</span>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
   </span>
 </header>
@@ -927,7 +948,7 @@
 
       <div id="planInputPanel" class="plan-panel active">
         <div class="plan-subtitle">계획입력</div>
-        <div class="plan-help">상단에서 공정을 선택하면 바로 아래에 해당 공정의 계획입력창이 표시됩니다. 용접은 계획 중심, 조립/검사/포장은 앞공정 재고와 금일 계획을 참고해 입력합니다. 필요수량은 요청잔량에서 이미 뒤공정에 있는 수량을 차감해 계산합니다. 가능수량 기준: 조립=용접완료+조립대기, 검사=조립완료+검사대기+오늘조립계획, 포장=검사완료+포장대기+오늘검사계획입니다.</div>
+        <div class="plan-help">상단에서 공정을 선택하면 해당 공정의 계획입력표가 표시됩니다. 계획표는 반장이 실제로 보는 정보만 남겼습니다. 납기와 필요수량으로 우선순위를 판단하고, 앞공정 재고와 가능수량을 참고해 오늘계획을 입력합니다.</div>
         <div class="segmented-tabs" id="planInputProcessTabs">
           <button id="planTabWeld" class="active" onclick="selectPlanProcess('용접',this)">용접</button>
           <button onclick="selectPlanProcess('조립',this)">조립</button>
@@ -1521,27 +1542,53 @@ function renderPlanInputTable(rows,process){
   const head=document.getElementById('planHead');
   const body=document.getElementById('planBody');
   if(!head||!body)return;
-  let header='<tr><th>제품</th><th>납기</th><th>판단</th><th>요청잔량</th><th>필요수량</th>';
-  if(process==='용접') header+='<th>완제품</th>';
-  if(process==='조립') header+='<th>완제품</th><th>조립완료</th><th>검사/포장공정</th><th>용접완료</th><th>조립대기</th><th>조립가능</th>';
-  if(process==='검사') header+='<th>완제품</th><th>검사완료</th><th>포장공정</th><th>조립완료</th><th>검사대기</th><th>오늘 조립계획</th><th>검사가능</th>';
-  if(process==='포장') header+='<th>완제품</th><th>포장완료</th><th>검사완료</th><th>포장대기</th><th>오늘 검사계획</th><th>포장가능</th>';
-  header+='<th>오늘계획</th><th>실적</th><th>달성률</th><th>우선</th><th>메모</th></tr>';
-  head.innerHTML=header;
+
+  const sourceCols={
+    '용접':['용접가능'],
+    '조립':['용접완료','조립대기','조립가능'],
+    '검사':['조립완료','검사대기','오늘 조립계획','검사가능'],
+    '포장':['검사완료','포장대기','오늘 검사계획','포장가능']
+  }[process]||[];
+  const sourceSpan=sourceCols.length;
+
+  let group='<tr class="group-row"><th rowspan="2">제품</th><th colspan="2" class="group-due">납기</th><th class="group-target">목표</th>';
+  group+='<th colspan="'+sourceSpan+'" class="group-source">투입가능</th>';
+  group+='<th class="group-plan">계획</th><th colspan="2" class="group-result">결과</th></tr>';
+
+  let sub='<tr><th class="group-due">납기일</th><th class="group-due">판단</th><th class="group-target">필요수량</th>';
+  sourceCols.forEach(function(c){sub+='<th class="group-source">'+c+'</th>';});
+  sub+='<th class="group-plan">오늘계획</th><th class="group-result">실적</th><th class="group-result">달성률</th></tr>';
+  head.innerHTML=group+sub;
   body.innerHTML='';
+
   rows.forEach(function(r){
-    const savedPlan=planQty(r,process); const pq=planInputDefaultQty(r,process); const act=planActual(r,process); const rate=pq>0?Math.round(act/pq*100):0;
+    const pq=planInputDefaultQty(r,process);
+    const act=planActual(r,process);
+    const rate=pq>0?Math.round(act/pq*100):0;
     const need=planNeedQty(r,process);
-    let html='<td>'+r.productName+'</td><td>'+(r.dueDate||'-')+'</td><td>'+urgencyChip(r.urgency)+'</td><td>'+(r.requestRemainQty||0)+'</td><td class="plus">'+need+'</td>';
-    if(process==='용접') html+='<td>'+(r.fgStock||0)+'</td>';
-    if(process==='조립') html+='<td>'+(r.fgStock||0)+'</td><td>'+(r.assyDoneStock||0)+'</td><td>'+(qtyVal(r.inspWorkStock)+qtyVal(r.inspDoneStock)+qtyVal(r.packWorkStock)+qtyVal(r.packDoneStock))+'</td><td>'+(r.weldStock||0)+'</td><td>'+(r.assyWorkStock||0)+'</td><td class="plus">'+assemblyAvailableQty(r)+'</td>';
-    if(process==='검사') html+='<td>'+(r.fgStock||0)+'</td><td>'+(r.inspDoneStock||0)+'</td><td>'+(qtyVal(r.packWorkStock)+qtyVal(r.packDoneStock))+'</td><td>'+(r.assyDoneStock||0)+'</td><td>'+(r.inspWorkStock||0)+'</td><td>'+(r.assemblyPlanQty||0)+'</td><td class="plus">'+inspectionAvailableQty(r)+'</td>';
-    if(process==='포장') html+='<td>'+(r.fgStock||0)+'</td><td>'+(r.packDoneStock||0)+'</td><td>'+(r.inspDoneStock||0)+'</td><td>'+(r.packWorkStock||0)+'</td><td>'+(r.inspectionPlanQty||0)+'</td><td class="plus">'+packingAvailableQty(r)+'</td>';
-    html+='<td><input class="plan-input" type="number" min="0" data-product="'+r.productCode+'" value="'+pq+'" title="저장된 계획이 없으면 필요수량과 가능수량 중 작은 값으로 표시됩니다."></td>';
-    html+='<td>'+act+'</td><td>'+(pq>0?rate+'%':'-')+'</td>';
-    html+='<td><select class="priority-select" data-product-priority="'+r.productCode+'"><option '+(planPriority(r,process)==='긴급'?'selected':'')+'>긴급</option><option '+(planPriority(r,process)==='보통'?'selected':'')+'>보통</option><option '+(planPriority(r,process)==='여유'?'selected':'')+'>여유</option></select></td>';
-    html+='<td><textarea class="plan-memo" data-product-memo="'+r.productCode+'">'+escapeHtml(planMemo(r,process))+'</textarea></td>';
-    const tr=document.createElement('tr'); tr.innerHTML=html; body.appendChild(tr);
+    let html='<td class="product-main">'+r.productName+'</td>';
+    html+='<td class="group-due">'+(r.dueDate||'-')+'</td><td class="group-due">'+urgencyChip(r.urgency)+'</td>';
+    html+='<td class="group-target"><span class="plan-num-need">'+need+'</span></td>';
+
+    if(process==='용접'){
+      const weldAvail=positiveQty(need-(qtyVal(r.weldStock)+qtyVal(r.assyWorkStock)));
+      html+='<td class="group-source"><span class="plan-num-avail">'+weldAvail+'</span></td>';
+    }
+    if(process==='조립'){
+      html+='<td class="group-source">'+(r.weldStock||0)+'</td><td class="group-source">'+(r.assyWorkStock||0)+'</td><td class="group-source"><span class="plan-num-avail">'+assemblyAvailableQty(r)+'</span></td>';
+    }
+    if(process==='검사'){
+      html+='<td class="group-source">'+(r.assyDoneStock||0)+'</td><td class="group-source">'+(r.inspWorkStock||0)+'</td><td class="group-source">'+(r.assemblyPlanQty||0)+'</td><td class="group-source"><span class="plan-num-avail">'+inspectionAvailableQty(r)+'</span></td>';
+    }
+    if(process==='포장'){
+      html+='<td class="group-source">'+(r.inspDoneStock||0)+'</td><td class="group-source">'+(r.packWorkStock||0)+'</td><td class="group-source">'+(r.inspectionPlanQty||0)+'</td><td class="group-source"><span class="plan-num-avail">'+packingAvailableQty(r)+'</span></td>';
+    }
+
+    html+='<td class="group-plan"><input class="plan-input" type="number" min="0" data-product="'+r.productCode+'" value="'+pq+'" title="저장된 계획이 없으면 필요수량과 가능수량 중 작은 값으로 표시됩니다."></td>';
+    html+='<td class="group-result"><span class="plan-num-result">'+act+'</span></td><td class="group-result">'+(pq>0?rate+'%':'-')+'</td>';
+    const tr=document.createElement('tr');
+    tr.innerHTML=html;
+    body.appendChild(tr);
   });
   updatePlanKpi(rows,process);
 }

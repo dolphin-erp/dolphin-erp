@@ -698,7 +698,7 @@
 
 
 
-    /* v15.5 Light Mode coverage for Production Plan */
+    /* v15.6 Light Mode coverage for Production Plan */
     body:not(.dark-mode) #productionPlan .monitor-hero{
       background:#fff!important;
       color:#0f172a!important;
@@ -731,7 +731,7 @@
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v15.5 · 2026-07-08 · 라이트모드 보강</span>
+    <span class="version-badge">v15.6 · 2026-07-08 · 라이트모드 보강</span>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
   </span>
 </header>
@@ -1313,31 +1313,58 @@ function toggleDarkMode(){
   try{localStorage.setItem(THEME_STORAGE_KEY,next);}catch(e){}
   applyThemeMode(next);
 }
-document.addEventListener('DOMContentLoaded',function(){initThemeMode();setToday();initDropZone();loadReportSettings();applyAdminSession();loadAll();startDashboardAutoRefresh();});
+document.addEventListener('DOMContentLoaded',function(){initThemeMode();initStabilityGuards();setToday();initDropZone();loadReportSettings();applyAdminSession();loadAll();startDashboardAutoRefresh();});
 
 function getTodayString(){const d=new Date();const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);return local.toISOString().slice(0,10);}
 function setToday(){const today=getTodayString();['workDate','receiptDate','shipDate','salesDate','masterDate','improveDate','planDate'].forEach(function(id){const el=document.getElementById(id);if(el)el.value=today;});}
+
+let USER_INPUT_ACTIVE=false;
+let DASHBOARD_RETRY_TIMER=null;
+function initStabilityGuards(){
+  document.addEventListener('focusin',function(e){
+    if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName||'')) USER_INPUT_ACTIVE=true;
+  });
+  document.addEventListener('focusout',function(){
+    setTimeout(function(){
+      USER_INPUT_ACTIVE=!!document.querySelector('input:focus, textarea:focus, select:focus');
+    },120);
+  });
+}
+function isDashboardActive(){const dash=document.getElementById('dashboard');return !!(dash&&dash.classList.contains('active'));}
+function handleQueryFailure(err,label,retryFn){
+  if(isTransientFetchError(err)){
+    setRefreshStatus((label||'조회')+' 지연, 자동 재시도 중...',true);
+    if(typeof retryFn==='function'){
+      clearTimeout(DASHBOARD_RETRY_TIMER);
+      DASHBOARD_RETRY_TIMER=setTimeout(retryFn,8000);
+    }
+    return;
+  }
+  console.warn(label||'조회 실패',err);
+  setRefreshStatus((label||'조회')+' 실패 - 수동 새로고침 가능',true);
+}
+function safeLoad(fn){try{if(typeof fn==='function')fn();}catch(e){console.warn(e);}}
 
 let DASHBOARD_AUTO_TIMER=null;
 function startDashboardAutoRefresh(){
   if(DASHBOARD_AUTO_TIMER)return;
   DASHBOARD_AUTO_TIMER=setInterval(function(){
-    const dash=document.getElementById('dashboard');
-    if(dash&&dash.classList.contains('active')){
-      const t=document.getElementById('autoRefreshText');
-      if(t)t.textContent='현황판 자동갱신 중...';
-      loadDashboard(function(){if(t)t.textContent='현황판 30초 자동갱신';});
-    }
+    if(!isDashboardActive())return;
+    if(USER_INPUT_ACTIVE){setRefreshStatus('입력 중이라 자동갱신 일시중지',false);return;}
+    const t=document.getElementById('autoRefreshText');
+    if(t)t.textContent='현황판 자동갱신 중...';
+    loadDashboard(function(){if(t)t.textContent='현황판 30초 자동갱신';},{silent:true});
   },30000);
 }
 function refreshAfterSave(){
-  loadDashboard();
-  loadSalesRequests();
-  loadHistory();
-  loadTodayWorkSummary();
+  loadDashboard(null,{silent:true});
+  if(document.getElementById('worklog')&&document.getElementById('worklog').classList.contains('active')) safeLoad(loadTodayWorkSummary);
+  if(document.getElementById('sales')&&document.getElementById('sales').classList.contains('active')) safeLoad(loadSalesRequests);
+  if(document.getElementById('history')&&document.getElementById('history').classList.contains('active')) safeLoad(loadHistory);
+  if(document.getElementById('productionPlan')&&document.getElementById('productionPlan').classList.contains('active')) safeLoad(loadProductionPlan);
 }
 function openPage(pageId,button){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('active');});document.getElementById(pageId).classList.add('active');button.classList.add('active');if(pageId==='dashboard')loadDashboard();if(pageId==='history')loadHistory();if(pageId==='flow')loadFlowTable();if(pageId==='worklog')loadTodayWorkSummary();if(pageId==='productionPlan')loadProductionPlan();if(pageId==='sales')loadSalesRequests();if(pageId==='improvement')loadImprovementRequests();if(pageId==='improvementAdmin')loadImprovementRequests();if(pageId==='master'){fillMasterSelects();renderMasterStockTable();}if(pageId==='printSummary')renderPrintSummary();}
-function loadAll(){google.script.run.withSuccessHandler(function(data){APP.products=data.products||[];APP.flows=data.flows||[];APP.workers=data.workers||[];APP.locations=data.locations||[];APP.salesRequests=data.salesRequests||[];['workProduct','receiptProduct','shipProduct','salesProduct','masterProduct'].forEach(fillProductSelect);fillLocationSelect('manualFromLocation',true);fillLocationSelect('manualToLocation',false);fillLocationSelect('autoManualToLocation',true,'자동 노선 그대로 사용');fillWorkerDatalist();fillLocationSelect('shipLocation',false);fillLocationSelect('masterLocation',false);updateWorkProcess();restoreWorkLogState();bindWorkLogStateEvents();updateReceiptProcess();loadDashboard();loadSalesRequests();loadFlowTable();loadTodayWorkSummary();loadProductionPlan();}).withFailureHandler(showError).getInitialData();}
+function loadAll(){google.script.run.withSuccessHandler(function(data){APP.products=data.products||[];APP.flows=data.flows||[];APP.workers=data.workers||[];APP.locations=data.locations||[];APP.salesRequests=data.salesRequests||[];['workProduct','receiptProduct','shipProduct','salesProduct','masterProduct'].forEach(fillProductSelect);fillLocationSelect('manualFromLocation',true);fillLocationSelect('manualToLocation',false);fillLocationSelect('autoManualToLocation',true,'자동 노선 그대로 사용');fillWorkerDatalist();fillLocationSelect('shipLocation',false);fillLocationSelect('masterLocation',false);updateWorkProcess();restoreWorkLogState();bindWorkLogStateEvents();updateReceiptProcess();loadDashboard();loadSalesRequests();loadFlowTable();loadTodayWorkSummary();loadProductionPlan();}).withFailureHandler(function(err){handleQueryFailure(err,'초기 데이터',function(){loadAll();});}).getInitialData();}
 function fillProductSelect(id){const select=document.getElementById(id);if(!select)return;select.innerHTML='';APP.products.forEach(function(p){const o=document.createElement('option');o.value=p.code;o.textContent=p.name;select.appendChild(o);});}
 function fillLocationSelect(id,allowBlank,blankText){const select=document.getElementById(id);if(!select)return;select.innerHTML='';if(allowBlank){const o=document.createElement('option');o.value='';o.textContent=blankText||'선택 안 함';select.appendChild(o);}APP.locations.forEach(function(loc){const o=document.createElement('option');o.value=loc.name;o.textContent=loc.floor+' - '+displayLocationName(loc.name);select.appendChild(o);});}
 function getFlowsByProduct(productCode){return APP.flows.filter(function(f){return f.productCode===productCode;});}
@@ -1435,7 +1462,7 @@ function loadProductionPlan(){
   google.script.run.withSuccessHandler(function(data){
     APP.productionPlan=data||{rows:[]};
     renderProductionPlan();
-  }).withFailureHandler(showError).getProductionPlanData(date);
+  }).withFailureHandler(function(err){handleQueryFailure(err,'생산계획 조회',function(){loadProductionPlan();});}).getProductionPlanData(date);
 }
 function planObj(row,process){
   if(!row.plans)return null;
@@ -1877,7 +1904,7 @@ function saveSalesRequest(){
     .withFailureHandler(function(err){endAction(key,'salesSubmitBtn','영업요청 등록');showError(err);})
     .addSalesRequest(data);
 }
-function loadSalesRequests(){google.script.run.withSuccessHandler(function(rows){APP.salesRequests=rows||[];renderSalesTables();fillSalesRequestSelect();}).withFailureHandler(showError).getSalesRequests();}
+function loadSalesRequests(){google.script.run.withSuccessHandler(function(rows){APP.salesRequests=rows||[];renderSalesTables();fillSalesRequestSelect();}).withFailureHandler(function(err){handleQueryFailure(err,'영업요청 조회',function(){loadSalesRequests();});}).getSalesRequests();}
 function renderSalesTables(){renderSalesBody('salesBody',true);renderSalesBody('dashboardSalesBody',false);renderShipmentSalesBody();}
 function statusClass(st){if(st==='소진')return 'status-done';if(st==='마감')return 'status-closed';return 'status-active';}
 function urgencyChip(u){const v=String(u||'미지정');return '<span class="urgency-chip urgency-'+v+'">'+v+'</span>';}
@@ -1990,7 +2017,7 @@ function saveShipment(){
 
 function setRefreshStatus(msg,isError){const el=document.getElementById('autoRefreshText');if(!el)return;el.textContent=msg||'현황판 30초 자동갱신';el.style.color=isError?'#b45309':'';el.style.fontWeight=isError?'800':'';}
 function isTransientFetchError(err){const raw=(err&&err.message)?err.message:String(err||'');return /524|timeout|타임아웃|일시적|temporarily|fetch|network/i.test(raw);}
-function loadDashboard(done){google.script.run.withSuccessHandler(function(rows){setRefreshStatus('현황판 30초 자동갱신',false);APP.dashboard=rows||[];renderDashboardTable(APP.dashboard);renderReceiptStockTable(APP.dashboard);renderShipmentStockTable(APP.dashboard);renderWorkStockTable(APP.dashboard);updateReceiptPreview();updateShipStockPreview();renderPrintSummary();loadSalesRequests();if(typeof done==='function')done();}).withFailureHandler(function(err){if(typeof done==='function')done();if(isTransientFetchError(err)){setRefreshStatus('연결 지연, 자동 재시도 중...',true);return;}showError(err);}).getDashboard();}
+function loadDashboard(done,opts){opts=opts||{};google.script.run.withSuccessHandler(function(rows){clearTimeout(DASHBOARD_RETRY_TIMER);setRefreshStatus('현황판 30초 자동갱신',false);APP.dashboard=rows||[];renderDashboardTable(APP.dashboard);renderReceiptStockTable(APP.dashboard);renderShipmentStockTable(APP.dashboard);renderWorkStockTable(APP.dashboard);updateReceiptPreview();updateShipStockPreview();renderPrintSummary();loadSalesRequests();if(typeof done==='function')done();}).withFailureHandler(function(err){if(typeof done==='function')done();handleQueryFailure(err,'현황판 조회',function(){if(isDashboardActive()&&!USER_INPUT_ACTIVE)loadDashboard(null,{silent:true});});}).getDashboard();}
 function renderDashboardTable(rows){const tbody=document.getElementById('dashboardBody');tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.productName+'</td>'+renderSalesRemainTd(r)+renderStockTd(r,'weldStock','floor-3')+renderStockTd(r,'assyWorkStock','floor-2')+renderStockTd(r,'assyDoneStock','floor-2')+renderStockTd(r,'inspWorkStock','floor-2')+renderStockTd(r,'inspDoneStock','floor-2')+renderStockTd(r,'packWorkStock','floor-2')+renderStockTd(r,'packDoneStock','floor-2')+renderStockTd(r,'fgStock','floor-1 plus')+'<td>'+r.shippedQty+'</td>';tbody.appendChild(tr);});renderV15DashboardHero(rows);}
 function v15Num(n){return Number(n)||0;}
 function renderV15DashboardHero(rows){
@@ -2074,8 +2101,8 @@ function renderWorkStockTable(rows){
 
 function renderReceiptStockTable(rows){const tbody=document.getElementById('receiptStockBody');if(!tbody)return;tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');let html='<td>'+r.productName+'</td>'+renderSalesRemainTd(r);STOCK_COLUMNS.forEach(function(col){const value=Number(r[col.field])||0;const isFrom=APP.receiptSelection.productCode===r.productCode&&APP.receiptSelection.fromLocation===col.location;const isTo=APP.receiptSelection.productCode===r.productCode&&APP.receiptSelection.toLocation===col.location;const cls=[col.floorClass,'stock-cell',value===0?'zero-stock':'',value<0?'minus':'',isFrom?'selected-from':'',isTo?'selected-to':''].join(' ');html+='<td class="'+cls+'" onclick="selectReceiptFromStock(\''+r.productCode+'\', \''+col.location+'\')">'+value+'</td>';});tr.innerHTML=html;tbody.appendChild(tr);});}
 function renderShipmentStockTable(rows){const tbody=document.getElementById('shipmentStockBody');if(!tbody)return;tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');let html='<td>'+r.productName+'</td>'+renderSalesRemainTd(r);STOCK_COLUMNS.forEach(function(col){const value=Number(r[col.field])||0;const isSelected=APP.shipSelection.productCode===r.productCode&&APP.shipSelection.location===col.location;const cls=[col.floorClass,'stock-cell',value===0?'zero-stock':'',value<0?'minus':'',isSelected?'selected-from':''].join(' ');html+='<td class="'+cls+'" onclick="selectShipmentFromStock(\''+r.productCode+'\', \''+col.location+'\')">'+value+'</td>';});tr.innerHTML=html;tbody.appendChild(tr);});}
-function loadTodayWorkSummary(){const workDate=document.getElementById('workDate').value;google.script.run.withSuccessHandler(function(data){const sb=document.getElementById('todayWorkSummaryBody');const lb=document.getElementById('todayWorkLogBody');if(!sb||!lb)return;sb.innerHTML='';lb.innerHTML='';data.summary.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.productName+'</td><td>'+r.process+'</td><td class="plus">'+r.totalQty+'</td><td>'+r.totalBadQty+'</td>';sb.appendChild(tr);});data.logs.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.createdAt+'</td><td>'+r.productName+'</td><td>'+r.process+'</td><td>'+r.qty+'</td><td>'+r.worker+'</td><td>'+r.memo+'</td>';lb.appendChild(tr);});}).withFailureHandler(showError).getTodayWorkSummary(workDate);}
-function loadHistory(){google.script.run.withSuccessHandler(function(rows){const tbody=document.getElementById('historyBody');tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.date+'</td><td>'+r.kind+'</td><td>'+r.type+'</td><td>'+r.from+'</td><td>'+r.to+'</td><td>'+r.productName+'</td><td>'+r.qty+'</td><td>'+r.person+'</td><td>'+r.memo+'</td><td>'+r.createdAt+'</td>';tbody.appendChild(tr);});}).withFailureHandler(showError).getRecentHistory();}
+function loadTodayWorkSummary(){const workDate=document.getElementById('workDate').value;google.script.run.withSuccessHandler(function(data){const sb=document.getElementById('todayWorkSummaryBody');const lb=document.getElementById('todayWorkLogBody');if(!sb||!lb)return;sb.innerHTML='';lb.innerHTML='';data.summary.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.productName+'</td><td>'+r.process+'</td><td class="plus">'+r.totalQty+'</td><td>'+r.totalBadQty+'</td>';sb.appendChild(tr);});data.logs.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.createdAt+'</td><td>'+r.productName+'</td><td>'+r.process+'</td><td>'+r.qty+'</td><td>'+r.worker+'</td><td>'+r.memo+'</td>';lb.appendChild(tr);});}).withFailureHandler(function(err){handleQueryFailure(err,'작업일보 조회',function(){loadTodayWorkSummary();});}).getTodayWorkSummary(workDate);}
+function loadHistory(){google.script.run.withSuccessHandler(function(rows){const tbody=document.getElementById('historyBody');tbody.innerHTML='';rows.forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.date+'</td><td>'+r.kind+'</td><td>'+r.type+'</td><td>'+r.from+'</td><td>'+r.to+'</td><td>'+r.productName+'</td><td>'+r.qty+'</td><td>'+r.person+'</td><td>'+r.memo+'</td><td>'+r.createdAt+'</td>';tbody.appendChild(tr);});}).withFailureHandler(function(err){handleQueryFailure(err,'이력조회',function(){loadHistory();});}).getRecentHistory();}
 function loadFlowTable(){const tbody=document.getElementById('flowBody');tbody.innerHTML='';APP.flows.forEach(function(f){const tr=document.createElement('tr');tr.innerHTML='<td>'+f.productCode+'</td><td>'+f.step+'</td><td>'+f.process+'</td><td>'+f.inputLocation+'</td><td>'+f.outputLocation+'</td><td>'+f.nextReceiptType+'</td><td>'+f.nextInputLocation+'</td>';tbody.appendChild(tr);});}
 function initDropZone(){const dropZone=document.getElementById('dropZone');const fileInput=document.getElementById('csvFile');dropZone.addEventListener('click',function(){fileInput.click();});fileInput.addEventListener('change',function(e){if(e.target.files.length>0)readCsvFile(e.target.files[0]);});dropZone.addEventListener('dragover',function(e){e.preventDefault();dropZone.classList.add('dragover');});dropZone.addEventListener('dragleave',function(e){e.preventDefault();dropZone.classList.remove('dragover');});dropZone.addEventListener('drop',function(e){e.preventDefault();dropZone.classList.remove('dragover');if(e.dataTransfer.files.length>0)readCsvFile(e.dataTransfer.files[0]);});}
 function readCsvFile(file){const reader=new FileReader();reader.onload=function(e){document.getElementById('csvText').value=e.target.result;document.getElementById('csvMsg').textContent=file.name+' 불러오기 완료';};reader.readAsText(file,'UTF-8');}

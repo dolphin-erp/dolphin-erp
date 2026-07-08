@@ -438,11 +438,11 @@
     .plan-kpi .box{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:14px;box-shadow:0 4px 12px rgba(15,23,42,.05)}
     .plan-kpi .title{font-size:13px;color:#64748b;margin-bottom:6px;font-weight:bold}
     .plan-kpi .value{font-size:26px;font-weight:800;color:#0f172a;letter-spacing:-.5px}
-    .monitor-hero{background:linear-gradient(135deg,#0f172a,#1e3a8a);color:white;border-radius:18px;padding:18px;margin:12px 0 14px;box-shadow:0 12px 30px rgba(15,23,42,.18)}
-    .monitor-hero h3{margin:0 0 6px;font-size:22px}.monitor-hero .desc{color:#cbd5e1;font-size:14px}
+    .monitor-hero{background:#fff;color:#0f172a;border:1px solid #dbe4f0;border-radius:18px;padding:18px;margin:12px 0 14px;box-shadow:0 10px 26px rgba(15,23,42,.08)}
+    .monitor-hero h3{margin:0 0 6px;font-size:22px;color:#0f172a}.monitor-hero .desc{color:#64748b;font-size:14px}
     .monitor-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px}
-    .monitor-box{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:14px;min-height:96px}
-    .monitor-box .label{font-size:13px;color:#dbeafe;margin-bottom:8px;font-weight:bold}.monitor-box .num{font-size:30px;font-weight:900;color:#fff}
+    .monitor-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px;min-height:96px}
+    .monitor-box .label{font-size:13px;color:#64748b;margin-bottom:8px;font-weight:bold}.monitor-box .num{font-size:30px;font-weight:900;color:#0f172a}
     .process-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:12px}
     .process-card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:16px;box-shadow:0 8px 22px rgba(15,23,42,.07);position:relative;overflow:hidden}
     .process-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:#2563eb}.process-card.urgent:before{background:#ef4444}.process-card.warn:before{background:#f59e0b}.process-card.ok:before{background:#10b981}
@@ -696,6 +696,33 @@
     body.dark-mode .rate-pill.warn{background:#78350f!important;color:#fde68a!important;}
     body.dark-mode .rate-pill.hot{background:#7f1d1d!important;color:#fecaca!important;}
 
+
+
+    /* v15.5 Light Mode coverage for Production Plan */
+    body:not(.dark-mode) #productionPlan .monitor-hero{
+      background:#fff!important;
+      color:#0f172a!important;
+      border:1px solid #dbe4f0!important;
+      box-shadow:0 10px 26px rgba(15,23,42,.08)!important;
+    }
+    body:not(.dark-mode) #productionPlan .monitor-hero h3{color:#0f172a!important;}
+    body:not(.dark-mode) #productionPlan .monitor-hero .desc{color:#64748b!important;}
+    body:not(.dark-mode) #productionPlan .monitor-box,
+    body:not(.dark-mode) #productionPlan .plan-kpi .box,
+    body:not(.dark-mode) #productionPlan .metric,
+    body:not(.dark-mode) #productionPlan .monitor-table-card{
+      background:#fff!important;
+      color:#0f172a!important;
+      border:1px solid #dbe4f0!important;
+      box-shadow:0 8px 22px rgba(15,23,42,.06)!important;
+    }
+    body:not(.dark-mode) #productionPlan .monitor-box .label,
+    body:not(.dark-mode) #productionPlan .plan-kpi .title,
+    body:not(.dark-mode) #productionPlan .metric .m-label{color:#64748b!important;}
+    body:not(.dark-mode) #productionPlan .monitor-box .num,
+    body:not(.dark-mode) #productionPlan .plan-kpi .value,
+    body:not(.dark-mode) #productionPlan .metric .m-value{color:#0f172a!important;}
+
     @media(max-width:800px){.header-actions{width:100%;justify-content:flex-start}.theme-toggle{font-size:12px;padding:6px 10px}}
 </style>
 </head>
@@ -704,7 +731,7 @@
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v15.4 · 2026-07-08 · 다크모드 보강</span>
+    <span class="version-badge">v15.5 · 2026-07-08 · 라이트모드 보강</span>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
   </span>
 </header>

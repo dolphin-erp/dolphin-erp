@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dolphin ERP v15.3</title>
+  <title>Dolphin ERP v15.4</title>
   <!-- Dolphin ERP v12: Cloudflare/GitHub frontend -->
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -607,6 +607,95 @@
     body.dark-mode .urgency-납기없음,
     body.dark-mode .urgency-미지정,
     body.dark-mode .urgency-마감{background:#374151!important;color:#d1d5db!important}
+
+    /* v15.4 Dark Mode coverage for Production Plan */
+    body.dark-mode .segmented-tabs{
+      background:rgba(15,23,42,.88)!important;
+      border-color:#334155!important;
+      box-shadow:0 12px 28px rgba(0,0,0,.22)!important;
+    }
+    body.dark-mode .segmented-tabs button{
+      background:#0f172a!important;
+      color:#e5e7eb!important;
+      border-color:#334155!important;
+      box-shadow:none!important;
+    }
+    body.dark-mode .segmented-tabs button.active{
+      background:linear-gradient(135deg,#2563eb,#1d4ed8)!important;
+      color:#fff!important;
+      border-color:#3b82f6!important;
+      box-shadow:0 10px 24px rgba(37,99,235,.30)!important;
+    }
+    body.dark-mode .plan-kpi .box,
+    body.dark-mode .metric,
+    body.dark-mode .monitor-table-card,
+    body.dark-mode .process-card{
+      background:linear-gradient(180deg,rgba(17,24,39,.96),rgba(15,23,42,.96))!important;
+      border-color:#334155!important;
+      color:#e5e7eb!important;
+      box-shadow:0 14px 34px rgba(0,0,0,.30)!important;
+    }
+    body.dark-mode .metric.highlight{
+      background:linear-gradient(180deg,rgba(30,64,175,.24),rgba(15,23,42,.96))!important;
+      border-color:#1d4ed8!important;
+    }
+    body.dark-mode .metric.danger{
+      background:linear-gradient(180deg,rgba(127,29,29,.28),rgba(15,23,42,.96))!important;
+      border-color:#7f1d1d!important;
+    }
+    body.dark-mode .plan-kpi .title,
+    body.dark-mode .metric .m-label,
+    body.dark-mode .monitor-table-title span:last-child,
+    body.dark-mode .monitor-note{
+      color:#94a3b8!important;
+    }
+    body.dark-mode .plan-kpi .value,
+    body.dark-mode .metric .m-value,
+    body.dark-mode .process-card-title,
+    body.dark-mode .monitor-table-title{
+      color:#f8fafc!important;
+    }
+    body.dark-mode .monitor-hero{
+      background:linear-gradient(135deg,#020617,#0f172a 45%,#1e3a8a)!important;
+      border:1px solid #334155!important;
+      box-shadow:0 18px 44px rgba(0,0,0,.42)!important;
+    }
+    body.dark-mode .monitor-box{
+      background:rgba(15,23,42,.72)!important;
+      border-color:rgba(96,165,250,.25)!important;
+    }
+    body.dark-mode .monitor-table{
+      background:#0f172a!important;
+      color:#e5e7eb!important;
+    }
+    body.dark-mode .monitor-table th{
+      background:#1e293b!important;
+      color:#f8fafc!important;
+      border-color:#334155!important;
+    }
+    body.dark-mode .monitor-table td{
+      background:#0f172a!important;
+      color:#e5e7eb!important;
+      border-color:#334155!important;
+    }
+    body.dark-mode .monitor-table tbody tr:nth-child(even) td{background:#111827!important;}
+    body.dark-mode .monitor-table tbody tr:hover td{background:#1e293b!important;}
+    body.dark-mode .monitor-table td.product{color:#f8fafc!important;}
+    body.dark-mode .monitor-table .memo{color:#cbd5e1!important;}
+    body.dark-mode .monitor-table .num-strong{color:#34d399!important;}
+    body.dark-mode .monitor-table .num-plan{color:#93c5fd!important;}
+    body.dark-mode .monitor-table .num-bad{color:#f87171!important;}
+    body.dark-mode .priority-badge.긴급,
+    body.dark-mode .status-chip.긴급{background:#7f1d1d!important;color:#fecaca!important;}
+    body.dark-mode .priority-badge.보통,
+    body.dark-mode .status-chip.보통{background:#1e3a8a!important;color:#bfdbfe!important;}
+    body.dark-mode .priority-badge.여유,
+    body.dark-mode .status-chip.여유{background:#14532d!important;color:#bbf7d0!important;}
+    body.dark-mode .rate-pill{background:#374151!important;color:#e5e7eb!important;border-color:#475569!important;}
+    body.dark-mode .rate-pill.ok{background:#14532d!important;color:#bbf7d0!important;}
+    body.dark-mode .rate-pill.warn{background:#78350f!important;color:#fde68a!important;}
+    body.dark-mode .rate-pill.hot{background:#7f1d1d!important;color:#fecaca!important;}
+
     @media(max-width:800px){.header-actions{width:100%;justify-content:flex-start}.theme-toggle{font-size:12px;padding:6px 10px}}
 </style>
 </head>
@@ -615,7 +704,7 @@
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v15.3 · 2026-07-07 · 다크모드</span>
+    <span class="version-badge">v15.4 · 2026-07-08 · 다크모드 보강</span>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
   </span>
 </header>

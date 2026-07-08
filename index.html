@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dolphin ERP v15.8</title>
+  <title>Dolphin ERP v15.9</title>
   <!-- Dolphin ERP v12: Cloudflare/GitHub frontend -->
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -469,26 +469,34 @@
     .monitor-table tr.priority-보통 td:first-child{border-left:6px solid #3b82f6}
     .monitor-table tr.priority-여유 td:first-child{border-left:6px solid #10b981}
 
-    /* v15.8 production plan simplified grouped table */
+    /* v15.9 production plan grouped header only */
     .plan-input-table table{border-collapse:separate;border-spacing:0;width:100%;}
-    .plan-input-table thead tr.group-row th{font-size:12px;letter-spacing:.02em;border-bottom:0;color:#334155;}
-    .plan-input-table th.group-due,.plan-input-table td.group-due{background:#f3e8ff!important;color:#581c87!important;}
-    .plan-input-table th.group-target,.plan-input-table td.group-target{background:#fee2e2!important;color:#991b1b!important;}
-    .plan-input-table th.group-source,.plan-input-table td.group-source{background:#dbeafe!important;color:#1e3a8a!important;}
-    .plan-input-table th.group-plan,.plan-input-table td.group-plan{background:#fef3c7!important;color:#92400e!important;}
-    .plan-input-table th.group-result,.plan-input-table td.group-result{background:#dcfce7!important;color:#14532d!important;}
+    .plan-input-table thead tr.group-row th{font-size:12px;letter-spacing:.02em;border-bottom:0;font-weight:900;}
+    .plan-input-table th.group-due{background:#f3e8ff!important;color:#581c87!important;}
+    .plan-input-table th.group-target{background:#fee2e2!important;color:#991b1b!important;}
+    .plan-input-table th.group-source{background:#dbeafe!important;color:#1e3a8a!important;}
+    .plan-input-table th.group-plan{background:#fef3c7!important;color:#92400e!important;}
+    .plan-input-table th.group-result{background:#dcfce7!important;color:#14532d!important;}
+    .plan-input-table td.group-due,.plan-input-table td.group-target,.plan-input-table td.group-source,.plan-input-table td.group-plan,.plan-input-table td.group-result{background:transparent!important;color:inherit!important;}
+    .plan-input-table td.group-due{border-left:3px solid #e9d5ff;}
+    .plan-input-table td.group-target{border-left:3px solid #fecaca;}
+    .plan-input-table td.group-source{border-left:3px solid #bfdbfe;}
+    .plan-input-table td.group-plan{border-left:3px solid #fde68a;}
+    .plan-input-table td.group-result{border-left:3px solid #bbf7d0;}
     .plan-input-table td.product-main{font-weight:900;text-align:left;color:#0f172a;}
-    .plan-input-table .plan-input{background:#fffef2;border:1px solid #facc15;font-weight:900;text-align:center;}
+    .plan-input-table .plan-input{background:#fff;border:1px solid #cbd5e1;font-weight:900;text-align:center;}
+    .plan-input-table .plan-input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12);}
     .plan-input-table .plan-num-need{font-size:17px;font-weight:900;color:#dc2626;}
     .plan-input-table .plan-num-avail{font-size:17px;font-weight:900;color:#2563eb;}
     .plan-input-table .plan-num-result{font-weight:900;color:#059669;}
-    body.dark-mode .plan-input-table th.group-due,body.dark-mode .plan-input-table td.group-due{background:rgba(88,28,135,.28)!important;color:#e9d5ff!important;}
-    body.dark-mode .plan-input-table th.group-target,body.dark-mode .plan-input-table td.group-target{background:rgba(127,29,29,.28)!important;color:#fecaca!important;}
-    body.dark-mode .plan-input-table th.group-source,body.dark-mode .plan-input-table td.group-source{background:rgba(30,64,175,.28)!important;color:#bfdbfe!important;}
-    body.dark-mode .plan-input-table th.group-plan,body.dark-mode .plan-input-table td.group-plan{background:rgba(146,64,14,.30)!important;color:#fde68a!important;}
-    body.dark-mode .plan-input-table th.group-result,body.dark-mode .plan-input-table td.group-result{background:rgba(20,83,45,.32)!important;color:#bbf7d0!important;}
+    body.dark-mode .plan-input-table th.group-due{background:rgba(88,28,135,.38)!important;color:#e9d5ff!important;}
+    body.dark-mode .plan-input-table th.group-target{background:rgba(127,29,29,.38)!important;color:#fecaca!important;}
+    body.dark-mode .plan-input-table th.group-source{background:rgba(30,64,175,.38)!important;color:#bfdbfe!important;}
+    body.dark-mode .plan-input-table th.group-plan{background:rgba(146,64,14,.42)!important;color:#fde68a!important;}
+    body.dark-mode .plan-input-table th.group-result{background:rgba(20,83,45,.42)!important;color:#bbf7d0!important;}
+    body.dark-mode .plan-input-table td.group-due,body.dark-mode .plan-input-table td.group-target,body.dark-mode .plan-input-table td.group-source,body.dark-mode .plan-input-table td.group-plan,body.dark-mode .plan-input-table td.group-result{background:transparent!important;color:inherit!important;}
     body.dark-mode .plan-input-table td.product-main{color:#f8fafc!important;}
-    body.dark-mode .plan-input-table .plan-input{background:#0f172a!important;border-color:#f59e0b!important;color:#f8fafc!important;}
+    body.dark-mode .plan-input-table .plan-input{background:#0f172a!important;border-color:#334155!important;color:#f8fafc!important;}
     .status-chip{display:inline-block;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:900}
     .status-chip.긴급{background:#fee2e2;color:#991b1b}
     .status-chip.보통{background:#dbeafe;color:#1d4ed8}
@@ -752,7 +760,7 @@
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v15.8 · 2026-07-08 · 생산계획 단순화</span>
+    <span class="version-badge">v15.9 · 2026-07-08 · 계획표 색상 정리</span>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
   </span>
 </header>

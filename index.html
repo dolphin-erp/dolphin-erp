@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dolphin ERP v16.0</title>
+  <title>Dolphin ERP v16.7</title>
   <!-- Dolphin ERP v12: Cloudflare/GitHub frontend -->
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -892,6 +892,9 @@ body.dark-mode .current-work-metric .value{color:#f8fafc!important}
 body.dark-mode .worker-names,body.dark-mode .work-cell .names{color:#cbd5e1!important}
 body.dark-mode .current-work-empty{background:#0f172a!important;border-color:#334155!important;color:#94a3b8!important}
 @media(max-width:900px){header{align-items:flex-start!important;flex-direction:column!important}.header-actions{width:100%;justify-content:flex-start!important}.tabs{top:90px!important}.current-work-list{grid-template-columns:1fr}}
+body.profile-required main > .tabs, body.profile-required main > section, body.profile-required #adminLoginBox{filter:blur(2px);pointer-events:none;user-select:none;}
+.user-modal.force-login{display:flex!important;}
+
 
 
 
@@ -933,7 +936,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v16.6 · 2026-07-09 · 권한마스터 방식</span>
+    <span class="version-badge">v16.7 · 2026-07-09 · 권한마스터 정리</span>
     <button type="button" id="userProfileBtn" class="user-profile-btn" onclick="openUserSetup()" title="사용자 등록/변경">👤 사용자</button>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
     <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
@@ -945,7 +948,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 <div id="userSetupModal" class="user-modal hidden no-print">
   <div class="user-modal-box">
     <h2>ERP 접속</h2>
-    <p class="note">부서와 직책을 선택하고 이름을 입력한 뒤 시작합니다. 권한은 구글시트 권한마스터의 1/빈칸 기준으로 적용됩니다. 관리자는 별도 비밀번호로 진입합니다.</p>
+    <p class="note">부서와 직책을 선택하고 이름을 입력한 뒤 시작합니다. 권한은 기기ID가 아니라 부서+직책 기준으로 적용됩니다. 권한 수정은 구글시트 권한마스터에서 합니다.</p>
     <div class="form-grid">
       <div>
         <label>이름</label>
@@ -953,7 +956,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
       </div>
       <div>
         <label>부서</label>
-        <select id="profileDept">
+        <select id="profileDept" onchange="updateProfileRoleOptions()">
           <option value="가공">가공</option>
           <option value="선반">선반</option>
           <option value="용접">용접</option>
@@ -1606,7 +1609,7 @@ function toggleDarkMode(){
   try{localStorage.setItem(THEME_STORAGE_KEY,next);}catch(e){}
   applyThemeMode(next);
 }
-document.addEventListener('DOMContentLoaded',function(){initThemeMode();initStabilityGuards();setToday();initDropZone();loadReportSettings();applyAdminSession();loadAll();startDashboardAutoRefresh();});
+document.addEventListener('DOMContentLoaded',function(){initThemeMode();initStabilityGuards();setToday();initDropZone();loadReportSettings();applyAdminSession();if(!getUserProfile()){document.body.classList.add('profile-required');setTimeout(function(){openUserSetup(true);},50);}loadAll();startDashboardAutoRefresh();});
 
 function getTodayString(){const d=new Date();const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);return local.toISOString().slice(0,10);}
 function setToday(){const today=getTodayString();['workDate','receiptDate','shipDate','salesDate','masterDate','improveDate','planDate'].forEach(function(id){const el=document.getElementById(id);if(el)el.value=today;});}
@@ -1684,7 +1687,7 @@ function refreshAfterSave(){
   if(document.getElementById('productionPlan')&&document.getElementById('productionPlan').classList.contains('active')) safeLoad(loadProductionPlan);
 }
 function openPage(pageId,button){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('active');});document.getElementById(pageId).classList.add('active');button.classList.add('active');if(pageId==='dashboard')loadDashboard();if(pageId==='history')loadHistory();if(pageId==='flow')loadFlowTable();if(pageId==='worklog')loadTodayWorkSummary();if(pageId==='productionPlan'){setDefaultPlanProcessForProfile();loadProductionPlan();}if(pageId==='currentWork')loadCurrentWorkPage();if(pageId==='userAdmin')loadUsersAdmin();if(pageId==='sales')loadSalesRequests();if(pageId==='improvement')loadImprovementRequests();if(pageId==='improvementAdmin')loadImprovementRequests();if(pageId==='master'){fillMasterSelects();renderMasterStockTable();}if(pageId==='printSummary')renderPrintSummary();}
-function loadAll(){google.script.run.withSuccessHandler(function(data){APP.products=data.products||[];APP.flows=data.flows||[];APP.workers=data.workers||[];APP.locations=data.locations||[];APP.salesRequests=data.salesRequests||[];APP.users=data.users||[];APP.roleAccess=data.roleAccess||[];['workProduct','receiptProduct','shipProduct','salesProduct','masterProduct','currentWorkProduct'].forEach(fillProductSelect);fillLocationSelect('manualFromLocation',true);fillLocationSelect('manualToLocation',false);fillLocationSelect('autoManualToLocation',true,'자동 노선 그대로 사용');fillWorkerDatalist();fillLocationSelect('shipLocation',false);fillLocationSelect('masterLocation',false);updateWorkProcess();restoreWorkLogState();bindWorkLogStateEvents();updateReceiptProcess();loadDashboard();loadSalesRequests();loadFlowTable();loadTodayWorkSummary();loadProductionPlan();ensureUserProfile();applyMenuPermissions();}).withFailureHandler(function(err){handleQueryFailure(err,'초기 데이터',function(){loadAll();});}).getInitialData();}
+function loadAll(){google.script.run.withSuccessHandler(function(data){APP.products=data.products||[];APP.flows=data.flows||[];APP.workers=data.workers||[];APP.locations=data.locations||[];APP.salesRequests=data.salesRequests||[];APP.users=data.users||[];APP.roleAccess=data.roleAccess||[];['workProduct','receiptProduct','shipProduct','salesProduct','masterProduct','currentWorkProduct'].forEach(fillProductSelect);fillLocationSelect('manualFromLocation',true);fillLocationSelect('manualToLocation',false);fillLocationSelect('autoManualToLocation',true,'자동 노선 그대로 사용');fillWorkerDatalist();fillLocationSelect('shipLocation',false);fillLocationSelect('masterLocation',false);updateWorkProcess();restoreWorkLogState();bindWorkLogStateEvents();updateReceiptProcess();loadDashboard();loadSalesRequests();loadFlowTable();loadTodayWorkSummary();loadProductionPlan();updateProfileDeptOptions();ensureUserProfile();applyMenuPermissions();}).withFailureHandler(function(err){handleQueryFailure(err,'초기 데이터',function(){loadAll();});}).getInitialData();}
 function fillProductSelect(id){const select=document.getElementById(id);if(!select)return;select.innerHTML='';APP.products.forEach(function(p){const o=document.createElement('option');o.value=p.code;o.textContent=p.name;select.appendChild(o);});}
 function fillLocationSelect(id,allowBlank,blankText){const select=document.getElementById(id);if(!select)return;select.innerHTML='';if(allowBlank){const o=document.createElement('option');o.value='';o.textContent=blankText||'선택 안 함';select.appendChild(o);}APP.locations.forEach(function(loc){const o=document.createElement('option');o.value=loc.name;o.textContent=loc.floor+' - '+displayLocationName(loc.name);select.appendChild(o);});}
 function getFlowsByProduct(productCode){return APP.flows.filter(function(f){return f.productCode===productCode;});}
@@ -3010,17 +3013,43 @@ function updateUserProfileUi(){
   if(btn)btn.textContent=p&&p.name?('👤 '+p.name+' · '+p.dept+' · '+(p.role||'작업자')):'👤 사용자';
   if(sum)sum.textContent=p&&p.name?('현재 사용자: '+p.name+' / '+p.dept+' / '+(p.role||'작업자')+' / 기기ID '+getDeviceId()+' (추적용)'):'사용자 정보가 없습니다. 상단 사용자 버튼에서 등록하세요.';
 }
-function openUserSetup(){
+function profileRoleCombos(){
+  const fromSheet=(APP.roleAccess||[]).filter(function(r){return r.dept&&r.role;}).map(function(r){return {dept:String(r.dept).trim(),role:String(r.role).trim()};});
+  if(fromSheet.length)return fromSheet;
+  const rows=[];['가공','선반','용접','조립','검사','포장'].forEach(function(d){rows.push({dept:d,role:'작업자'},{dept:d,role:'반장'},{dept:d,role:'일반'});});
+  rows.push({dept:'영업',role:'작업자'},{dept:'영업',role:'일반'},{dept:'사무직',role:'일반'},{dept:'생산관리',role:'일반'},{dept:'임원',role:'임원'});
+  return rows;
+}
+function updateProfileDeptOptions(){
+  const deptSel=document.getElementById('profileDept'); if(!deptSel)return;
+  const old=deptSel.value||((getUserProfile()||{}).dept)||'조립';
+  const depts=[]; profileRoleCombos().forEach(function(x){if(depts.indexOf(x.dept)<0)depts.push(x.dept);});
+  deptSel.innerHTML=depts.map(function(d){return '<option value="'+escapeHtml(d)+'">'+escapeHtml(d)+'</option>';}).join('');
+  deptSel.value=depts.indexOf(old)>=0?old:(depts[0]||'조립');
+  updateProfileRoleOptions();
+}
+function updateProfileRoleOptions(){
+  const deptSel=document.getElementById('profileDept'), roleSel=document.getElementById('profileRole'); if(!deptSel||!roleSel)return;
+  const dept=deptSel.value; const old=roleSel.value||((getUserProfile()||{}).role)||'작업자';
+  const roles=[]; profileRoleCombos().forEach(function(x){if(x.dept===dept && roles.indexOf(x.role)<0)roles.push(x.role);});
+  roleSel.innerHTML=roles.map(function(r){return '<option value="'+escapeHtml(r)+'">'+escapeHtml(r)+'</option>';}).join('');
+  roleSel.value=roles.indexOf(old)>=0?old:(roles[0]||'작업자');
+}
+function openUserSetup(force){
   const p=getUserProfile()||{};
   const box=document.getElementById('userSetupModal');
-  if(document.getElementById('profileName'))document.getElementById('profileName').value=p.name||'';
-  if(document.getElementById('profileDept'))document.getElementById('profileDept').value=p.dept||'조립';
-  if(document.getElementById('profileRole'))document.getElementById('profileRole').value=p.role||'작업자';
-  if(box)box.classList.remove('hidden');
+  if(document.getElementById('profileName'))document.getElementById('profileName').value=p.name||localStorage.getItem('dolphinLastProfileName')||'';
+  updateProfileDeptOptions();
+  if(document.getElementById('profileDept')){document.getElementById('profileDept').value=p.dept||document.getElementById('profileDept').value||'조립'; updateProfileRoleOptions();}
+  if(document.getElementById('profileRole'))document.getElementById('profileRole').value=p.role||document.getElementById('profileRole').value||'작업자';
+  if(box){box.classList.remove('hidden');box.classList.toggle('force-login',!!force);}
+  document.body.classList.toggle('profile-required',!!force);
 }
 function closeUserSetup(){
   const box=document.getElementById('userSetupModal');
   if(box)box.classList.add('hidden');
+  if(box)box.classList.remove('force-login');
+  document.body.classList.remove('profile-required');
 }
 function saveUserProfile(){
   const name=(document.getElementById('profileName').value||'').trim();
@@ -3028,22 +3057,25 @@ function saveUserProfile(){
   const role=(document.getElementById('profileRole').value||'작업자').trim();
   const msg=document.getElementById('profileMsg');
   if(!name){if(msg)msg.textContent='이름을 입력하세요.';return;}
+  const valid=profileRoleCombos().some(function(x){return x.dept===dept&&x.role===role;});
+  if(!valid){if(msg)msg.textContent='권한마스터에 없는 부서/직책 조합입니다.';return;}
   const profile={name:name,dept:dept,role:role,deviceId:getDeviceId(),savedAt:new Date().toISOString()};
+  localStorage.setItem('dolphinLastProfileName',name);
   setUserProfile(profile);
   if(msg)msg.textContent='저장되었습니다.';
-  try{
-    google.script.run.withSuccessHandler(function(){})
-      .withFailureHandler(function(){})
-      .upsertErpUser(profile);
-  }catch(e){}
-  setTimeout(closeUserSetup,300);
+  try{google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){}).upsertErpUser(profile);}catch(e){}
+  setTimeout(function(){closeUserSetup();applyMenuPermissions();if(document.querySelector('.page.active')&&document.querySelector('.page.active').id==='productionPlan'){setDefaultPlanProcessForProfile();renderProductionPlan();}},250);
 }
 function ensureUserProfile(){
   updateUserProfileUi();
-  if(!getUserProfile())setTimeout(openUserSetup,500);
+  if(!getUserProfile())setTimeout(function(){openUserSetup(true);},100);
+  else document.body.classList.remove('profile-required');
 }
 function activeProcessForProfile(){
   const p=getUserProfile()||{};
+  const dept=p.dept||'조립';
+  return ACTIVE_PLAN_PROCESSES.indexOf(dept)>=0?dept:'조립';
+};
   const dept=p.dept||'조립';
   return ACTIVE_PLAN_PROCESSES.indexOf(dept)>=0?dept:'조립';
 }
@@ -3090,8 +3122,9 @@ function findRoleAccess(dept,role){
   })||null;
 }
 function currentAllowedMenus(){
-  if(currentIsAdmin())return MENU_DEFS.map(function(m){return m.page;}).concat(['csv','improvementAdmin']);
+  if(currentIsAdmin())return MENU_DEFS.map(function(m){return m.page;}).concat(['csv','improvementAdmin','userAdmin','master']);
   const p=getUserProfile()||{};
+  if(!p.name)return [];
   const u=findRegisteredUser();
   if(u && String(u.useYn||'Y').toUpperCase()==='N')return [];
   const ra=findRoleAccess(p.dept||'', p.role||'작업자');
@@ -3117,7 +3150,7 @@ function applyMenuPermissions(){
   document.querySelectorAll('.tabs button').forEach(function(btn){
     const page=pageFromButton(btn);
     if(!page)return;
-    const show=allowed.indexOf(page)>=0 || (isAdmin && ['csv','master','printSummary','improvementAdmin','history','flow'].indexOf(page)>=0);
+    let show=allowed.indexOf(page)>=0 || (isAdmin && ['csv','master','printSummary','improvementAdmin','history','flow','userAdmin'].indexOf(page)>=0); if(page==='userAdmin'||page==='master')show=isAdmin;
     btn.classList.toggle('menu-hidden-by-permission',!show);
   });
   const adminBtn=document.getElementById('adminLoginBtn'); if(adminBtn)adminBtn.style.display='';

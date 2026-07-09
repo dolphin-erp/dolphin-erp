@@ -855,6 +855,44 @@ body.dark-mode .plan-expected{color:#cbd5e1!important;font-weight:900!important}
 .metric.expected .m-value{color:#475569!important;font-weight:900}
 body.dark-mode .metric.expected .m-value{color:#cbd5e1!important}
 
+
+
+/* v16.1 compact header + current work */
+header{min-height:44px!important;padding:9px 16px!important;font-size:18px!important;gap:8px!important;flex-wrap:nowrap!important}
+header span:first-child{white-space:nowrap}
+.header-actions{gap:7px!important;flex-wrap:nowrap!important}
+.version-badge{font-size:12px!important;padding:5px 9px!important}
+.user-profile-btn{font-size:12px!important;padding:5px 10px!important;border-radius:999px!important;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.theme-toggle{font-size:12px!important;padding:5px 10px!important}
+.global-refresh-toggle{width:32px!important;height:32px!important;font-size:18px!important}
+.tabs{top:54px!important;padding:7px 10px!important;border-radius:14px!important}
+.tabs button{min-height:36px!important;padding:8px 14px!important;border-radius:11px!important}
+main{padding-top:10px!important}
+.profile-summary.compact{background:#f1f5f9;border:1px solid #dbe5f1;border-radius:12px;padding:10px 12px;font-weight:900;color:#1e293b;margin:10px 0}
+.current-work-toolbar{display:flex;align-items:center;gap:10px;margin:10px 0 14px;flex-wrap:wrap}
+.current-work-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.current-work-card{border:1px solid #dbe5f1;border-radius:16px;background:#fff;box-shadow:0 6px 16px rgba(15,23,42,.06);padding:14px;display:flex;flex-direction:column;gap:10px}
+.current-work-card.active{border-color:#2563eb;box-shadow:0 10px 22px rgba(37,99,235,.16)}
+.current-work-title{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:18px;font-weight:900;color:#0f172a}
+.current-work-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.current-work-metric{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px}
+.current-work-metric .label{font-size:12px;color:#64748b;font-weight:800;margin-bottom:4px}
+.current-work-metric .value{font-size:22px;font-weight:900;color:#0f172a}
+.worker-count-badge{display:inline-flex;align-items:center;gap:4px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-weight:900;font-size:12px;padding:5px 9px;white-space:nowrap}
+.worker-names{font-size:12px;color:#475569;line-height:1.5;min-height:18px}
+.current-work-empty{padding:24px;border:1px dashed #cbd5e1;border-radius:16px;text-align:center;color:#64748b;font-weight:800;background:#f8fafc}
+.work-cell{min-width:90px;text-align:center}.work-cell details{cursor:pointer}.work-cell summary{list-style:none}.work-cell summary::-webkit-details-marker{display:none}.work-cell .names{margin-top:6px;font-size:12px;color:#475569;line-height:1.5}.work-cell .none{color:#94a3b8;font-weight:700}
+body.dark-mode .profile-summary.compact{background:#0f172a!important;border-color:#334155!important;color:#e5e7eb!important}
+body.dark-mode .current-work-card{background:#111827!important;border-color:#334155!important;box-shadow:0 10px 24px rgba(0,0,0,.3)!important}
+body.dark-mode .current-work-card.active{border-color:#3b82f6!important}
+body.dark-mode .current-work-title{color:#f8fafc!important}
+body.dark-mode .current-work-metric{background:#0f172a!important;border-color:#334155!important}
+body.dark-mode .current-work-metric .label{color:#94a3b8!important}
+body.dark-mode .current-work-metric .value{color:#f8fafc!important}
+body.dark-mode .worker-names,body.dark-mode .work-cell .names{color:#cbd5e1!important}
+body.dark-mode .current-work-empty{background:#0f172a!important;border-color:#334155!important;color:#94a3b8!important}
+@media(max-width:900px){header{align-items:flex-start!important;flex-direction:column!important}.header-actions{width:100%;justify-content:flex-start!important}.tabs{top:90px!important}.current-work-list{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -862,7 +900,7 @@ body.dark-mode .metric.expected .m-value{color:#cbd5e1!important}
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v16.0 · 2026-07-08 · 사용자/작업현황</span>
+    <span class="version-badge">v16.1 · 2026-07-08 · 현재작업 개선</span>
     <button type="button" id="userProfileBtn" class="user-profile-btn" onclick="openUserSetup()" title="사용자 등록/변경">👤 사용자</button>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
     <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
@@ -1166,44 +1204,22 @@ body.dark-mode .metric.expected .m-value{color:#cbd5e1!important}
 
   
 <section id="currentWork" class="page">
-  <div class="card">
+  <div class="card current-work-page-card">
     <h2>현재 작업</h2>
-    <div class="note">작업 시작/종료가 아니라 현재 무엇을 하고 있는지만 변경합니다. 여러 명이 같은 작업을 선택해도 됩니다.</div>
-    <div class="profile-summary" id="currentProfileSummary">사용자 정보 없음</div>
-    <div class="form-grid">
-      <div>
-        <label>상태</label>
-        <select id="currentWorkState" onchange="toggleCurrentWorkInputs()">
-          <option value="대기">대기</option>
-          <option value="작업중">작업중</option>
-        </select>
-      </div>
-      <div>
-        <label>공정</label>
-        <select id="currentWorkProcess">
-          <option value="가공">가공</option>
-          <option value="선반">선반</option>
-          <option value="용접">용접</option>
-          <option value="조립">조립</option>
-          <option value="검사">검사</option>
-          <option value="포장">포장</option>
-          <option value="출하">출하</option>
-        </select>
-      </div>
-      <div>
-        <label>제품</label>
-        <select id="currentWorkProduct"></select>
-      </div>
-      <div>
-        <label>비고</label>
-        <input id="currentWorkMemo" placeholder="선택 입력">
-      </div>
+    <div class="note">오늘 생산계획에 등록된 작업만 표시됩니다. 작업자는 본인이 현재 붙는 작업을 선택하고, 작업이 끝나거나 이동하면 다른 작업 또는 대기로 변경합니다.</div>
+    <div class="profile-summary compact" id="currentProfileSummary">사용자 정보 없음</div>
+
+    <div class="current-work-toolbar">
+      <button class="small-btn" onclick="setCurrentWorkIdle()">대기 상태로 변경</button>
+      <span class="message" id="currentWorkMsg"></span>
     </div>
-    <button id="currentWorkSaveBtn" class="submit-btn" onclick="saveCurrentWorkUI()">현재 작업 저장</button>
-    <span class="message" id="currentWorkMsg"></span>
+
+    <div class="current-work-list" id="todayWorkCards"></div>
   </div>
+
   <div class="card">
     <h2>작업자 현재 현황</h2>
+    <div class="note">작업자별 현재 위치입니다. 여러 명이 같은 작업을 선택해도 됩니다.</div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>작업자</th><th>부서</th><th>상태</th><th>현재작업</th><th>최근변경</th><th>비고</th></tr></thead>
@@ -1728,6 +1744,7 @@ function loadProductionPlan(){
   google.script.run.withSuccessHandler(function(data){
     APP.productionPlan=data||{rows:[]};
     renderProductionPlan();
+    if(document.getElementById('currentWork')&&document.getElementById('currentWork').classList.contains('active'))renderCurrentWorkJobs();
   }).withFailureHandler(function(err){handleQueryFailure(err,'생산계획 조회',function(){loadProductionPlan();});}).getProductionPlanData(date);
 }
 function planObj(row,process){
@@ -2032,10 +2049,10 @@ function renderMonitorCards(rows,process){
 function renderProcessMonitorTable(rows,process){
   const title=process+' 공정 상세 모니터링';
   let head='<tr><th>우선</th><th>제품</th><th>요청잔량</th><th>필요수량</th>';
-  if(process==='용접') head+='<th>완제품</th><th>오늘계획</th><th>실적</th><th>달성률</th><th>메모</th>';
-  if(process==='조립') head+='<th>용접완료</th><th>조립대기</th><th>현재가능</th><th>오늘계획</th><th>실적</th><th>달성률</th><th>메모</th>';
-  if(process==='검사') head+='<th>조립 오늘계획</th><th>조립완료</th><th>검사대기</th><th>검사가능</th><th>오늘계획</th><th>실적</th><th>달성률</th><th>메모</th>';
-  if(process==='포장') head+='<th>검사 오늘계획</th><th>검사완료</th><th>포장대기</th><th>포장가능</th><th>오늘계획</th><th>실적</th><th>달성률</th><th>메모</th>';
+  if(process==='용접') head+='<th>완제품</th><th>오늘계획</th><th>작업중</th><th>실적</th><th>달성률</th><th>메모</th>';
+  if(process==='조립') head+='<th>용접완료</th><th>조립대기</th><th>현재가능</th><th>오늘계획</th><th>작업중</th><th>실적</th><th>달성률</th><th>메모</th>';
+  if(process==='검사') head+='<th>조립 오늘계획</th><th>조립완료</th><th>검사대기</th><th>검사가능</th><th>오늘계획</th><th>작업중</th><th>실적</th><th>달성률</th><th>메모</th>';
+  if(process==='포장') head+='<th>검사 오늘계획</th><th>검사완료</th><th>포장대기</th><th>포장가능</th><th>오늘계획</th><th>작업중</th><th>실적</th><th>달성률</th><th>메모</th>';
   head+='</tr>';
   const body=planDisplayRows(rows,process).map(function(r){
     const p=planQty(r,process);
@@ -2044,20 +2061,20 @@ function renderProcessMonitorTable(rows,process){
     const pr=planPriority(r,process);
     let html='<tr class="priority-'+pr+'"><td><span class="status-chip '+pr+'">'+pr+'</span></td><td class="product">'+r.productName+'</td><td>'+(r.requestRemainQty||0)+'</td><td class="num-strong">'+planNeedQty(r,process)+'</td>';
     if(process==='용접'){
-      html+='<td>'+(r.fgStock||0)+'</td><td class="num-plan">'+p+'</td><td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
+      html+='<td>'+(r.fgStock||0)+'</td><td class="num-plan">'+p+'</td>'+renderWorkCountCell(process,r.productCode)+'<td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
     }else if(process==='조립'){
       const current=assemblyAvailableQty(r);
-      html+='<td>'+(r.weldStock||0)+'</td><td>'+(r.assyWorkStock||0)+'</td><td class="num-strong">'+current+'</td><td class="num-plan">'+p+'</td><td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
+      html+='<td>'+(r.weldStock||0)+'</td><td>'+(r.assyWorkStock||0)+'</td><td class="num-strong">'+current+'</td><td class="num-plan">'+p+'</td>'+renderWorkCountCell(process,r.productCode)+'<td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
     }else if(process==='검사'){
       const current=(qtyVal(r.assyDoneStock)+qtyVal(r.inspWorkStock));
       const add=qtyVal(r.assemblyPlanQty);
       const max=current+add;
-      html+='<td class="plan-expected">'+add+'</td><td>'+(r.assyDoneStock||0)+'</td><td>'+(r.inspWorkStock||0)+'</td><td class="num-strong">'+current+'</td><td class="num-plan">'+p+'</td><td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
+      html+='<td class="plan-expected">'+add+'</td><td>'+(r.assyDoneStock||0)+'</td><td>'+(r.inspWorkStock||0)+'</td><td class="num-strong">'+current+'</td><td class="num-plan">'+p+'</td>'+renderWorkCountCell(process,r.productCode)+'<td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
     }else{
       const current=(qtyVal(r.inspDoneStock)+qtyVal(r.packWorkStock));
       const add=qtyVal(r.inspectionPlanQty);
       const max=current+add;
-      html+='<td class="plan-expected">'+add+'</td><td>'+(r.inspDoneStock||0)+'</td><td>'+(r.packWorkStock||0)+'</td><td class="num-strong">'+current+'</td><td class="num-plan">'+p+'</td><td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
+      html+='<td class="plan-expected">'+add+'</td><td>'+(r.inspDoneStock||0)+'</td><td>'+(r.packWorkStock||0)+'</td><td class="num-strong">'+current+'</td><td class="num-plan">'+p+'</td>'+renderWorkCountCell(process,r.productCode)+'<td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
     }
     return html+'</tr>';
   }).join('');
@@ -2978,49 +2995,90 @@ function ensureUserProfile(){
   updateUserProfileUi();
   if(!getUserProfile())setTimeout(openUserSetup,500);
 }
+function activeProcessForProfile(){
+  const p=getUserProfile()||{};
+  const dept=p.dept||'조립';
+  return ACTIVE_PLAN_PROCESSES.indexOf(dept)>=0?dept:'조립';
+}
+function workActors(process,productCode){
+  return ((APP.currentWorks||[]).filter(function(w){
+    return String(w.state||'')==='작업중' && String(w.process||'')===String(process||'') && String(w.productCode||'')===String(productCode||'');
+  }));
+}
+function workActorsText(process,productCode){
+  const arr=workActors(process,productCode);
+  return arr.map(function(w){return w.name;}).filter(Boolean).join(', ');
+}
+function renderWorkCountCell(process,productCode){
+  const arr=workActors(process,productCode);
+  if(!arr.length)return '<td class="work-cell"><span class="none">0명</span></td>';
+  const names=arr.map(function(w){return escapeHtml(w.name||'');}).filter(Boolean).join('<br>');
+  return '<td class="work-cell"><details><summary><span class="worker-count-badge">'+arr.length+'명</span></summary><div class="names">'+names+'</div></details></td>';
+}
 function loadCurrentWorkPage(){
   updateUserProfileUi();
-  fillProductSelect('currentWorkProduct');
   const p=getUserProfile();
-  if(p&&document.getElementById('currentWorkProcess'))document.getElementById('currentWorkProcess').value=p.dept||'조립';
-  toggleCurrentWorkInputs();
+  if(!p||!p.name){openUserSetup();}
+  renderCurrentWorkJobs();
   loadCurrentWorkList();
+  if(!APP.productionPlan||!APP.productionPlan.rows||!APP.productionPlan.rows.length)loadProductionPlan();
 }
-function toggleCurrentWorkInputs(){
-  const state=document.getElementById('currentWorkState')?document.getElementById('currentWorkState').value:'대기';
-  ['currentWorkProcess','currentWorkProduct','currentWorkMemo'].forEach(function(id){
-    const el=document.getElementById(id);
-    if(el)el.disabled=(state==='대기'&&id!=='currentWorkMemo');
-  });
-}
-function saveCurrentWorkUI(){
+function renderCurrentWorkJobs(){
+  const box=document.getElementById('todayWorkCards');
+  if(!box)return;
   const profile=getUserProfile();
-  const msg=document.getElementById('currentWorkMsg');
+  if(!profile||!profile.name){box.innerHTML='<div class="current-work-empty">사용자 등록 후 오늘 작업을 확인할 수 있습니다.</div>';return;}
+  const process=activeProcessForProfile();
+  const rows=planDisplayRows(((APP.productionPlan||{}).rows)||[],process).filter(function(r){return planInputDefaultQty(r,process)>0;});
+  const current=((APP.currentWorks||[]).find(function(w){return w.deviceId===getDeviceId();})||{});
+  if(!rows.length){box.innerHTML='<div class="current-work-empty">'+escapeHtml(process)+' 공정의 오늘 계획 작업이 없습니다.</div>';return;}
+  box.innerHTML=rows.map(function(r){
+    const plan=planInputDefaultQty(r,process);
+    const actual=planActual(r,process);
+    const remain=Math.max(0,plan-actual);
+    const actors=workActors(process,r.productCode);
+    const active=String(current.state||'')==='작업중' && String(current.process||'')===process && String(current.productCode||'')===String(r.productCode);
+    const names=actors.map(function(w){return w.name;}).filter(Boolean).join(', ');
+    return '<div class="current-work-card '+(active?'active':'')+'">'+
+      '<div class="current-work-title"><span>'+escapeHtml(r.productName||'')+'</span><span class="worker-count-badge">'+actors.length+'명 작업중</span></div>'+
+      '<div class="current-work-meta">'+
+        '<div class="current-work-metric"><div class="label">오늘계획</div><div class="value">'+plan+'</div></div>'+
+        '<div class="current-work-metric"><div class="label">남은수량</div><div class="value">'+remain+'</div></div>'+ 
+      '</div>'+
+      '<div class="worker-names">'+(names?('작업자: '+escapeHtml(names)):'현재 작업자 없음')+'</div>'+ 
+      '<button class="submit-btn" onclick="saveCurrentWorkFromJob(\''+escapeJs(process)+'\',\''+escapeJs(r.productCode)+'\')">'+(active?'현재 선택됨':'이 작업 선택')+'</button>'+ 
+      '</div>';
+  }).join('');
+  updateUserProfileUi();
+}
+function escapeJs(v){return String(v||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+function saveCurrentWorkFromJob(process,productCode){
+  const profile=getUserProfile();
   if(!profile||!profile.name){openUserSetup();return;}
-  const state=document.getElementById('currentWorkState').value;
-  const productCode=(document.getElementById('currentWorkProduct')||{}).value||'';
-  const product=(APP.products||[]).find(function(p){return p.code===productCode;})||{};
-  const process=document.getElementById('currentWorkProcess').value;
-  const payload={
-    name:profile.name,
-    dept:profile.dept,
-    deviceId:getDeviceId(),
-    state:state,
-    process:state==='대기'?'':process,
-    productCode:state==='대기'?'':productCode,
-    productName:state==='대기'?'':(product.name||''),
-    memo:(document.getElementById('currentWorkMemo').value||'')
-  };
-  if(!beginAction('currentWork','currentWorkSaveBtn','currentWorkMsg','저장 중...','현재 작업 저장 중입니다.'))return;
+  const product=(APP.products||[]).find(function(p){return String(p.code)===String(productCode);})||{};
+  const payload={name:profile.name,dept:profile.dept,deviceId:getDeviceId(),state:'작업중',process:process,productCode:productCode,productName:product.name||'',memo:''};
+  saveCurrentWorkPayload(payload,'작업 선택 중...');
+}
+function setCurrentWorkIdle(){
+  const profile=getUserProfile();
+  if(!profile||!profile.name){openUserSetup();return;}
+  const payload={name:profile.name,dept:profile.dept,deviceId:getDeviceId(),state:'대기',process:'',productCode:'',productName:'',memo:''};
+  saveCurrentWorkPayload(payload,'대기 전환 중...');
+}
+function saveCurrentWorkPayload(payload,loadingText){
+  const msg=document.getElementById('currentWorkMsg');
+  if(msg)msg.textContent=loadingText||'저장 중...';
   google.script.run.withSuccessHandler(function(){
     if(msg)msg.textContent='현재 작업이 저장되었습니다.';
-    endAction('currentWork','currentWorkSaveBtn','현재 작업 저장');
     loadCurrentWorkList();
-  }).withFailureHandler(function(err){endAction('currentWork','currentWorkSaveBtn','현재 작업 저장');showError(err);}).saveCurrentWork(payload);
+  }).withFailureHandler(function(err){showError(err);}).saveCurrentWork(payload);
 }
 function loadCurrentWorkList(){
   google.script.run.withSuccessHandler(function(rows){
-    renderCurrentWorkTable(rows||[]);
+    APP.currentWorks=rows||[];
+    renderCurrentWorkTable(APP.currentWorks);
+    renderCurrentWorkJobs();
+    if(document.getElementById('productionPlan')&&document.getElementById('productionPlan').classList.contains('active'))renderProductionPlan();
   }).withFailureHandler(function(err){handleQueryFailure(err,'현재작업 조회',function(){loadCurrentWorkList();});}).getCurrentWorks();
 }
 function renderCurrentWorkTable(rows){

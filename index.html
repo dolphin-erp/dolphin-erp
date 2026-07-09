@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dolphin ERP v16.0</title>
+  <title>Dolphin ERP v16.8</title>
   <!-- Dolphin ERP v12: Cloudflare/GitHub frontend -->
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -933,7 +933,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v16.5 · 2026-07-09 · 역할권한 개선</span>
+    <span class="version-badge">v16.8 · 2026-07-09 · 권한 로그인 안정화</span>
     <button type="button" id="userProfileBtn" class="user-profile-btn" onclick="openUserSetup()" title="사용자 등록/변경">👤 사용자</button>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
     <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
@@ -945,7 +945,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 <div id="userSetupModal" class="user-modal hidden no-print">
   <div class="user-modal-box">
     <h2>사용자 선택</h2>
-    <p class="note">공용 PC에서는 현재 사용할 부서/직책/이름을 선택합니다. 권한은 기기ID가 아니라 부서+직책 기준으로 적용되며, 관리자는 별도 비밀번호로 진입합니다.</p>
+    <p class="note">공용 PC에서는 사용할 부서/직책/이름을 선택한 뒤 시작합니다. 로그인 전에는 현황판만 보이고, 권한은 권한마스터 시트의 부서+직책 기준으로 적용됩니다.</p>
     <div class="form-grid">
       <div>
         <label>이름</label>
@@ -953,25 +953,22 @@ body.dark-mode .role-user-list{color:#cbd5e1}
       </div>
       <div>
         <label>부서</label>
-        <select id="profileDept">
+        <select id="profileDept" onchange="updateProfileRoleOptions()">
           <option value="가공">가공</option>
           <option value="선반">선반</option>
           <option value="용접">용접</option>
           <option value="조립" selected>조립</option>
           <option value="검사">검사</option>
           <option value="포장">포장</option>
-          <option value="출하">출하</option>
           <option value="영업">영업</option>
+          <option value="사무직">사무직</option>
           <option value="생산관리">생산관리</option>
+          <option value="임원">임원</option>
         </select>
       </div>
       <div>
         <label>직책</label>
-        <select id="profileRole">
-          <option value="작업자">작업자</option>
-          <option value="반장">반장</option>
-          <option value="임원">임원</option>
-        </select>
+        <select id="profileRole"></select>
       </div>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
@@ -1606,7 +1603,7 @@ function toggleDarkMode(){
   try{localStorage.setItem(THEME_STORAGE_KEY,next);}catch(e){}
   applyThemeMode(next);
 }
-document.addEventListener('DOMContentLoaded',function(){initThemeMode();initStabilityGuards();setToday();initDropZone();loadReportSettings();applyAdminSession();loadAll();startDashboardAutoRefresh();});
+document.addEventListener('DOMContentLoaded',function(){initThemeMode();initStabilityGuards();setToday();initDropZone();loadReportSettings();applyAdminSession();initUserProfileForm();applyMenuPermissions();loadAll();startDashboardAutoRefresh();});
 
 function getTodayString(){const d=new Date();const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);return local.toISOString().slice(0,10);}
 function setToday(){const today=getTodayString();['workDate','receiptDate','shipDate','salesDate','masterDate','improveDate','planDate'].forEach(function(id){const el=document.getElementById(id);if(el)el.value=today;});}
@@ -3010,12 +3007,40 @@ function updateUserProfileUi(){
   if(btn)btn.textContent=p&&p.name?('👤 '+p.name+' · '+p.dept+' · '+(p.role||'작업자')):'👤 사용자';
   if(sum)sum.textContent=p&&p.name?('현재 사용자: '+p.name+' / '+p.dept+' / '+(p.role||'작업자')+' / 기기ID '+getDeviceId()+' (추적용)'):'사용자 정보가 없습니다. 상단 사용자 버튼에서 등록하세요.';
 }
+
+const ROLE_OPTIONS_BY_DEPT={
+  '가공':['작업자','반장','일반'],
+  '선반':['작업자','반장','일반'],
+  '용접':['작업자','반장','일반'],
+  '조립':['작업자','반장','일반'],
+  '검사':['작업자','반장','일반'],
+  '포장':['작업자','반장','일반'],
+  '영업':['일반'],
+  '사무직':['일반'],
+  '생산관리':['일반'],
+  '임원':['임원']
+};
+function initUserProfileForm(){
+  const deptEl=document.getElementById('profileDept');
+  if(deptEl)deptEl.addEventListener('change',function(){updateProfileRoleOptions();});
+  updateProfileRoleOptions();
+}
+function updateProfileRoleOptions(selectedRole){
+  const deptEl=document.getElementById('profileDept');
+  const roleEl=document.getElementById('profileRole');
+  if(!deptEl||!roleEl)return;
+  const dept=deptEl.value||'조립';
+  const roles=ROLE_OPTIONS_BY_DEPT[dept]||['작업자'];
+  const prev=selectedRole||roleEl.value||roles[0];
+  roleEl.innerHTML=roles.map(function(r){return '<option value="'+r+'">'+r+'</option>';}).join('');
+  roleEl.value=roles.indexOf(prev)>=0?prev:roles[0];
+}
 function openUserSetup(){
   const p=getUserProfile()||{};
   const box=document.getElementById('userSetupModal');
-  if(document.getElementById('profileName'))document.getElementById('profileName').value=p.name||'';
-  if(document.getElementById('profileDept'))document.getElementById('profileDept').value=p.dept||'조립';
-  if(document.getElementById('profileRole'))document.getElementById('profileRole').value=p.role||'작업자';
+  if(document.getElementById('profileName'))document.getElementById('profileName').value=p.name||localStorage.getItem('dolphinLastUserName')||'';
+  if(document.getElementById('profileDept'))document.getElementById('profileDept').value=p.dept||localStorage.getItem('dolphinLastDept')||'조립';
+  updateProfileRoleOptions(p.role||localStorage.getItem('dolphinLastRole')||'작업자');
   if(box)box.classList.remove('hidden');
 }
 function closeUserSetup(){
@@ -3029,6 +3054,7 @@ function saveUserProfile(){
   const msg=document.getElementById('profileMsg');
   if(!name){if(msg)msg.textContent='이름을 입력하세요.';return;}
   const profile={name:name,dept:dept,role:role,deviceId:getDeviceId(),savedAt:new Date().toISOString()};
+  localStorage.setItem('dolphinLastUserName',name); localStorage.setItem('dolphinLastDept',dept); localStorage.setItem('dolphinLastRole',role);
   setUserProfile(profile);
   if(msg)msg.textContent='저장되었습니다.';
   try{
@@ -3040,7 +3066,7 @@ function saveUserProfile(){
 }
 function ensureUserProfile(){
   updateUserProfileUi();
-  if(!getUserProfile())setTimeout(openUserSetup,500);
+  applyMenuPermissions();
 }
 function activeProcessForProfile(){
   const p=getUserProfile()||{};
@@ -3066,11 +3092,13 @@ const MENU_DEFS=[
 ];
 function defaultMenusForRole(dept, role){
   dept=String(dept||'').trim(); role=String(role||'작업자').trim();
-  if(role==='임원')return ['dashboard','productionPlan','currentWork','history','printSummary'];
-  if(dept==='생산관리')return ['dashboard','sales','worklog','productionPlan','currentWork','receipt','shipment','improvement','history','flow','printSummary','improvementAdmin'];
-  if(dept==='영업')return ['sales','improvement'];
-  if(role==='반장')return ['dashboard','worklog','productionPlan','currentWork','improvement'];
-  return ['currentWork','worklog'];
+  if(dept==='생산관리')return ['dashboard','sales','worklog','productionPlan','currentWork','receipt','shipment','improvement','history','flow','printSummary','improvementAdmin','csv'];
+  if(dept==='임원'||role==='임원')return ['dashboard','productionPlan','history','printSummary','improvement'];
+  if(dept==='영업')return ['dashboard','sales','shipment','improvement'];
+  if(dept==='사무직')return ['dashboard','worklog','history','improvement'];
+  if(role==='반장')return ['dashboard','worklog','productionPlan','currentWork','receipt','improvement'];
+  if(role==='일반')return ['dashboard','currentWork','receipt','worklog','improvement'];
+  return ['dashboard','currentWork','receipt','worklog','improvement'];
 }
 function defaultMenusForDept(dept){ return defaultMenusForRole(dept,'작업자'); }
 function findRegisteredUser(){
@@ -3087,9 +3115,10 @@ function findRoleAccess(dept,role){
 }
 function currentAllowedMenus(){
   if(currentIsAdmin())return MENU_DEFS.map(function(m){return m.page;}).concat(['csv','improvementAdmin']);
-  const p=getUserProfile()||{};
+  const p=getUserProfile();
+  if(!p||!p.name)return ['dashboard'];
   const u=findRegisteredUser();
-  if(u && String(u.useYn||'Y').toUpperCase()==='N')return [];
+  if(u && String(u.useYn||'Y').toUpperCase()==='N')return ['dashboard'];
   const ra=findRoleAccess(p.dept||'', p.role||'작업자');
   if(ra&&ra.menuPerms)return String(ra.menuPerms).split(',').map(function(x){return x.trim();}).filter(Boolean);
   return defaultMenusForRole(p.dept||'', p.role||'작업자');

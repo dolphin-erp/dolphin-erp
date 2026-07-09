@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dolphin ERP v15.15</title>
+  <title>Dolphin ERP v16.0</title>
   <!-- Dolphin ERP v12: Cloudflare/GitHub frontend -->
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -835,6 +835,26 @@
     body:not(.dark-mode) #productionPlan .metric .m-value{color:#0f172a!important;}
 
     @media(max-width:800px){.header-actions{width:100%;justify-content:flex-start}.theme-toggle{font-size:12px;padding:6px 10px}}
+
+/* v16.0 user/current work */
+.user-profile-btn{border:0;border-radius:999px;padding:7px 11px;background:#e0f2fe;color:#075985;font-weight:900;cursor:pointer}
+body.dark-mode .user-profile-btn{background:#0f172a;color:#bfdbfe;border:1px solid #334155}
+.user-modal{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+.user-modal.hidden{display:none!important}
+.user-modal-box{background:white;color:#0f172a;border-radius:18px;padding:22px;max-width:560px;width:100%;box-shadow:0 30px 80px rgba(15,23,42,.35)}
+body.dark-mode .user-modal-box{background:#111827;color:#f8fafc;border:1px solid #334155}
+.profile-summary{font-weight:900;background:#f1f5f9;border:1px solid #dbe4f0;border-radius:12px;padding:12px;margin-bottom:12px;color:#334155}
+body.dark-mode .profile-summary{background:#0f172a;border-color:#334155;color:#cbd5e1}
+.work-state{display:inline-block;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:900}
+.work-state.busy{background:#dcfce7;color:#166534}
+.work-state.idle{background:#e5e7eb;color:#374151}
+body.dark-mode .work-state.busy{background:#14532d;color:#bbf7d0}
+body.dark-mode .work-state.idle{background:#374151;color:#e5e7eb}
+.plan-expected{color:#374151!important;font-weight:900!important}
+body.dark-mode .plan-expected{color:#cbd5e1!important;font-weight:900!important}
+.metric.expected .m-value{color:#475569!important;font-weight:900}
+body.dark-mode .metric.expected .m-value{color:#cbd5e1!important}
+
 </style>
 </head>
 <body>
@@ -842,18 +862,53 @@
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v15.15 · 2026-07-08 · 용접 필요수량</span>
+    <span class="version-badge">v16.0 · 2026-07-08 · 사용자/작업현황</span>
+    <button type="button" id="userProfileBtn" class="user-profile-btn" onclick="openUserSetup()" title="사용자 등록/변경">👤 사용자</button>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
     <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
   </span>
 </header>
 <main>
   <datalist id="workerNameList"></datalist>
+
+<div id="userSetupModal" class="user-modal hidden no-print">
+  <div class="user-modal-box">
+    <h2>최초 사용자 등록</h2>
+    <p class="note">이 브라우저에서 사용할 이름과 부서를 저장합니다. IP가 바뀌어도 브라우저 기준으로 유지됩니다.</p>
+    <div class="form-grid">
+      <div>
+        <label>이름</label>
+        <input id="profileName" placeholder="예: 홍길동">
+      </div>
+      <div>
+        <label>부서</label>
+        <select id="profileDept">
+          <option value="생산관리">생산관리</option>
+          <option value="가공">가공</option>
+          <option value="선반">선반</option>
+          <option value="용접">용접</option>
+          <option value="조립">조립</option>
+          <option value="검사">검사</option>
+          <option value="포장">포장</option>
+          <option value="출하">출하</option>
+          <option value="영업">영업</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+      <button class="secondary-btn" onclick="closeUserSetup()">나중에</button>
+      <button class="submit-btn" onclick="saveUserProfile()">저장</button>
+    </div>
+    <div class="message" id="profileMsg"></div>
+  </div>
+</div>
+
   <div class="tabs">
     <button class="active" onclick="openPage('dashboard',this)">현황판</button>
     <button onclick="openPage('sales',this)">영업요청</button>
     <button onclick="openPage('worklog',this)">작업일보</button>
     <button onclick="openPage('productionPlan',this)">생산계획</button>
+    <button onclick="openPage('currentWork',this)">현재작업</button>
     <button onclick="openPage('receipt',this)">입고증</button>
     <button onclick="openPage('shipment',this)">출하증</button>
     <button onclick="openPage('improvement',this)">개선요청</button>
@@ -863,6 +918,7 @@
     <button class="admin-only hidden" onclick="openPage('printSummary',this)">보고용</button>
     <button class="admin-only hidden" onclick="openPage('improvementAdmin',this)">개선관리</button>
       <button id="adminLoginBtn" class="admin-btn" onclick="showAdminLogin()">관리자</button>
+    <button id="userAdminTabBtn" class="admin-only hidden" onclick="openPage('userAdmin',this)">사용자관리</button>
     <button id="masterTabBtn" class="admin-only hidden" onclick="openPage('master',this)">마스터</button>
   </div>
 
@@ -1108,7 +1164,70 @@
     <div class="card"><h2>금일 작업일보 입력 로그</h2><div class="table-wrap"><table><thead><tr><th>등록일시</th><th>제품명</th><th>공정</th><th>수량</th><th>작업자</th><th>비고</th></tr></thead><tbody id="todayWorkLogBody"></tbody></table></div></div>
   </section>
 
-  <section id="receipt" class="page">
+  
+<section id="currentWork" class="page">
+  <div class="card">
+    <h2>현재 작업</h2>
+    <div class="note">작업 시작/종료가 아니라 현재 무엇을 하고 있는지만 변경합니다. 여러 명이 같은 작업을 선택해도 됩니다.</div>
+    <div class="profile-summary" id="currentProfileSummary">사용자 정보 없음</div>
+    <div class="form-grid">
+      <div>
+        <label>상태</label>
+        <select id="currentWorkState" onchange="toggleCurrentWorkInputs()">
+          <option value="대기">대기</option>
+          <option value="작업중">작업중</option>
+        </select>
+      </div>
+      <div>
+        <label>공정</label>
+        <select id="currentWorkProcess">
+          <option value="가공">가공</option>
+          <option value="선반">선반</option>
+          <option value="용접">용접</option>
+          <option value="조립">조립</option>
+          <option value="검사">검사</option>
+          <option value="포장">포장</option>
+          <option value="출하">출하</option>
+        </select>
+      </div>
+      <div>
+        <label>제품</label>
+        <select id="currentWorkProduct"></select>
+      </div>
+      <div>
+        <label>비고</label>
+        <input id="currentWorkMemo" placeholder="선택 입력">
+      </div>
+    </div>
+    <button id="currentWorkSaveBtn" class="submit-btn" onclick="saveCurrentWorkUI()">현재 작업 저장</button>
+    <span class="message" id="currentWorkMsg"></span>
+  </div>
+  <div class="card">
+    <h2>작업자 현재 현황</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>작업자</th><th>부서</th><th>상태</th><th>현재작업</th><th>최근변경</th><th>비고</th></tr></thead>
+        <tbody id="currentWorkBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="userAdmin" class="page">
+  <div class="card">
+    <h2>사용자 관리</h2>
+    <div class="note">사용자 등록 현황입니다. 부서별 화면 제한은 이후 이 사용자 정보를 기준으로 확장합니다.</div>
+    <button class="refresh-btn" onclick="loadUsersAdmin()">사용자 새로고침</button>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>이름</th><th>부서</th><th>사용여부</th><th>기기ID</th><th>등록일시</th><th>최근접속</th></tr></thead>
+        <tbody id="userAdminBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="receipt" class="page">
     <div class="card"><h2>입고 선택용 공정재고 현황</h2><div class="note">재고 숫자를 클릭하면 해당 위치가 FROM으로 선택됩니다. 빨간색은 FROM, 초록색은 TO입니다.</div><div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th rowspan="2">요청잔량</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th></tr><tr><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="receiptStockBody"></tbody></table></div></div>
     <div class="card"><h2>입고증 작성</h2><div class="form-grid"><div><label>입고일</label><input type="date" id="receiptDate"></div><div><label>입고방식</label><select id="receiptMode" onchange="changeReceiptMode()"><option value="auto">자동입고</option><option value="manual">수동입고/반송</option></select></div><div><label>제품</label><select id="receiptProduct" onchange="updateReceiptProcessAndQty()"></select></div><div id="autoProcessBox"><label>기준공정</label><select id="receiptProcess" onchange="setReceiptQtyToAvailable(); updateReceiptPreview();"></select></div><div id="manualTypeBox" class="hidden"><label>입고구분</label><input type="text" id="manualReceiptType" placeholder="예: 반송입고, 초기재고"></div><div id="manualFromBox" class="hidden"><label>FROM위치</label><select id="manualFromLocation" onchange="setReceiptQtyToAvailable(); updateReceiptPreview();"></select></div><div id="manualToBox" class="hidden"><label>TO위치</label><select id="manualToLocation" onchange="updateReceiptPreview()"></select></div><div id="autoManualToBox"><label>예외 TO위치</label><select id="autoManualToLocation" onchange="updateReceiptPreview()"><option value="">자동 노선 그대로 사용</option></select></div><div><label>수량</label><input type="number" id="receiptQty" min="1" value="1"><button type="button" class="small-btn" onclick="fillReceiptAllQty()">현재 FROM 재고 전량 입력</button></div><div><label>작성자</label><input type="text" id="receiptWriter" list="workerNameList"></div><div class="full"><div class="route-box" id="receiptPreview">자동 노선 미리보기</div></div><div class="full"><label>비고</label><textarea id="receiptMemo"></textarea></div></div><button class="submit-btn" id="receiptSubmitBtn" onclick="saveReceipt()">입고증 등록</button><div class="message" id="receiptMsg"></div></div>
   </section>
@@ -1475,6 +1594,8 @@ function globalRefreshCurrentPage(){
     if(page==='sales'){loadSalesRequests(); return done();}
     if(page==='worklog'){loadDashboard(null,{silent:true}); loadTodayWorkSummary(); return done();}
     if(page==='productionPlan'){loadProductionPlan(); return done();}
+    if(page==='currentWork'){loadCurrentWorkPage(); return done();}
+    if(page==='userAdmin'){loadUsersAdmin(); return done();}
     if(page==='receipt'){loadDashboard(done,{silent:true}); return;}
     if(page==='shipment'){loadDashboard(null,{silent:true}); loadSalesRequests(); return done();}
     if(page==='history'){loadHistory(); return done();}
@@ -1505,8 +1626,8 @@ function refreshAfterSave(){
   if(document.getElementById('history')&&document.getElementById('history').classList.contains('active')) safeLoad(loadHistory);
   if(document.getElementById('productionPlan')&&document.getElementById('productionPlan').classList.contains('active')) safeLoad(loadProductionPlan);
 }
-function openPage(pageId,button){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('active');});document.getElementById(pageId).classList.add('active');button.classList.add('active');if(pageId==='dashboard')loadDashboard();if(pageId==='history')loadHistory();if(pageId==='flow')loadFlowTable();if(pageId==='worklog')loadTodayWorkSummary();if(pageId==='productionPlan')loadProductionPlan();if(pageId==='sales')loadSalesRequests();if(pageId==='improvement')loadImprovementRequests();if(pageId==='improvementAdmin')loadImprovementRequests();if(pageId==='master'){fillMasterSelects();renderMasterStockTable();}if(pageId==='printSummary')renderPrintSummary();}
-function loadAll(){google.script.run.withSuccessHandler(function(data){APP.products=data.products||[];APP.flows=data.flows||[];APP.workers=data.workers||[];APP.locations=data.locations||[];APP.salesRequests=data.salesRequests||[];['workProduct','receiptProduct','shipProduct','salesProduct','masterProduct'].forEach(fillProductSelect);fillLocationSelect('manualFromLocation',true);fillLocationSelect('manualToLocation',false);fillLocationSelect('autoManualToLocation',true,'자동 노선 그대로 사용');fillWorkerDatalist();fillLocationSelect('shipLocation',false);fillLocationSelect('masterLocation',false);updateWorkProcess();restoreWorkLogState();bindWorkLogStateEvents();updateReceiptProcess();loadDashboard();loadSalesRequests();loadFlowTable();loadTodayWorkSummary();loadProductionPlan();}).withFailureHandler(function(err){handleQueryFailure(err,'초기 데이터',function(){loadAll();});}).getInitialData();}
+function openPage(pageId,button){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('active');});document.getElementById(pageId).classList.add('active');button.classList.add('active');if(pageId==='dashboard')loadDashboard();if(pageId==='history')loadHistory();if(pageId==='flow')loadFlowTable();if(pageId==='worklog')loadTodayWorkSummary();if(pageId==='productionPlan')loadProductionPlan();if(pageId==='currentWork')loadCurrentWorkPage();if(pageId==='userAdmin')loadUsersAdmin();if(pageId==='sales')loadSalesRequests();if(pageId==='improvement')loadImprovementRequests();if(pageId==='improvementAdmin')loadImprovementRequests();if(pageId==='master'){fillMasterSelects();renderMasterStockTable();}if(pageId==='printSummary')renderPrintSummary();}
+function loadAll(){google.script.run.withSuccessHandler(function(data){APP.products=data.products||[];APP.flows=data.flows||[];APP.workers=data.workers||[];APP.locations=data.locations||[];APP.salesRequests=data.salesRequests||[];APP.users=data.users||[];['workProduct','receiptProduct','shipProduct','salesProduct','masterProduct','currentWorkProduct'].forEach(fillProductSelect);fillLocationSelect('manualFromLocation',true);fillLocationSelect('manualToLocation',false);fillLocationSelect('autoManualToLocation',true,'자동 노선 그대로 사용');fillWorkerDatalist();fillLocationSelect('shipLocation',false);fillLocationSelect('masterLocation',false);updateWorkProcess();restoreWorkLogState();bindWorkLogStateEvents();updateReceiptProcess();loadDashboard();loadSalesRequests();loadFlowTable();loadTodayWorkSummary();loadProductionPlan();ensureUserProfile();}).withFailureHandler(function(err){handleQueryFailure(err,'초기 데이터',function(){loadAll();});}).getInitialData();}
 function fillProductSelect(id){const select=document.getElementById(id);if(!select)return;select.innerHTML='';APP.products.forEach(function(p){const o=document.createElement('option');o.value=p.code;o.textContent=p.name;select.appendChild(o);});}
 function fillLocationSelect(id,allowBlank,blankText){const select=document.getElementById(id);if(!select)return;select.innerHTML='';if(allowBlank){const o=document.createElement('option');o.value='';o.textContent=blankText||'선택 안 함';select.appendChild(o);}APP.locations.forEach(function(loc){const o=document.createElement('option');o.value=loc.name;o.textContent=loc.floor+' - '+displayLocationName(loc.name);select.appendChild(o);});}
 function getFlowsByProduct(productCode){return APP.flows.filter(function(f){return f.productCode===productCode;});}
@@ -1751,8 +1872,8 @@ function updatePlanDiff(input){
   setPlanReasonEnabled(row,diff!==0);
 }
 function assemblyAvailableQty(r){return qtyVal(r.weldStock)+qtyVal(r.assyWorkStock);}
-function inspectionAvailableQty(r){return qtyVal(r.assyDoneStock)+qtyVal(r.inspWorkStock)+qtyVal(r.assemblyPlanQty);}
-function packingAvailableQty(r){return qtyVal(r.inspDoneStock)+qtyVal(r.packWorkStock)+qtyVal(r.inspectionPlanQty);}
+function inspectionAvailableQty(r){return qtyVal(r.assyDoneStock)+qtyVal(r.inspWorkStock);}
+function packingAvailableQty(r){return qtyVal(r.inspDoneStock)+qtyVal(r.packWorkStock);}
 function downstreamAfterAssemblyQty(r){
   return qtyVal(r.assyDoneStock)+qtyVal(r.inspWorkStock)+qtyVal(r.inspDoneStock)+qtyVal(r.packWorkStock)+qtyVal(r.packDoneStock)+qtyVal(r.fgStock);
 }
@@ -1810,9 +1931,9 @@ function renderPlanInputTable(rows,process){
   const displayRows=planDisplayRows(rows,process);
   const sourceCols={
     '용접':['용접필요'],
-    '조립':['용접완료','조립대기','조립가능'],
-    '검사':['조립완료','검사대기','오늘 조립계획','검사가능'],
-    '포장':['검사완료','포장대기','오늘 검사계획','포장가능']
+    '조립':['용접 오늘계획','용접완료','조립대기','조립가능'],
+    '검사':['조립 오늘계획','조립완료','검사대기','검사가능'],
+    '포장':['검사 오늘계획','검사완료','포장대기','포장가능']
   }[process]||[];
   const sourceSpan=sourceCols.length;
 
@@ -1848,13 +1969,13 @@ function renderPlanInputTable(rows,process){
       html+='<td class="group-source"><span class="plan-num-avail">'+weldNeed+'</span></td>';
     }
     if(process==='조립'){
-      html+='<td class="group-source">'+(r.weldStock||0)+'</td><td class="group-source">'+(r.assyWorkStock||0)+'</td><td class="group-source"><span class="plan-num-avail">'+assemblyAvailableQty(r)+'</span></td>';
+      html+='<td class="group-source plan-expected">'+(r.weldingPlanQty||0)+'</td><td class="group-source">'+(r.weldStock||0)+'</td><td class="group-source">'+(r.assyWorkStock||0)+'</td><td class="group-source"><span class="plan-num-avail">'+assemblyAvailableQty(r)+'</span></td>';
     }
     if(process==='검사'){
-      html+='<td class="group-source">'+(r.assyDoneStock||0)+'</td><td class="group-source">'+(r.inspWorkStock||0)+'</td><td class="group-source">'+(r.assemblyPlanQty||0)+'</td><td class="group-source"><span class="plan-num-avail">'+inspectionAvailableQty(r)+'</span></td>';
+      html+='<td class="group-source plan-expected">'+(r.assemblyPlanQty||0)+'</td><td class="group-source">'+(r.assyDoneStock||0)+'</td><td class="group-source">'+(r.inspWorkStock||0)+'</td><td class="group-source"><span class="plan-num-avail">'+inspectionAvailableQty(r)+'</span></td>';
     }
     if(process==='포장'){
-      html+='<td class="group-source">'+(r.inspDoneStock||0)+'</td><td class="group-source">'+(r.packWorkStock||0)+'</td><td class="group-source">'+(r.inspectionPlanQty||0)+'</td><td class="group-source"><span class="plan-num-avail">'+packingAvailableQty(r)+'</span></td>';
+      html+='<td class="group-source plan-expected">'+(r.inspectionPlanQty||0)+'</td><td class="group-source">'+(r.inspDoneStock||0)+'</td><td class="group-source">'+(r.packWorkStock||0)+'</td><td class="group-source"><span class="plan-num-avail">'+packingAvailableQty(r)+'</span></td>';
     }
 
     html+='<td class="group-plan"><span class="plan-num-recommend">'+rec+'</span></td>';
@@ -1913,8 +2034,8 @@ function renderProcessMonitorTable(rows,process){
   let head='<tr><th>우선</th><th>제품</th><th>요청잔량</th><th>필요수량</th>';
   if(process==='용접') head+='<th>완제품</th><th>오늘계획</th><th>실적</th><th>달성률</th><th>메모</th>';
   if(process==='조립') head+='<th>용접완료</th><th>조립대기</th><th>현재가능</th><th>오늘계획</th><th>실적</th><th>달성률</th><th>메모</th>';
-  if(process==='검사') head+='<th>조립완료</th><th>검사대기</th><th>현재가능</th><th>오늘 조립계획</th><th>오늘 최대가능</th><th>오늘계획</th><th>실적</th><th>달성률</th><th>메모</th>';
-  if(process==='포장') head+='<th>검사완료</th><th>포장대기</th><th>현재가능</th><th>오늘 검사계획</th><th>오늘 최대가능</th><th>오늘계획</th><th>실적</th><th>달성률</th><th>메모</th>';
+  if(process==='검사') head+='<th>조립 오늘계획</th><th>조립완료</th><th>검사대기</th><th>검사가능</th><th>오늘계획</th><th>실적</th><th>달성률</th><th>메모</th>';
+  if(process==='포장') head+='<th>검사 오늘계획</th><th>검사완료</th><th>포장대기</th><th>포장가능</th><th>오늘계획</th><th>실적</th><th>달성률</th><th>메모</th>';
   head+='</tr>';
   const body=planDisplayRows(rows,process).map(function(r){
     const p=planQty(r,process);
@@ -1931,12 +2052,12 @@ function renderProcessMonitorTable(rows,process){
       const current=(qtyVal(r.assyDoneStock)+qtyVal(r.inspWorkStock));
       const add=qtyVal(r.assemblyPlanQty);
       const max=current+add;
-      html+='<td>'+(r.assyDoneStock||0)+'</td><td>'+(r.inspWorkStock||0)+'</td><td class="num-strong">'+current+'</td><td>'+add+'</td><td class="num-strong">'+max+'</td><td class="num-plan">'+p+'</td><td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
+      html+='<td class="plan-expected">'+add+'</td><td>'+(r.assyDoneStock||0)+'</td><td>'+(r.inspWorkStock||0)+'</td><td class="num-strong">'+current+'</td><td class="num-plan">'+p+'</td><td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
     }else{
       const current=(qtyVal(r.inspDoneStock)+qtyVal(r.packWorkStock));
       const add=qtyVal(r.inspectionPlanQty);
       const max=current+add;
-      html+='<td>'+(r.inspDoneStock||0)+'</td><td>'+(r.packWorkStock||0)+'</td><td class="num-strong">'+current+'</td><td>'+add+'</td><td class="num-strong">'+max+'</td><td class="num-plan">'+p+'</td><td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
+      html+='<td class="plan-expected">'+add+'</td><td>'+(r.inspDoneStock||0)+'</td><td>'+(r.packWorkStock||0)+'</td><td class="num-strong">'+current+'</td><td class="num-plan">'+p+'</td><td>'+a+'</td><td>'+ratePill(rate,p)+'</td><td class="memo">'+escapeHtml(planMemo(r,process))+'</td>';
     }
     return html+'</tr>';
   }).join('');
@@ -1951,8 +2072,8 @@ function ratePill(rate,plan){
 function monitorMetrics(r,process){
   if(process==='용접')return '<div class="metric-grid">'+metric('요청잔량',r.requestRemainQty||0,'highlight')+metric('완제품',r.fgStock||0,'')+metric('오늘계획',planQty(r,process),'highlight')+metric('실적',planActual(r,process),'')+'</div>';
   if(process==='조립')return '<div class="metric-grid">'+metric('용접완료',r.weldStock||0,'highlight')+metric('조립대기',r.assyWorkStock||0,'')+metric('오늘 조립 가능',assemblyAvailableQty(r),'highlight')+metric('오늘계획',planQty(r,process),'highlight')+metric('실적',planActual(r,process),'')+metric('요청잔량',r.requestRemainQty||0,'')+'</div>';
-  if(process==='검사')return '<div class="metric-grid">'+metric('조립완료',r.assyDoneStock||0,'highlight')+metric('검사대기',r.inspWorkStock||0,'')+metric('오늘 조립계획',r.assemblyPlanQty||0,'highlight')+metric('오늘 검사 가능',inspectionAvailableQty(r),'highlight')+metric('오늘계획',planQty(r,process),'highlight')+metric('실적',planActual(r,process),'')+'</div>';
-  return '<div class="metric-grid">'+metric('검사완료',r.inspDoneStock||0,'highlight')+metric('포장대기',r.packWorkStock||0,'')+metric('오늘 검사계획',r.inspectionPlanQty||0,'highlight')+metric('오늘 포장 가능',packingAvailableQty(r),'highlight')+metric('오늘계획',planQty(r,process),'highlight')+metric('실적',planActual(r,process),'')+'</div>';
+  if(process==='검사')return '<div class="metric-grid">'+metric('조립완료',r.assyDoneStock||0,'highlight')+metric('검사대기',r.inspWorkStock||0,'')+metric('조립 오늘계획(예정)',r.assemblyPlanQty||0,'expected')+metric('검사가능',inspectionAvailableQty(r),'highlight')+metric('오늘계획',planQty(r,process),'highlight')+metric('실적',planActual(r,process),'')+'</div>';
+  return '<div class="metric-grid">'+metric('검사완료',r.inspDoneStock||0,'highlight')+metric('포장대기',r.packWorkStock||0,'')+metric('검사 오늘계획(예정)',r.inspectionPlanQty||0,'expected')+metric('포장가능',packingAvailableQty(r),'highlight')+metric('오늘계획',planQty(r,process),'highlight')+metric('실적',planActual(r,process),'')+'</div>';
 }
 function metric(label,value,extra){return '<div class="metric '+(extra||'')+'"><div class="m-label">'+label+'</div><div class="m-value">'+(value||0)+'</div></div>';}
 function progress(rate){const r=Math.max(0,Math.min(100,rate||0)); const cls=r>=80?'ok':r>=40?'warn':'bad';return '<div class="progress-wrap"><div class="progress-text"><span>달성률</span><span>'+r+'%</span></div><div class="progress-bar"><div class="progress-fill '+cls+'" style="width:'+r+'%"></div></div></div>';}
@@ -2803,6 +2924,130 @@ function saveImprovementAdmin(requestId, idx, btn) {
     .updateImprovementRequest(data);
 }
 
+
+/* v16.0 사용자 등록 / 현재작업 */
+function getDeviceId(){
+  let id=localStorage.getItem('dolphinDeviceId');
+  if(!id){
+    id='DEV-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
+    localStorage.setItem('dolphinDeviceId',id);
+  }
+  return id;
+}
+function getUserProfile(){
+  try{return JSON.parse(localStorage.getItem('dolphinUserProfile')||'null')||null;}catch(e){return null;}
+}
+function setUserProfile(p){
+  localStorage.setItem('dolphinUserProfile',JSON.stringify(p||{}));
+  updateUserProfileUi();
+}
+function updateUserProfileUi(){
+  const p=getUserProfile();
+  const btn=document.getElementById('userProfileBtn');
+  const sum=document.getElementById('currentProfileSummary');
+  if(btn)btn.textContent=p&&p.name?('👤 '+p.name+' · '+p.dept):'👤 사용자';
+  if(sum)sum.textContent=p&&p.name?('현재 사용자: '+p.name+' / '+p.dept+' / 기기ID '+getDeviceId()):'사용자 정보가 없습니다. 상단 사용자 버튼에서 등록하세요.';
+}
+function openUserSetup(){
+  const p=getUserProfile()||{};
+  const box=document.getElementById('userSetupModal');
+  if(document.getElementById('profileName'))document.getElementById('profileName').value=p.name||'';
+  if(document.getElementById('profileDept'))document.getElementById('profileDept').value=p.dept||'생산관리';
+  if(box)box.classList.remove('hidden');
+}
+function closeUserSetup(){
+  const box=document.getElementById('userSetupModal');
+  if(box)box.classList.add('hidden');
+}
+function saveUserProfile(){
+  const name=(document.getElementById('profileName').value||'').trim();
+  const dept=(document.getElementById('profileDept').value||'').trim();
+  const msg=document.getElementById('profileMsg');
+  if(!name){if(msg)msg.textContent='이름을 입력하세요.';return;}
+  const profile={name:name,dept:dept,deviceId:getDeviceId(),savedAt:new Date().toISOString()};
+  setUserProfile(profile);
+  if(msg)msg.textContent='저장되었습니다.';
+  try{
+    google.script.run.withSuccessHandler(function(){})
+      .withFailureHandler(function(){})
+      .upsertErpUser(profile);
+  }catch(e){}
+  setTimeout(closeUserSetup,300);
+}
+function ensureUserProfile(){
+  updateUserProfileUi();
+  if(!getUserProfile())setTimeout(openUserSetup,500);
+}
+function loadCurrentWorkPage(){
+  updateUserProfileUi();
+  fillProductSelect('currentWorkProduct');
+  const p=getUserProfile();
+  if(p&&document.getElementById('currentWorkProcess'))document.getElementById('currentWorkProcess').value=p.dept||'조립';
+  toggleCurrentWorkInputs();
+  loadCurrentWorkList();
+}
+function toggleCurrentWorkInputs(){
+  const state=document.getElementById('currentWorkState')?document.getElementById('currentWorkState').value:'대기';
+  ['currentWorkProcess','currentWorkProduct','currentWorkMemo'].forEach(function(id){
+    const el=document.getElementById(id);
+    if(el)el.disabled=(state==='대기'&&id!=='currentWorkMemo');
+  });
+}
+function saveCurrentWorkUI(){
+  const profile=getUserProfile();
+  const msg=document.getElementById('currentWorkMsg');
+  if(!profile||!profile.name){openUserSetup();return;}
+  const state=document.getElementById('currentWorkState').value;
+  const productCode=(document.getElementById('currentWorkProduct')||{}).value||'';
+  const product=(APP.products||[]).find(function(p){return p.code===productCode;})||{};
+  const process=document.getElementById('currentWorkProcess').value;
+  const payload={
+    name:profile.name,
+    dept:profile.dept,
+    deviceId:getDeviceId(),
+    state:state,
+    process:state==='대기'?'':process,
+    productCode:state==='대기'?'':productCode,
+    productName:state==='대기'?'':(product.name||''),
+    memo:(document.getElementById('currentWorkMemo').value||'')
+  };
+  if(!beginAction('currentWork','currentWorkSaveBtn','currentWorkMsg','저장 중...','현재 작업 저장 중입니다.'))return;
+  google.script.run.withSuccessHandler(function(){
+    if(msg)msg.textContent='현재 작업이 저장되었습니다.';
+    endAction('currentWork','currentWorkSaveBtn','현재 작업 저장');
+    loadCurrentWorkList();
+  }).withFailureHandler(function(err){endAction('currentWork','currentWorkSaveBtn','현재 작업 저장');showError(err);}).saveCurrentWork(payload);
+}
+function loadCurrentWorkList(){
+  google.script.run.withSuccessHandler(function(rows){
+    renderCurrentWorkTable(rows||[]);
+  }).withFailureHandler(function(err){handleQueryFailure(err,'현재작업 조회',function(){loadCurrentWorkList();});}).getCurrentWorks();
+}
+function renderCurrentWorkTable(rows){
+  const body=document.getElementById('currentWorkBody'); if(!body)return;
+  body.innerHTML='';
+  if(!rows.length){body.innerHTML='<tr><td colspan="6" style="padding:24px;text-align:center;color:#64748b;">현재 작업 등록 내역이 없습니다.</td></tr>';return;}
+  rows.forEach(function(r){
+    const tr=document.createElement('tr');
+    const work=r.state==='대기'?'-':((r.productName||'')+' '+(r.process||''));
+    tr.innerHTML='<td>'+escapeHtml(r.name||'')+'</td><td>'+escapeHtml(r.dept||'')+'</td><td><span class="work-state '+(r.state==='대기'?'idle':'busy')+'">'+escapeHtml(r.state||'')+'</span></td><td>'+escapeHtml(work)+'</td><td>'+escapeHtml(r.updatedAt||'')+'</td><td>'+escapeHtml(r.memo||'')+'</td>';
+    body.appendChild(tr);
+  });
+}
+function loadUsersAdmin(){
+  google.script.run.withSuccessHandler(function(rows){renderUsersAdmin(rows||[]);})
+    .withFailureHandler(function(err){handleQueryFailure(err,'사용자 조회',function(){loadUsersAdmin();});}).getErpUsers();
+}
+function renderUsersAdmin(rows){
+  const body=document.getElementById('userAdminBody'); if(!body)return;
+  body.innerHTML='';
+  if(!rows.length){body.innerHTML='<tr><td colspan="6" style="padding:24px;text-align:center;color:#64748b;">사용자 등록 내역이 없습니다.</td></tr>';return;}
+  rows.forEach(function(r){
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+escapeHtml(r.name||'')+'</td><td>'+escapeHtml(r.dept||'')+'</td><td>'+escapeHtml(r.useYn||'Y')+'</td><td>'+escapeHtml(r.deviceId||'')+'</td><td>'+escapeHtml(r.createdAt||'')+'</td><td>'+escapeHtml(r.lastSeenAt||'')+'</td>';
+    body.appendChild(tr);
+  });
+}
 
 function showError(error){const raw=(error&&error.message)?error.message:String(error||'');let msg=raw;if(/is not defined|ReferenceError|TypeError|SyntaxError/i.test(raw)){msg='처리 중 화면 오류가 발생했습니다. 데이터 반영 여부를 새로고침 후 확인하세요.\n\n상세: '+raw;}alert(msg);}
 </script>

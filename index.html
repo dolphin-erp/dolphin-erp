@@ -921,6 +921,11 @@ body.dark-mode .current-work-table .prod{color:#f8fafc!important}
 body.dark-mode .current-work-table .names{color:#cbd5e1!important}
 body.dark-mode .permission-grid label{background:#0f172a!important;border-color:#334155!important;color:#e5e7eb!important}
 
+
+/* v16.5 role-group permission table */
+.permission-grid.compact{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:6px;align-items:center}
+.role-user-list{max-width:260px;white-space:normal;line-height:1.6;color:#334155}
+body.dark-mode .role-user-list{color:#cbd5e1}
 </style>
 </head>
 <body>
@@ -928,7 +933,7 @@ body.dark-mode .permission-grid label{background:#0f172a!important;border-color:
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v16.4 · 2026-07-09 · 권한구조 변경</span>
+    <span class="version-badge">v16.5 · 2026-07-09 · 역할권한 개선</span>
     <button type="button" id="userProfileBtn" class="user-profile-btn" onclick="openUserSetup()" title="사용자 등록/변경">👤 사용자</button>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
     <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
@@ -1268,11 +1273,11 @@ body.dark-mode .permission-grid label{background:#0f172a!important;border-color:
 <section id="userAdmin" class="page">
   <div class="card">
     <h2>사용자 관리</h2>
-    <div class="note">부서+직책 기본 권한을 적용하고, 필요한 사용자만 예외 메뉴를 체크로 조정합니다. 관리자 기능은 비밀번호 진입 후 사용할 수 있습니다.</div>
+    <div class="note">부서+직책 조합별로 보이는 메뉴를 관리합니다. 작업자 개인별로 60명씩 설정하지 않고, 예: 조립+작업자 / 조립+반장 기준으로 일괄 적용합니다. 관리자 기능은 비밀번호 진입 후 사용할 수 있습니다.</div>
     <button class="refresh-btn" onclick="loadUsersAdmin()">사용자 새로고침</button>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>이름</th><th>부서</th><th>직책</th><th>사용여부</th><th>관리자</th><th>보이는 메뉴</th><th>기기ID</th><th>최근접속</th><th>저장</th></tr></thead>
+        <thead><tr><th>권한그룹</th><th>부서</th><th>직책</th><th>등록 사용자</th><th>보이는 메뉴</th><th>저장</th></tr></thead>
         <tbody id="userAdminBody"></tbody>
       </table>
     </div>
@@ -1679,7 +1684,7 @@ function refreshAfterSave(){
   if(document.getElementById('productionPlan')&&document.getElementById('productionPlan').classList.contains('active')) safeLoad(loadProductionPlan);
 }
 function openPage(pageId,button){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('active');});document.getElementById(pageId).classList.add('active');button.classList.add('active');if(pageId==='dashboard')loadDashboard();if(pageId==='history')loadHistory();if(pageId==='flow')loadFlowTable();if(pageId==='worklog')loadTodayWorkSummary();if(pageId==='productionPlan'){setDefaultPlanProcessForProfile();loadProductionPlan();}if(pageId==='currentWork')loadCurrentWorkPage();if(pageId==='userAdmin')loadUsersAdmin();if(pageId==='sales')loadSalesRequests();if(pageId==='improvement')loadImprovementRequests();if(pageId==='improvementAdmin')loadImprovementRequests();if(pageId==='master'){fillMasterSelects();renderMasterStockTable();}if(pageId==='printSummary')renderPrintSummary();}
-function loadAll(){google.script.run.withSuccessHandler(function(data){APP.products=data.products||[];APP.flows=data.flows||[];APP.workers=data.workers||[];APP.locations=data.locations||[];APP.salesRequests=data.salesRequests||[];APP.users=data.users||[];['workProduct','receiptProduct','shipProduct','salesProduct','masterProduct','currentWorkProduct'].forEach(fillProductSelect);fillLocationSelect('manualFromLocation',true);fillLocationSelect('manualToLocation',false);fillLocationSelect('autoManualToLocation',true,'자동 노선 그대로 사용');fillWorkerDatalist();fillLocationSelect('shipLocation',false);fillLocationSelect('masterLocation',false);updateWorkProcess();restoreWorkLogState();bindWorkLogStateEvents();updateReceiptProcess();loadDashboard();loadSalesRequests();loadFlowTable();loadTodayWorkSummary();loadProductionPlan();ensureUserProfile();applyMenuPermissions();}).withFailureHandler(function(err){handleQueryFailure(err,'초기 데이터',function(){loadAll();});}).getInitialData();}
+function loadAll(){google.script.run.withSuccessHandler(function(data){APP.products=data.products||[];APP.flows=data.flows||[];APP.workers=data.workers||[];APP.locations=data.locations||[];APP.salesRequests=data.salesRequests||[];APP.users=data.users||[];APP.roleAccess=data.roleAccess||[];['workProduct','receiptProduct','shipProduct','salesProduct','masterProduct','currentWorkProduct'].forEach(fillProductSelect);fillLocationSelect('manualFromLocation',true);fillLocationSelect('manualToLocation',false);fillLocationSelect('autoManualToLocation',true,'자동 노선 그대로 사용');fillWorkerDatalist();fillLocationSelect('shipLocation',false);fillLocationSelect('masterLocation',false);updateWorkProcess();restoreWorkLogState();bindWorkLogStateEvents();updateReceiptProcess();loadDashboard();loadSalesRequests();loadFlowTable();loadTodayWorkSummary();loadProductionPlan();ensureUserProfile();applyMenuPermissions();}).withFailureHandler(function(err){handleQueryFailure(err,'초기 데이터',function(){loadAll();});}).getInitialData();}
 function fillProductSelect(id){const select=document.getElementById(id);if(!select)return;select.innerHTML='';APP.products.forEach(function(p){const o=document.createElement('option');o.value=p.code;o.textContent=p.name;select.appendChild(o);});}
 function fillLocationSelect(id,allowBlank,blankText){const select=document.getElementById(id);if(!select)return;select.innerHTML='';if(allowBlank){const o=document.createElement('option');o.value='';o.textContent=blankText||'선택 안 함';select.appendChild(o);}APP.locations.forEach(function(loc){const o=document.createElement('option');o.value=loc.name;o.textContent=loc.floor+' - '+displayLocationName(loc.name);select.appendChild(o);});}
 function getFlowsByProduct(productCode){return APP.flows.filter(function(f){return f.productCode===productCode;});}
@@ -3074,12 +3079,19 @@ function findRegisteredUser(){
     return p.name && u.name===p.name && String(u.dept||'')===String(p.dept||'') && String(u.role||'작업자')===String(p.role||'작업자');
   })||null;
 }
+function findRoleAccess(dept,role){
+  dept=String(dept||'').trim(); role=String(role||'작업자').trim();
+  return (APP.roleAccess||[]).find(function(r){
+    return String(r.dept||'').trim()===dept && String(r.role||'작업자').trim()===role;
+  })||null;
+}
 function currentAllowedMenus(){
   if(currentIsAdmin())return MENU_DEFS.map(function(m){return m.page;}).concat(['csv','improvementAdmin']);
   const p=getUserProfile()||{};
   const u=findRegisteredUser();
   if(u && String(u.useYn||'Y').toUpperCase()==='N')return [];
-  if(u&&u.menuPerms)return String(u.menuPerms).split(',').map(function(x){return x.trim();}).filter(Boolean);
+  const ra=findRoleAccess(p.dept||'', p.role||'작업자');
+  if(ra&&ra.menuPerms)return String(ra.menuPerms).split(',').map(function(x){return x.trim();}).filter(Boolean);
   return defaultMenusForRole(p.dept||'', p.role||'작업자');
 }
 function currentIsAdmin(){
@@ -3215,45 +3227,59 @@ function renderCurrentWorkTable(rows){
   });
 }
 function loadUsersAdmin(){
-  google.script.run.withSuccessHandler(function(rows){renderUsersAdmin(rows||[]);})
-    .withFailureHandler(function(err){handleQueryFailure(err,'사용자 조회',function(){loadUsersAdmin();});}).getErpUsers();
+  google.script.run.withSuccessHandler(function(data){
+    if(Array.isArray(data)){APP.users=data; APP.roleAccess=[]; renderUsersAdminByRole(APP.users,[]); return;}
+    APP.users=(data&&data.users)||[];
+    APP.roleAccess=(data&&data.roleAccess)||[];
+    renderUsersAdminByRole(APP.users,APP.roleAccess);
+  }).withFailureHandler(function(err){handleQueryFailure(err,'권한그룹 조회',function(){loadUsersAdmin();});}).getUserAccessAdminData();
 }
-function renderUsersAdmin(rows){
+function usersByRole(dept,role){
+  return (APP.users||[]).filter(function(u){return String(u.dept||'')===String(dept||'') && String(u.role||'작업자')===String(role||'작업자') && String(u.useYn||'Y').toUpperCase()!=='N';});
+}
+function renderUsersAdminByRole(users,roleAccess){
   const body=document.getElementById('userAdminBody'); if(!body)return;
   body.innerHTML='';
-  if(!rows.length){body.innerHTML='<tr><td colspan="9" style="padding:24px;text-align:center;color:#64748b;">사용자 등록 내역이 없습니다.</td></tr>';return;}
-  rows.forEach(function(r,idx){
-    const tr=document.createElement('tr');
-    const perms=(r.menuPerms?String(r.menuPerms).split(','):defaultMenusForRole(r.dept||'', r.role||'작업자')).map(function(x){return x.trim();});
-    const permHtml='<div class="permission-grid">'+MENU_DEFS.map(function(m){
+  const depts=['가공','선반','용접','조립','검사','포장','영업','생산관리'];
+  const roles=['작업자','반장','임원'];
+  const combos=[];
+  depts.forEach(function(d){roles.forEach(function(r){
+    if(d==='영업' && r==='반장')return;
+    if(d==='생산관리' && r==='반장')return;
+    combos.push({dept:d,role:r});
+  });});
+  combos.forEach(function(c){
+    const saved=(roleAccess||[]).find(function(r){return String(r.dept)===c.dept && String(r.role)===c.role;})||{};
+    const members=usersByRole(c.dept,c.role);
+    const perms=(saved.menuPerms?String(saved.menuPerms).split(','):defaultMenusForRole(c.dept,c.role)).map(function(x){return x.trim();}).filter(Boolean);
+    const permHtml='<div class="permission-grid compact">'+MENU_DEFS.filter(function(m){return m.page!=='userAdmin'&&m.page!=='master';}).map(function(m){
       const checked=perms.indexOf(m.page)>=0?'checked':'';
       return '<label><input type="checkbox" class="perm-cb" data-page="'+m.page+'" '+checked+'> '+m.label+'</label>';
     }).join('')+'</div>';
-    tr.setAttribute('data-device-id',r.deviceId||'');
-    tr.setAttribute('data-name',r.name||'');
-    tr.innerHTML='<td>'+escapeHtml(r.name||'')+'</td>'+ 
-      '<td>'+escapeHtml(r.dept||'')+'</td>'+ 
-      '<td>'+escapeHtml(r.role||'작업자')+'</td>'+ 
-      '<td>'+escapeHtml(r.useYn||'Y')+'</td>'+ 
-      '<td><label class="admin-check"><input type="checkbox" class="admin-yn" '+(String(r.adminYn||'').toUpperCase()==='Y'?'checked':'')+'> 관리자</label></td>'+ 
+    const names=members.map(function(u){return escapeHtml(u.name||'');}).filter(Boolean).join(', ') || '<span style="color:#94a3b8;">등록 사용자 없음</span>';
+    const tr=document.createElement('tr');
+    tr.setAttribute('data-dept',c.dept); tr.setAttribute('data-role',c.role);
+    tr.innerHTML='<td><b>'+escapeHtml(c.dept+' '+c.role)+'</b></td>'+ 
+      '<td>'+escapeHtml(c.dept)+'</td>'+ 
+      '<td>'+escapeHtml(c.role)+'</td>'+ 
+      '<td class="role-user-list">'+names+'</td>'+ 
       '<td>'+permHtml+'</td>'+ 
-      '<td style="font-size:11px;color:#64748b;">'+escapeHtml(r.deviceId||'')+'</td>'+ 
-      '<td>'+escapeHtml(r.lastSeenAt||'')+'</td>'+ 
-      '<td><button class="user-admin-save" onclick="saveUserAccessRow(this)">저장</button></td>';
+      '<td><button class="user-admin-save" onclick="saveRoleAccessRow(this)">저장</button></td>';
     body.appendChild(tr);
   });
 }
-function saveUserAccessRow(btn){
+function saveRoleAccessRow(btn){
   const tr=btn.closest('tr'); if(!tr)return;
   const menus=Array.from(tr.querySelectorAll('.perm-cb:checked')).map(function(c){return c.getAttribute('data-page');});
-  const payload={deviceId:tr.getAttribute('data-device-id')||'',name:tr.getAttribute('data-name')||'',adminYn:tr.querySelector('.admin-yn').checked?'Y':'N',menuPerms:menus.join(',')};
+  const payload={dept:tr.getAttribute('data-dept')||'',role:tr.getAttribute('data-role')||'',menuPerms:menus.join(',')};
   btn.disabled=true; btn.textContent='저장중';
-  google.script.run.withSuccessHandler(function(rows){
-    APP.users=rows||APP.users||[];
+  google.script.run.withSuccessHandler(function(data){
+    APP.users=(data&&data.users)||APP.users||[];
+    APP.roleAccess=(data&&data.roleAccess)||APP.roleAccess||[];
     btn.textContent='저장됨';
     applyMenuPermissions();
     setTimeout(function(){btn.disabled=false;btn.textContent='저장';},800);
-  }).withFailureHandler(function(err){btn.disabled=false;btn.textContent='저장';showError(err);}).saveUserAccess(payload);
+  }).withFailureHandler(function(err){btn.disabled=false;btn.textContent='저장';showError(err);}).saveRoleAccess(payload);
 }
 function showError(error){const raw=(error&&error.message)?error.message:String(error||'');let msg=raw;if(/is not defined|ReferenceError|TypeError|SyntaxError/i.test(raw)){msg='처리 중 화면 오류가 발생했습니다. 데이터 반영 여부를 새로고침 후 확인하세요.\n\n상세: '+raw;}alert(msg);}
 </script>

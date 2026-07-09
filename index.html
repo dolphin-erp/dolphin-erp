@@ -928,7 +928,7 @@ body.dark-mode .permission-grid label{background:#0f172a!important;border-color:
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v16.3 · 2026-07-09 · 권한진입 개선</span>
+    <span class="version-badge">v16.4 · 2026-07-09 · 권한구조 변경</span>
     <button type="button" id="userProfileBtn" class="user-profile-btn" onclick="openUserSetup()" title="사용자 등록/변경">👤 사용자</button>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
     <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
@@ -939,8 +939,8 @@ body.dark-mode .permission-grid label{background:#0f172a!important;border-color:
 
 <div id="userSetupModal" class="user-modal hidden no-print">
   <div class="user-modal-box">
-    <h2>최초 사용자 등록</h2>
-    <p class="note">공용 PC에서도 부서/직책/이름을 선택해 화면 권한을 자동 적용합니다. 관리자는 별도 비밀번호로 진입합니다.</p>
+    <h2>사용자 선택</h2>
+    <p class="note">공용 PC에서는 현재 사용할 부서/직책/이름을 선택합니다. 권한은 기기ID가 아니라 부서+직책 기준으로 적용되며, 관리자는 별도 비밀번호로 진입합니다.</p>
     <div class="form-grid">
       <div>
         <label>이름</label>
@@ -966,7 +966,6 @@ body.dark-mode .permission-grid label{background:#0f172a!important;border-color:
           <option value="작업자">작업자</option>
           <option value="반장">반장</option>
           <option value="임원">임원</option>
-          <option value="관리자">관리자</option>
         </select>
       </div>
     </div>
@@ -2995,6 +2994,7 @@ function getUserProfile(){
 }
 function setUserProfile(p){
   localStorage.setItem('dolphinUserProfile',JSON.stringify(p||{}));
+  sessionStorage.removeItem('dolphinAdmin');
   updateUserProfileUi();
   applyMenuPermissions();
 }
@@ -3003,7 +3003,7 @@ function updateUserProfileUi(){
   const btn=document.getElementById('userProfileBtn');
   const sum=document.getElementById('currentProfileSummary');
   if(btn)btn.textContent=p&&p.name?('👤 '+p.name+' · '+p.dept+' · '+(p.role||'작업자')):'👤 사용자';
-  if(sum)sum.textContent=p&&p.name?('현재 사용자: '+p.name+' / '+p.dept+' / '+(p.role||'작업자')+' / 기기ID '+getDeviceId()):'사용자 정보가 없습니다. 상단 사용자 버튼에서 등록하세요.';
+  if(sum)sum.textContent=p&&p.name?('현재 사용자: '+p.name+' / '+p.dept+' / '+(p.role||'작업자')+' / 기기ID '+getDeviceId()+' (추적용)'):'사용자 정보가 없습니다. 상단 사용자 버튼에서 등록하세요.';
 }
 function openUserSetup(){
   const p=getUserProfile()||{};
@@ -3024,7 +3024,6 @@ function saveUserProfile(){
   const msg=document.getElementById('profileMsg');
   if(!name){if(msg)msg.textContent='이름을 입력하세요.';return;}
   const profile={name:name,dept:dept,role:role,deviceId:getDeviceId(),savedAt:new Date().toISOString()};
-  if(role==='관리자'){setTimeout(showAdminLogin,100);}
   setUserProfile(profile);
   if(msg)msg.textContent='저장되었습니다.';
   try{
@@ -3064,22 +3063,33 @@ function defaultMenusForRole(dept, role){
   dept=String(dept||'').trim(); role=String(role||'작업자').trim();
   if(role==='임원')return ['dashboard','productionPlan','currentWork','history','printSummary'];
   if(dept==='생산관리')return ['dashboard','sales','worklog','productionPlan','currentWork','receipt','shipment','improvement','history','flow','printSummary','improvementAdmin'];
-  if(dept==='영업')return ['dashboard','sales','currentWork','improvement'];
+  if(dept==='영업')return ['sales','improvement'];
   if(role==='반장')return ['dashboard','worklog','productionPlan','currentWork','improvement'];
-  return ['currentWork','worklog','improvement'];
+  return ['currentWork','worklog'];
 }
 function defaultMenusForDept(dept){ return defaultMenusForRole(dept,'작업자'); }
 function findRegisteredUser(){
-  const p=getUserProfile()||{}; const did=getDeviceId();
-  return (APP.users||[]).find(function(u){return (u.deviceId&&u.deviceId===did)||(p.name&&u.name===p.name);})||null;
+  const p=getUserProfile()||{};
+  return (APP.users||[]).find(function(u){
+    return p.name && u.name===p.name && String(u.dept||'')===String(p.dept||'') && String(u.role||'작업자')===String(p.role||'작업자');
+  })||null;
 }
 function currentAllowedMenus(){
-  const p=getUserProfile()||{}; const u=findRegisteredUser();
+  if(currentIsAdmin())return MENU_DEFS.map(function(m){return m.page;}).concat(['csv','improvementAdmin']);
+  const p=getUserProfile()||{};
+  const u=findRegisteredUser();
+  if(u && String(u.useYn||'Y').toUpperCase()==='N')return [];
   if(u&&u.menuPerms)return String(u.menuPerms).split(',').map(function(x){return x.trim();}).filter(Boolean);
   return defaultMenusForRole(p.dept||'', p.role||'작업자');
 }
 function currentIsAdmin(){
   return sessionStorage.getItem('dolphinAdmin')==='Y';
+}
+function firstAllowedMenu(){
+  const allowed=currentAllowedMenus();
+  const pref=['dashboard','currentWork','worklog','productionPlan','sales','printSummary'];
+  for(const p of pref){if(allowed.indexOf(p)>=0)return p;}
+  return allowed[0]||'currentWork';
 }
 function pageFromButton(btn){
   const oc=btn.getAttribute('onclick')||'';
@@ -3091,11 +3101,17 @@ function applyMenuPermissions(){
   document.querySelectorAll('.tabs button').forEach(function(btn){
     const page=pageFromButton(btn);
     if(!page)return;
-    const show=allowed.indexOf(page)>=0 || (isAdmin && ['userAdmin','master','printSummary','improvementAdmin'].indexOf(page)>=0);
+    const show=allowed.indexOf(page)>=0 || (isAdmin && ['csv','userAdmin','master','printSummary','improvementAdmin','history','flow'].indexOf(page)>=0);
     btn.classList.toggle('menu-hidden-by-permission',!show);
   });
   const adminBtn=document.getElementById('adminLoginBtn'); if(adminBtn)adminBtn.style.display='';
   document.querySelectorAll('.admin-only').forEach(function(el){el.classList.toggle('hidden',!isAdmin);});
+  const active=document.querySelector('.page.active');
+  if(active && allowed.indexOf(active.id)<0 && !isAdmin){
+    const page=firstAllowedMenu();
+    const btn=Array.from(document.querySelectorAll('.tabs button')).find(function(b){return pageFromButton(b)===page;});
+    if(btn)openPage(page,btn);
+  }
 }
 function setDefaultPlanProcessForProfile(){
   const proc=activeProcessForProfile();
@@ -3133,7 +3149,7 @@ function renderCurrentWorkJobs(){
   if(!profile||!profile.name){box.innerHTML='<div class="current-work-empty">사용자 등록 후 오늘 작업을 확인할 수 있습니다.</div>';return;}
   const process=activeProcessForProfile();
   const rows=planDisplayRows(((APP.productionPlan||{}).rows)||[],process).filter(function(r){return planInputDefaultQty(r,process)>0;});
-  const current=((APP.currentWorks||[]).find(function(w){return w.deviceId===getDeviceId();})||{});
+  const current=((APP.currentWorks||[]).find(function(w){return w.name===profile.name && w.dept===profile.dept;})||{});
   if(!rows.length){box.innerHTML='<div class="current-work-empty">'+escapeHtml(process)+' 공정의 오늘 계획 작업이 없습니다.</div>';return;}
   let html='<table class="current-work-table"><thead><tr><th>제품</th><th>오늘계획</th><th>실적</th><th>남음</th><th>작업중</th><th>작업자</th><th>선택</th></tr></thead><tbody>';
   html+=rows.map(function(r){
@@ -3162,13 +3178,13 @@ function saveCurrentWorkFromJob(process,productCode){
   const profile=getUserProfile();
   if(!profile||!profile.name){openUserSetup();return;}
   const product=(APP.products||[]).find(function(p){return String(p.code)===String(productCode);})||{};
-  const payload={name:profile.name,dept:profile.dept,deviceId:getDeviceId(),state:'작업중',process:process,productCode:productCode,productName:product.name||'',memo:''};
+  const payload={name:profile.name,dept:profile.dept,role:profile.role||'작업자',deviceId:getDeviceId(),state:'작업중',process:process,productCode:productCode,productName:product.name||'',memo:''};
   saveCurrentWorkPayload(payload,'작업 선택 중...');
 }
 function setCurrentWorkIdle(){
   const profile=getUserProfile();
   if(!profile||!profile.name){openUserSetup();return;}
-  const payload={name:profile.name,dept:profile.dept,deviceId:getDeviceId(),state:'대기',process:'',productCode:'',productName:'',memo:''};
+  const payload={name:profile.name,dept:profile.dept,role:profile.role||'작업자',deviceId:getDeviceId(),state:'대기',process:'',productCode:'',productName:'',memo:''};
   saveCurrentWorkPayload(payload,'대기 전환 중...');
 }
 function saveCurrentWorkPayload(payload,loadingText){

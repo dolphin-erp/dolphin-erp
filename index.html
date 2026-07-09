@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dolphin ERP v15.11</title>
+  <title>Dolphin ERP v15.15</title>
   <!-- Dolphin ERP v12: Cloudflare/GitHub frontend -->
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -842,7 +842,7 @@
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v15.14 · 2026-07-08 · 계획사유 보강</span>
+    <span class="version-badge">v15.15 · 2026-07-08 · 용접 필요수량</span>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
     <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
   </span>
@@ -1713,7 +1713,7 @@ function planRecommendQty(r,process){
   if(process==='조립')avail=assemblyAvailableQty(r);
   else if(process==='검사')avail=inspectionAvailableQty(r);
   else if(process==='포장')avail=packingAvailableQty(r);
-  else if(process==='용접')avail=positiveQty(need-(qtyVal(r.weldStock)+qtyVal(r.assyWorkStock)));
+  else if(process==='용접')return need; // v15.15: 용접은 첫 공정이므로 전체 부족분을 ERP추천으로 사용
   else avail=need;
   return Math.max(0, Math.min(need, avail));
 }
@@ -1809,7 +1809,7 @@ function renderPlanInputTable(rows,process){
 
   const displayRows=planDisplayRows(rows,process);
   const sourceCols={
-    '용접':['용접가능'],
+    '용접':['용접필요'],
     '조립':['용접완료','조립대기','조립가능'],
     '검사':['조립완료','검사대기','오늘 조립계획','검사가능'],
     '포장':['검사완료','포장대기','오늘 검사계획','포장가능']
@@ -1844,8 +1844,8 @@ function renderPlanInputTable(rows,process){
     html+='<td class="group-target"><span class="plan-num-need">'+need+'</span></td>';
 
     if(process==='용접'){
-      const weldAvail=positiveQty(need-(qtyVal(r.weldStock)+qtyVal(r.assyWorkStock)));
-      html+='<td class="group-source"><span class="plan-num-avail">'+weldAvail+'</span></td>';
+      const weldNeed=need;
+      html+='<td class="group-source"><span class="plan-num-avail">'+weldNeed+'</span></td>';
     }
     if(process==='조립'){
       html+='<td class="group-source">'+(r.weldStock||0)+'</td><td class="group-source">'+(r.assyWorkStock||0)+'</td><td class="group-source"><span class="plan-num-avail">'+assemblyAvailableQty(r)+'</span></td>';
@@ -1958,9 +1958,9 @@ function metric(label,value,extra){return '<div class="metric '+(extra||'')+'"><
 function progress(rate){const r=Math.max(0,Math.min(100,rate||0)); const cls=r>=80?'ok':r>=40?'warn':'bad';return '<div class="progress-wrap"><div class="progress-text"><span>달성률</span><span>'+r+'%</span></div><div class="progress-bar"><div class="progress-fill '+cls+'" style="width:'+r+'%"></div></div></div>';}
 function memoBlock(memo){return memo?'<div class="monitor-note">'+escapeHtml(memo)+'</div>':'';}
 function cardStatus(rate,plan){if(!plan)return 'warn'; if(rate>=80)return 'ok'; if(rate>=40)return 'warn'; return 'urgent';}
-function monitorAvailableLabel(process){if(process==='용접')return '요청잔량'; if(process==='조립')return '용접완료+조립대기'; if(process==='검사')return '오늘 검사 가능'; if(process==='포장')return '오늘 포장 가능'; return '참고수량';}
+function monitorAvailableLabel(process){if(process==='용접')return '용접 필요수량'; if(process==='조립')return '용접완료+조립대기'; if(process==='검사')return '오늘 검사 가능'; if(process==='포장')return '오늘 포장 가능'; return '참고수량';}
 function monitorDescription(process){if(process==='용접')return '용접은 재고 판단보다 금일 계획과 우선순위 중심으로 확인합니다.'; if(process==='조립')return '조립은 용접완료와 조립대기를 함께 보고 금일 계획을 확인합니다.'; if(process==='검사')return '검사는 조립완료 전 단계와 금일 조립계획까지 함께 보고 검사 가능량을 확인합니다.'; return '포장은 검사완료 전 단계와 금일 검사계획까지 함께 보고 포장 가능량을 확인합니다.';}
-function monitorAvailableQty(r,process){if(process==='용접')return Number(r.requestRemainQty)||0; if(process==='조립')return assemblyAvailableQty(r); if(process==='검사')return inspectionAvailableQty(r); if(process==='포장')return packingAvailableQty(r); return 0;}
+function monitorAvailableQty(r,process){if(process==='용접')return planNeedQty(r,'용접'); if(process==='조립')return assemblyAvailableQty(r); if(process==='검사')return inspectionAvailableQty(r); if(process==='포장')return packingAvailableQty(r); return 0;}
 function sumAvailable(rows,process){return rows.reduce(function(s,r){return s+monitorAvailableQty(r,process);},0);}
 function updatePlanKpi(rows,process){
   const remain=rows.reduce(function(s,r){return s+planNeedQty(r,process);},0);

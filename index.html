@@ -1004,7 +1004,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v16.18 · 2026-07-10 · 프린트 현황·작성자 개선</span>
+    <span class="version-badge">v16.19 · 2026-07-10 · 영업지시 과부족 개선</span>
     <button type="button" id="userProfileBtn" class="user-profile-btn" onclick="openUserSetup()" title="사용자 등록/변경">👤 사용자</button>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
     <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
@@ -3497,28 +3497,31 @@ function renderProductionPrint(title,sub,sec,note){
 }
 function renderSalesPrint(title,sub,sec,note){
   title.textContent='영업지시 현황';sub.textContent='요청·출하·잔량과 현재 공정재고를 함께 확인';sec.textContent='제품별 영업지시 및 생산대응 현황';
-  const stockMap={};
+  const stockMap={},fgMap={};
   (APP.dashboard||[]).forEach(function(d){
     const total=printNum(d.weldStock)+printNum(d.assyWorkStock)+printNum(d.assyDoneStock)+printNum(d.inspWorkStock)+printNum(d.inspDoneStock)+printNum(d.packWorkStock)+printNum(d.packDoneStock);
-    if(d.productCode)stockMap['C:'+String(d.productCode)]=total;
-    if(d.productName)stockMap['N:'+String(d.productName)]=total;
+    const fg=printNum(d.fgStock);
+    if(d.productCode){stockMap['C:'+String(d.productCode)]=total;fgMap['C:'+String(d.productCode)]=fg;}
+    if(d.productName){stockMap['N:'+String(d.productName)]=total;fgMap['N:'+String(d.productName)]=fg;}
   });
   const rows=(APP.salesRequests||[]).filter(function(r){return !isClosedSalesRow(r);}).slice().sort(function(a,b){
     const pn=String(a.productName||'').localeCompare(String(b.productName||''),'ko');
     return pn||dueSortValue(a.dueDate)-dueSortValue(b.dueDate)||String(a.customerName||'').localeCompare(String(b.customerName||''),'ko');
   });
-  let req=0,done=0,remain=0,processStock=0,urgent=0;
+  let req=0,done=0,remain=0,processStock=0,finishedStock=0,urgent=0;
   const counted={};
   const body=rows.map(function(r){
     const q=printNum(r.requestQty),d=printNum(r.shippedQty||r.doneQty),rm=printNum(r.remainQty),jud=r.urgency||r.judgement||'';
     const key=r.productCode?('C:'+String(r.productCode)):('N:'+String(r.productName||''));
-    const ps=printNum(stockMap[key]);
-    req+=q;done+=d;remain+=rm;if(!counted[key]){processStock+=ps;counted[key]=true;}if(String(jud).indexOf('긴급')>=0)urgent++;
-    return [r.productName||'',r.customerName||'',q,d,rm,ps,r.dueDate||'',jud,r.status||'진행'];
+    const ps=printNum(stockMap[key]),fg=printNum(fgMap[key]),balance=ps+fg-rm;
+    const balanceText=balance>0?('+'+balance):String(balance);
+    req+=q;done+=d;remain+=rm;if(!counted[key]){processStock+=ps;finishedStock+=fg;counted[key]=true;}if(String(jud).indexOf('긴급')>=0)urgent++;
+    return [r.productName||'',r.customerName||'',q,d,rm,ps,fg,balanceText,r.dueDate||'',r.status||'진행'];
   });
-  setPrintKpis([['진행건수',rows.length],['총 요청',req],['출하누계',done],['총 잔량',remain],['총 공정재고',processStock],['긴급건',urgent]]);
-  setPrintTable(['제품명','납품처','요청','출하','잔량','총 공정재고','납기일','판단','상태'],body,['합계','',req,done,remain,processStock,'','',''],['19%','20%','7%','7%','7%','10%','12%','11%','7%'],['text-left nowrap','text-left wrap','','','','','nowrap','nowrap','nowrap']);
-  note.textContent='※ 마감된 지시는 제외합니다. 요청수량에서 출하수량을 뺀 잔량과 현재 총 공정재고를 함께 확인하여 추가 생산 필요 여부를 판단합니다. 제품명 오름차순, 동일 제품은 납기일 순입니다.';
+  const totalBalance=processStock+finishedStock-remain,totalBalanceText=totalBalance>0?('+'+totalBalance):String(totalBalance);
+  setPrintKpis([['진행건수',rows.length],['총 요청',req],['출하누계',done],['총 잔량',remain],['총 공정재고',processStock],['총 과부족',totalBalanceText]]);
+  setPrintTable(['제품명','납품처','요청','출하','잔량','총 공정재고','완제품','과부족','납기일','상태'],body,['합계','',req,done,remain,processStock,finishedStock,totalBalanceText,'',''],['17%','17%','6%','6%','6%','10%','7%','8%','13%','10%'],['text-left nowrap','text-left wrap','','','','','','','nowrap','nowrap']);
+  note.textContent='※ 과부족 = 완제품 + 총 공정재고 - 영업잔량입니다. +는 여유, 0은 충족, -는 부족을 의미합니다. 제품명 오름차순, 동일 제품은 납기일 순입니다.';
 }
 function setPrintGroupedTable(groups,subHeaders,rows,widths,cellClasses){
   const h=document.getElementById('standardPrintHead'),b=document.getElementById('standardPrintBody'),f=document.getElementById('standardPrintFoot'),table=h&&h.closest('table');

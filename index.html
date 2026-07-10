@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dolphin ERP v16.9</title>
+  <title>Dolphin ERP v16.10</title>
   <!-- Dolphin ERP v12: Cloudflare/GitHub frontend -->
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -870,8 +870,8 @@ header span:first-child{white-space:nowrap}
 main{padding-top:10px!important}
 .profile-summary.compact{background:#f1f5f9;border:1px solid #dbe5f1;border-radius:12px;padding:10px 12px;font-weight:900;color:#1e293b;margin:10px 0}
 .current-work-toolbar{display:flex;align-items:center;gap:10px;margin:10px 0 14px;flex-wrap:wrap}
-.current-work-process-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 12px;padding:8px;border:1px solid #dbe5f1;border-radius:14px;background:#f8fafc}
-.current-work-process-tabs button{min-width:82px;border:1px solid #cbd5e1;background:#fff;border-radius:11px;padding:9px 12px;font-weight:900;cursor:pointer;color:#0f172a}
+.current-work-process-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px;padding:6px;border:1px solid #dbe5f1;border-radius:12px;background:#f8fafc}
+.current-work-process-tabs button{min-width:58px;width:auto!important;border:1px solid #cbd5e1;background:#fff;border-radius:9px;padding:6px 10px;font-weight:900;font-size:12px;cursor:pointer;color:#0f172a}
 .current-work-process-tabs button.active{background:#2563eb;border-color:#2563eb;color:#fff;box-shadow:0 6px 14px rgba(37,99,235,.18)}
 .current-work-filter-title{font-size:13px;font-weight:900;color:#475569;margin:2px 0 0}
 body.dark-mode .current-work-process-tabs{background:#0f172a!important;border-color:#334155!important}
@@ -915,6 +915,15 @@ body.dark-mode .current-work-empty{background:#0f172a!important;border-color:#33
 .current-work-table .now-badge{display:inline-flex;align-items:center;border-radius:999px;background:#2563eb;color:#fff;font-weight:900;font-size:12px;padding:4px 8px;margin-left:6px}
 .current-work-table .small-btn{min-width:86px;padding:7px 10px;border-radius:10px;font-size:12px;font-weight:900;border:1px solid #bfdbfe;background:#2563eb;color:#fff;cursor:pointer}
 .current-work-table tr.active .small-btn{background:#0f172a;border-color:#0f172a}
+.current-work-table .current-work-select-btn{background:#2563eb!important;border-color:#2563eb!important;color:#fff!important}
+.current-work-table .current-work-select-btn.is-selected{background:#facc15!important;border-color:#eab308!important;color:#422006!important}
+.process-badge{display:inline-flex;align-items:center;justify-content:center;min-width:48px;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:900;white-space:nowrap}
+.process-badge.process-가공{background:#e2e8f0;color:#334155}
+.process-badge.process-선반{background:#f1f5f9;color:#475569}
+.process-badge.process-용접{background:#ffedd5;color:#c2410c}
+.process-badge.process-조립{background:#dbeafe;color:#1d4ed8}
+.process-badge.process-검사{background:#ede9fe;color:#6d28d9}
+.process-badge.process-포장{background:#dcfce7;color:#15803d}
 .current-work-table .names{font-size:12px;color:#475569;line-height:1.4;max-width:230px;white-space:normal;text-align:left}
 .permission-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;min-width:420px}
 .permission-grid label{display:flex;gap:4px;align-items:center;font-size:12px;font-weight:800;white-space:nowrap;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 6px}
@@ -928,6 +937,9 @@ body.dark-mode .current-work-table tr.active{background:#0f2a4a!important;outlin
 body.dark-mode .current-work-table tr.dim{background:#0f172a!important;color:#94a3b8!important}
 body.dark-mode .current-work-table .prod{color:#f8fafc!important}
 body.dark-mode .current-work-table .names{color:#cbd5e1!important}
+body.dark-mode .current-work-table .current-work-select-btn{background:#475569!important;border-color:#64748b!important;color:#f8fafc!important}
+body.dark-mode .current-work-table .current-work-select-btn.is-selected{background:#f8fafc!important;border-color:#fff!important;color:#111827!important}
+body.dark-mode .process-badge{filter:saturate(.85) brightness(.9)}
 body.dark-mode .permission-grid label{background:#0f172a!important;border-color:#334155!important;color:#e5e7eb!important}
 
 
@@ -942,7 +954,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v16.9 · 2026-07-09 · 현재작업 공정필터</span>
+    <span class="version-badge">v16.10 · 2026-07-10 · 현재작업 UI 안정화</span>
     <button type="button" id="userProfileBtn" class="user-profile-btn" onclick="openUserSetup()" title="사용자 등록/변경">👤 사용자</button>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
     <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
@@ -3260,14 +3272,14 @@ function renderCurrentWorkJobs(){
     const active=String(current.state||'')==='작업중' && String(current.process||'')===proc && String(current.productCode||'')===String(r.productCode);
     const names=actors.map(function(w){return w.name;}).filter(Boolean).join(', ');
     return '<tr class="'+(active?'active':'')+(remain<=0?' dim':'')+'">'+
-      (showProcess?'<td><span class="worker-count-badge">'+escapeHtml(proc)+'</span></td>':'')+
+      (showProcess?'<td><span class="process-badge process-'+escapeHtml(proc)+'">'+escapeHtml(proc)+'</span></td>':'')+
       '<td class="prod">'+escapeHtml(r.productName||'')+(active?'<span class="now-badge">현재작업</span>':'')+'</td>'+ 
       '<td class="num-plan">'+plan+'</td>'+ 
       '<td>'+actual+'</td>'+ 
       '<td class="num-strong">'+remain+'</td>'+ 
       '<td><span class="worker-count-badge">'+actors.length+'명</span></td>'+ 
       '<td><div class="names">'+(names?escapeHtml(names):'현재 작업자 없음')+'</div></td>'+ 
-      '<td><button class="small-btn" onclick="saveCurrentWorkFromJob(\''+escapeJs(proc)+'\',\''+escapeJs(r.productCode)+'\')">'+(active?'선택됨':'선택')+'</button></td>'+ 
+      '<td><button class="small-btn current-work-select-btn '+(active?'is-selected':'')+'" onclick="saveCurrentWorkFromJob(\''+escapeJs(proc)+'\',\''+escapeJs(r.productCode)+'\')">'+(active?'선택됨':'선택')+'</button></td>'+ 
       '</tr>';
   }).join('');
   html+='</tbody></table>';
@@ -3376,7 +3388,7 @@ function saveRoleAccessRow(btn){
     setTimeout(function(){btn.disabled=false;btn.textContent='저장';},800);
   }).withFailureHandler(function(err){btn.disabled=false;btn.textContent='저장';showError(err);}).saveRoleAccess(payload);
 }
-function showError(error){const raw=(error&&error.message)?error.message:String(error||'');let msg=raw;if(/is not defined|ReferenceError|TypeError|SyntaxError/i.test(raw)){msg='처리 중 화면 오류가 발생했습니다. 데이터 반영 여부를 새로고침 후 확인하세요.\n\n상세: '+raw;}alert(msg);}
+function showError(error){const raw=(error&&error.message)?error.message:String(error||'');let msg=raw;if(/<!DOCTYPE|<html|API\(JSON\/JSONP\)|응답 앞부분/i.test(raw)){msg='서버 응답 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';}else if(/is not defined|ReferenceError|TypeError|SyntaxError/i.test(raw)){msg='처리 중 화면 오류가 발생했습니다. 새로고침 후 다시 시도해주세요.';}alert(msg);}
 </script>
 </body>
 </html>

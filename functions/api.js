@@ -104,7 +104,7 @@ function parseAppsScriptResponse(text, callbackName) {
   }
 
   // 4) HTML이 오면 원인을 바로 보이게 함
-  throw new Error('Apps Script 응답이 API(JSON/JSONP)가 아닙니다. 응답 앞부분: ' + raw.slice(0, 220));
+  throw new Error('서버 응답 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
 }
 
 function json(data, status = 200) {

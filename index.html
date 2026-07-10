@@ -1004,7 +1004,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v16.14 · 2026-07-10 · 영업요청 마감 수정</span>
+    <span class="version-badge">v16.17 · 2026-07-10 · 프린트 양식·권한마스터 개선</span>
     <button type="button" id="userProfileBtn" class="user-profile-btn" onclick="openUserSetup()" title="사용자 등록/변경">👤 사용자</button>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
     <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
@@ -3496,30 +3496,56 @@ function renderProductionPrint(title,sub,sec,note){
   note.textContent='※ 생산필요 = 영업잔량 - (용접·조립·검사·포장 공정재고 + 완제품). 실제 재고 확인 후 우선 생산 여부를 판단합니다.';
 }
 function renderSalesPrint(title,sub,sec,note){
-  title.textContent='영업지시 현황';sub.textContent='진행 중 영업요청을 납기 우선으로 확인';sec.textContent='진행 중 영업지시';
-  const rows=(APP.salesRequests||[]).filter(function(r){return !isClosedSalesRow(r);}).slice().sort(function(a,b){const au=String(a.urgency||a.judgement||'').indexOf('긴급')>=0?0:1,bu=String(b.urgency||b.judgement||'').indexOf('긴급')>=0?0:1;return au-bu||dueSortValue(a.dueDate)-dueSortValue(b.dueDate);});
+  title.textContent='영업지시 현황';sub.textContent='제품별 진행 지시를 납기 순서로 확인';sec.textContent='제품별 영업지시';
+  const rows=(APP.salesRequests||[]).filter(function(r){return !isClosedSalesRow(r);}).slice().sort(function(a,b){
+    const pn=String(a.productName||'').localeCompare(String(b.productName||''),'ko');
+    return pn||dueSortValue(a.dueDate)-dueSortValue(b.dueDate)||String(a.customerName||'').localeCompare(String(b.customerName||''),'ko');
+  });
   let req=0,done=0,remain=0,urgent=0;
-  const body=rows.map(function(r){const q=printNum(r.requestQty),d=printNum(r.shippedQty||r.doneQty),rm=printNum(r.remainQty),jud=r.urgency||r.judgement||'';req+=q;done+=d;remain+=rm;if(String(jud).indexOf('긴급')>=0)urgent++;return [r.requestId||'',r.customerName||'',r.productName||'',q,d,rm,r.dueDate||'',jud,r.status||'진행'];});
+  const body=rows.map(function(r){const q=printNum(r.requestQty),d=printNum(r.shippedQty||r.doneQty),rm=printNum(r.remainQty),jud=r.urgency||r.judgement||'';req+=q;done+=d;remain+=rm;if(String(jud).indexOf('긴급')>=0)urgent++;return [r.productName||'',r.customerName||'',q,d,rm,r.dueDate||'',jud,r.status||'진행'];});
   setPrintKpis([['진행건수',rows.length],['총 요청',req],['출하누계',done],['총 잔량',remain],['긴급건',urgent]]);
-  setPrintTable(['수주번호','납품처','제품명','요청','출하','잔량','납기일','판단','상태'],body,['합계','','',req,done,remain,'','',''],['22%','15%','13%','7%','7%','7%','12%','10%','7%'],['text-left nowrap','text-left wrap','text-left nowrap','','','','nowrap','nowrap','nowrap']);
-  note.textContent='※ 마감된 지시는 제외합니다. 긴급 지시를 먼저, 같은 조건에서는 납기일이 빠른 순서로 출력합니다.';
+  setPrintTable(['제품명','납품처','요청','출하','잔량','납기일','판단','상태'],body,['합계','',req,done,remain,'','',''],['21%','24%','8%','8%','8%','13%','11%','7%'],['text-left nowrap','text-left wrap','','','','nowrap','nowrap','nowrap']);
+  note.textContent='※ 마감된 지시는 제외합니다. 제품명 오름차순으로 묶고, 같은 제품은 납기일이 빠른 순서로 출력합니다.';
 }
 function renderPlanPrint(title,sub,sec,note){
-  const date=(document.getElementById('planDate')&&document.getElementById('planDate').value)||getTodayString();title.textContent='생산계획';sub.textContent=date+' 현재 재고 기준 아침 생산계획';sec.textContent='제품별 재고 및 공정별 오늘 계획';
-  const dash=(APP.dashboard||[]).slice().sort(function(a,b){return String(a.productName||'').localeCompare(String(b.productName||''),'ko');});let totalNeed=0,totalPlan=0,plannedProducts=0;
-  const body=dash.map(function(d){const pr=dashPlanRow(d.productCode),remain=printNum(d.salesRemainQty||d.requestRemainQty),fg=printNum(d.fgStock),wStock=printNum(d.weldStock),aStock=printNum(d.assyWorkStock)+printNum(d.assyDoneStock),iStock=printNum(d.inspWorkStock)+printNum(d.inspDoneStock),pStock=printNum(d.packWorkStock)+printNum(d.packDoneStock),need=Math.max(0,remain-(fg+wStock+aStock+iStock+pStock)),wp=planQty(pr,'용접'),ap=planQty(pr,'조립'),ip=planQty(pr,'검사'),pp=planQty(pr,'포장'),sum=wp+ap+ip+pp;totalNeed+=need;totalPlan+=sum;if(sum>0)plannedProducts++;return [d.productName||d.productCode,remain,fg,wStock,wp,aStock,ap,iStock,ip,pStock,pp,need];});
-  setPrintKpis([['계획일',date],['영업잔량',body.reduce(function(s,r){return s+printNum(r[1]);},0)],['신규 생산필요',totalNeed],['오늘 공정계획',totalPlan],['계획 제품',plannedProducts]]);
-  setPrintTable(['제품명','영업잔량','완제품','용접재고','용접계획','조립재고','조립계획','검사재고','검사계획','포장재고','포장계획','생산필요'],body,null,['14%','7%','7%','7%','7%','7%','7%','7%','7%','7%','7%','9%'],['text-left nowrap','','','process-cell','process-cell','process-cell','process-cell','process-cell','process-cell','process-cell','process-cell','']);
-  note.textContent='※ 아침 계획 수립용입니다. 실적·달성률은 제외하고, 영업잔량과 각 공정의 현재 재고를 비교해 계획이 부족하거나 과다한지 판단합니다.';
+  const date=(document.getElementById('planDate')&&document.getElementById('planDate').value)||getTodayString();title.textContent='생산계획';sub.textContent=date+' 현재 재고 기준 아침 생산계획';sec.textContent='재고 대비 오늘 공정계획';
+  const dash=(APP.dashboard||[]).slice().sort(function(a,b){return String(a.productName||'').localeCompare(String(b.productName||''),'ko');});let totalNeed=0,plannedProducts=0,needProducts=0;
+  const body=dash.map(function(d){
+    const pr=dashPlanRow(d.productCode),remain=printNum(d.salesRemainQty||d.requestRemainQty),fg=printNum(d.fgStock),processStock=printNum(d.weldStock)+printNum(d.assyWorkStock)+printNum(d.assyDoneStock)+printNum(d.inspWorkStock)+printNum(d.inspDoneStock)+printNum(d.packWorkStock)+printNum(d.packDoneStock),need=Math.max(0,remain-(fg+processStock));
+    const wp=planQty(pr,'용접'),ap=planQty(pr,'조립'),ip=planQty(pr,'검사'),pp=planQty(pr,'포장');
+    let judge='추가 생산 불필요';
+    if(need>0){needProducts++;if(wp<=0)judge='용접계획 필요';else if(wp<need)judge='용접계획 부족 '+(need-wp);else judge='계획 반영';}
+    if(wp+ap+ip+pp>0)plannedProducts++;totalNeed+=need;
+    return [d.productName||d.productCode,remain,fg,processStock,need,wp,ap,ip,pp,judge];
+  });
+  setPrintKpis([['계획일',date],['영업잔량',body.reduce(function(s,r){return s+printNum(r[1]);},0)],['생산필요 제품',needProducts],['신규 생산필요',totalNeed],['계획 등록 제품',plannedProducts]]);
+  setPrintTable(['제품명','영업잔량','완제품','공정재고','부족수량','용접','조립','검사','포장','판단'],body,null,['18%','8%','8%','9%','9%','8%','8%','8%','8%','16%'],['text-left nowrap','','','','','process-cell','process-cell','process-cell','process-cell','text-left wrap']);
+  note.textContent='※ 아침 계획 수립용입니다. 영업잔량에서 완제품과 전체 공정재고를 뺀 부족수량을 먼저 확인하고, 부족한 제품의 공정별 오늘 계획만 판단합니다.';
+}
+function printDueInfo(productCode,productName){
+  const today=new Date();today.setHours(0,0,0,0);
+  const list=(APP.salesRequests||[]).filter(function(r){return !isClosedSalesRow(r)&&String(r.productCode||'')===String(productCode||'')&&r.dueDate;});
+  if(!list.length&&productName){
+    (APP.salesRequests||[]).forEach(function(r){if(!isClosedSalesRow(r)&&String(r.productName||'')===String(productName||'')&&r.dueDate)list.push(r);});
+  }
+  list.sort(function(a,b){return dueSortValue(a.dueDate)-dueSortValue(b.dueDate);});
+  if(!list.length)return '-';
+  const raw=String(list[0].dueDate||'').slice(0,10), d=new Date(raw+'T00:00:00');
+  if(isNaN(d.getTime()))return raw||'-';
+  const diff=Math.round((d-today)/86400000);
+  if(diff===0)return '오늘';
+  if(diff>0)return 'D-'+diff;
+  return Math.abs(diff)+'일 지남';
 }
 function renderWorkPrint(title,sub,sec,note){
-  const date=(document.getElementById('planDate')&&document.getElementById('planDate').value)||getTodayString();title.textContent='작업지시서';sub.textContent=date+' 작업자별 담당 작업 및 미지정 작업';sec.textContent='작업자 기준 작업지시';
+  const date=(document.getElementById('planDate')&&document.getElementById('planDate').value)||getTodayString();title.textContent='작업지시서';sub.textContent=date+' 공정 순서별 작업지시';sec.textContent='공정별 작업지시';
   const src=((APP.productionPlan||{}).rows)||[], rows=[];let totalQty=0,unassigned=0;
-  ['용접','조립','검사','포장'].forEach(function(proc){planDisplayRows(src,proc).forEach(function(r){const pq=planQty(r,proc);if(pq<=0)return;const actors=workActors(proc,r.productCode),names=actors.map(function(w){return w.name;}).filter(Boolean).sort().join(', ');if(!names)unassigned++;totalQty+=pq;rows.push([names||'미지정',proc,r.productName||'',pq,planPriority(r,proc),names?'작업중':'지시 대기','□ 완료']);});});
-  rows.sort(function(a,b){if(a[0]==='미지정'&&b[0]!=='미지정')return 1;if(b[0]==='미지정'&&a[0]!=='미지정')return -1;return String(a[0]).localeCompare(String(b[0]),'ko')||['용접','조립','검사','포장'].indexOf(a[1])-['용접','조립','검사','포장'].indexOf(b[1]);});
+  const order=['용접','조립','검사','포장'];
+  order.forEach(function(proc){planDisplayRows(src,proc).forEach(function(r){const pq=planQty(r,proc);if(pq<=0)return;const actors=workActors(proc,r.productCode),names=actors.map(function(w){return w.name;}).filter(Boolean).sort().join(', ');if(!names)unassigned++;totalQty+=pq;rows.push([proc,names||'-',r.productName||'',pq,printDueInfo(r.productCode,r.productName),names?'작업중':'지시 대기','□ 완료']);});});
+  rows.sort(function(a,b){return order.indexOf(a[0])-order.indexOf(b[0])||String(a[1]).localeCompare(String(b[1]),'ko')||String(a[2]).localeCompare(String(b[2]),'ko');});
   setPrintKpis([['작업일',date],['지시건수',rows.length],['총 지시수량',totalQty],['담당 미지정',unassigned],['작업중 인원',(APP.currentWorks||[]).filter(function(w){return w.state==='작업중';}).length]]);
-  setPrintTable(['작업자','공정','제품명','지시수량','우선순위','현재상태','확인'],rows,['합계','','',totalQty,'','',''],['19%','10%','25%','11%','12%','14%','9%'],['text-left wrap','process-cell','text-left nowrap','','nowrap','nowrap','nowrap']);
-  note.textContent='※ 현재작업에 등록된 작업자를 우선 표시합니다. 담당자가 정해지지 않은 계획은 “미지정”으로 분리하여 아침 배정 시 빠뜨리지 않도록 합니다.';
+  setPrintTable(['공정','작업자','제품명','지시수량','남은 납기일','현재상태','확인'],rows,['합계','','',totalQty,'','',''],['11%','17%','27%','11%','13%','13%','8%'],['process-cell','process-cell','process-cell','','nowrap','nowrap','nowrap']);
+  note.textContent='※ 공정 순서대로 출력합니다. 현재작업에 등록된 작업자를 표시하며, 담당자가 정해지지 않은 작업은 “-”로 표시합니다. 남은 납기일은 해당 제품의 가장 빠른 진행 중 납기를 기준으로 합니다.';
 }
 function refreshPrintCenter(){loadDashboard(function(){loadSalesRequests(function(){loadProductionPlan(function(){renderStandardPrint();});});});}
 function printStandardDocument(){renderStandardPrint();document.body.classList.remove('print-report','print-production-plan');document.body.classList.add('print-standard');setTimeout(function(){window.print();},80);}

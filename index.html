@@ -966,6 +966,8 @@ body.dark-mode .role-user-list{color:#cbd5e1}
     body.dark-mode tr.sales-product-band-b td{background:#0f172a;}
     body.dark-mode tr.sales-closed-row td{background:#162033;color:#94a3b8;}
     body.dark-mode .sales-closed-card summary{color:#cbd5e1;}
+
+.balance-negative{color:#dc2626 !important;font-weight:800;}
 </style>
 
 <style id="standardPrintCenterStyle">
@@ -1004,7 +1006,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v16.19 · 2026-07-10 · 영업지시 과부족 개선</span>
+    <span class="version-badge">v16.20 · 2026-07-10 · 프린트 권한 분리 및 과부족 강조</span>
     <button type="button" id="userProfileBtn" class="user-profile-btn" onclick="openUserSetup()" title="사용자 등록/변경">👤 사용자</button>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
     <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
@@ -1063,7 +1065,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
     <button class="admin-only hidden" onclick="openPage('csv',this)">CSV 업로드</button>
     <button class="admin-only hidden" onclick="openPage('flow',this)">공정흐름</button>
     <button class="admin-only hidden" onclick="openPage('history',this)">이력조회</button>
-    <button class="admin-only hidden" onclick="openPage('printSummary',this)">프린트</button>
+    <button onclick="openPage('printSummary',this)">프린트</button>
     <button class="admin-only hidden" onclick="openPage('improvementAdmin',this)">개선관리</button>
       <button id="adminLoginBtn" class="admin-btn" onclick="showAdminLogin()">관리자</button>
     <button id="userAdminTabBtn" class="admin-only hidden" onclick="openPage('userAdmin',this)">사용자관리</button>
@@ -3521,6 +3523,10 @@ function renderSalesPrint(title,sub,sec,note){
   const totalBalance=processStock+finishedStock-remain,totalBalanceText=totalBalance>0?('+'+totalBalance):String(totalBalance);
   setPrintKpis([['진행건수',rows.length],['총 요청',req],['출하누계',done],['총 잔량',remain],['총 공정재고',processStock],['총 과부족',totalBalanceText]]);
   setPrintTable(['제품명','납품처','요청','출하','잔량','총 공정재고','완제품','과부족','납기일','상태'],body,['합계','',req,done,remain,processStock,finishedStock,totalBalanceText,'',''],['17%','17%','6%','6%','6%','10%','7%','8%','13%','10%'],['text-left nowrap','text-left wrap','','','','','','','nowrap','nowrap']);
+  const salesPrintTable=document.getElementById('standardPrintBody');
+  if(salesPrintTable){salesPrintTable.querySelectorAll('tr').forEach(function(tr){const td=tr.children[7];if(td&&String(td.textContent||'').trim().charAt(0)==='-')td.classList.add('balance-negative');});}
+  const salesPrintFoot=document.getElementById('standardPrintFoot');
+  if(salesPrintFoot){const td=salesPrintFoot.querySelector('tr > *:nth-child(8)');if(td&&String(td.textContent||'').trim().charAt(0)==='-')td.classList.add('balance-negative');}
   note.textContent='※ 과부족 = 완제품 + 총 공정재고 - 영업잔량입니다. +는 여유, 0은 충족, -는 부족을 의미합니다. 제품명 오름차순, 동일 제품은 납기일 순입니다.';
 }
 function setPrintGroupedTable(groups,subHeaders,rows,widths,cellClasses){

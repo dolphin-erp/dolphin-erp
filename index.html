@@ -967,6 +967,37 @@ body.dark-mode .role-user-list{color:#cbd5e1}
     body.dark-mode tr.sales-closed-row td{background:#162033;color:#94a3b8;}
     body.dark-mode .sales-closed-card summary{color:#cbd5e1;}
 </style>
+
+<style id="standardPrintCenterStyle">
+.print-template-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+.print-template-btn{min-height:94px;text-align:left;border:1px solid #cbd5e1;background:#fff;border-radius:12px;padding:15px;cursor:pointer}
+.print-template-btn b{display:block;font-size:17px;margin-bottom:7px}.print-template-btn span{display:block;color:#64748b;font-size:13px;line-height:1.45}
+.print-template-btn.active{border:2px solid #2563eb;background:#eff6ff}.print-action-row{display:flex;gap:10px;justify-content:flex-end;align-items:center}
+.standard-print-paper{background:#fff;color:#111827}.standard-print-header{display:grid;grid-template-columns:160px 1fr 220px;align-items:center;border-bottom:2px solid #111827;padding-bottom:10px;margin-bottom:12px}
+.standard-print-brand{font-weight:800;font-size:16px;letter-spacing:.5px}.standard-print-title{text-align:center;font-size:25px;font-weight:800}.standard-print-subtitle{text-align:center;color:#475569;font-size:12px;margin-top:4px}
+.standard-print-meta{text-align:right;font-size:11px;line-height:1.6}.standard-kpi-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:10px 0 13px}
+.standard-kpi{border:1px solid #94a3b8;border-radius:6px;padding:7px;text-align:center}.standard-kpi-label{font-size:10px;color:#475569}.standard-kpi-value{font-size:19px;font-weight:800;margin-top:2px}
+.standard-print-section-title{font-weight:800;font-size:14px;margin:8px 0 5px}.standard-print-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px}
+.standard-print-table th,.standard-print-table td{border:1px solid #64748b;padding:5px 4px;text-align:center;vertical-align:middle;overflow-wrap:anywhere}.standard-print-table th{background:#e2e8f0;font-weight:800}.standard-print-table td:first-child,.standard-print-table .text-left{text-align:left}.standard-print-table tfoot th{background:#f1f5f9}
+.standard-print-footer-note{margin-top:8px;font-size:9px;color:#475569;line-height:1.45}.print-urgent{font-weight:800}.print-muted{color:#64748b}.print-empty{text-align:center!important;padding:28px!important;color:#64748b}
+@media(max-width:900px){.print-template-grid{grid-template-columns:1fr 1fr}.standard-print-header{grid-template-columns:1fr}.standard-print-title,.standard-print-subtitle,.standard-print-meta{text-align:left}.standard-print-brand{margin-bottom:5px}}
+@media print{
+ @page{size:A4 landscape;margin:8mm}
+ body.print-standard *{visibility:hidden!important}
+ body.print-standard #printSummary,body.print-standard #printSummary *{visibility:visible!important}
+ body.print-standard #printSummary{display:block!important;position:absolute!important;left:0;top:0;width:100%;margin:0;padding:0}
+ body.print-standard .no-print{display:none!important}
+ body.print-standard .standard-print-paper{display:block!important;box-shadow:none!important;border:0!important;margin:0!important;padding:0!important;width:100%!important;max-width:none!important}
+ body.print-standard .standard-print-header{break-inside:avoid;page-break-inside:avoid}
+ body.print-standard .standard-kpi-grid{break-inside:avoid;page-break-inside:avoid}
+ body.print-standard .standard-print-table{font-size:9.5pt;table-layout:fixed}
+ body.print-standard .standard-print-table thead{display:table-header-group}
+ body.print-standard .standard-print-table tfoot{display:table-footer-group}
+ body.print-standard .standard-print-table tr{break-inside:avoid;page-break-inside:avoid}
+ body.print-standard .standard-print-table th,body.print-standard .standard-print-table td{padding:3.2mm 1.4mm}
+ body.print-standard .standard-print-footer-note{break-inside:avoid;page-break-inside:avoid}
+}
+</style>
 </head>
 <body>
 <div id="loadingOverlay"><div class="box">⏳ 등록 중입니다...<br><small>잠시만 기다려 주세요.</small></div></div>
@@ -1032,7 +1063,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
     <button class="admin-only hidden" onclick="openPage('csv',this)">CSV 업로드</button>
     <button class="admin-only hidden" onclick="openPage('flow',this)">공정흐름</button>
     <button class="admin-only hidden" onclick="openPage('history',this)">이력조회</button>
-    <button class="admin-only hidden" onclick="openPage('printSummary',this)">보고용</button>
+    <button class="admin-only hidden" onclick="openPage('printSummary',this)">프린트</button>
     <button class="admin-only hidden" onclick="openPage('improvementAdmin',this)">개선관리</button>
       <button id="adminLoginBtn" class="admin-btn" onclick="showAdminLogin()">관리자</button>
     <button id="userAdminTabBtn" class="admin-only hidden" onclick="openPage('userAdmin',this)">사용자관리</button>
@@ -1071,126 +1102,40 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 
 
   <section id="printSummary" class="page">
-    <div class="card no-print">
-      <h2>보고용 화면 설정</h2>
-      <div class="note">
-        이 화면에서 제목, 기준문구, 특이사항, 표시 항목을 수정한 뒤 인쇄합니다.
-        입력한 값은 이 PC 브라우저에 저장됩니다.
+    <div class="card no-print print-center-control">
+      <h2>프린트</h2>
+      <div class="note">회사 공통 표준양식입니다. 출력 종류만 선택하면 최신 데이터 기준으로 자동 구성됩니다. 모든 문서는 A4 가로로 인쇄되며, 내용이 많으면 행 단위로 자연스럽게 다음 페이지로 이어집니다.</div>
+      <div class="print-template-grid">
+        <button class="print-template-btn active" data-print-type="production" onclick="selectPrintTemplate('production',this)"><b>생산회의용</b><span>공정재고·영업잔량·완제품·부족현황</span></button>
+        <button class="print-template-btn" data-print-type="sales" onclick="selectPrintTemplate('sales',this)"><b>영업회의용</b><span>수주·납기·출하·잔량·상태</span></button>
+        <button class="print-template-btn" data-print-type="plan" onclick="selectPrintTemplate('plan',this)"><b>생산계획</b><span>공정별 계획·실적·달성률·잔여</span></button>
+        <button class="print-template-btn" data-print-type="work" onclick="selectPrintTemplate('work',this)"><b>현장용 작업지시서</b><span>공정·제품·계획수량·우선순위·담당</span></button>
       </div>
-
-      <div class="form-grid">
-        <div>
-          <label>보고서 제목</label>
-          <input type="text" id="reportTitleInput" value="돌핀 생산재고 요약현황" oninput="renderEditableReport(); saveReportSettings();">
-        </div>
-
-        <div>
-          <label>기준문구</label>
-          <input type="text" id="reportBaseInput" placeholder="자동: 현재 시간 기준" oninput="renderEditableReport(); saveReportSettings();">
-        </div>
-
-        <div>
-          <label>보고대상</label>
-          <select id="reportTargetInput" onchange="renderEditableReport(); saveReportSettings();">
-            <option value="생산부">생산부</option>
-            <option value="영업부">영업부</option>
-            <option value="대표">대표</option>
-            <option value="전체">전체</option>
-          </select>
-        </div>
-
-        <div>
-          <label>작성자</label>
-          <input type="text" id="reportWriterInput" placeholder="예: 생산관리" oninput="renderEditableReport(); saveReportSettings();">
-        </div>
-
-        <div class="full">
-          <label>특이사항 / 보고 메모</label>
-          <textarea id="reportMemoInput" placeholder="예: 금일 100A 요청잔량 우선 생산 필요&#10;예: 완제품 부족 제품은 포장 완료 후 즉시 출하 예정" oninput="renderEditableReport(); saveReportSettings();"></textarea>
-        </div>
-
-        <div>
-          <label><input type="checkbox" id="showKpiInput" checked onchange="renderEditableReport(); saveReportSettings();" style="width:auto;"> 상단 요약 표시</label>
-        </div>
-
-        <div>
-          <label><input type="checkbox" id="showMemoInput" checked onchange="renderEditableReport(); saveReportSettings();" style="width:auto;"> 특이사항 표시</label>
-        </div>
-
-        <div>
-          <label><input type="checkbox" id="showStatusInput" checked onchange="renderEditableReport(); saveReportSettings();" style="width:auto;"> 판정 표시</label>
-        </div>
-
-        <div>
-          <label><input type="checkbox" id="hideZeroInput" checked onchange="renderEditableReport(); saveReportSettings();" style="width:auto;"> 재고/요청 없는 제품 숨김</label>
-        </div>
+      <div class="print-action-row">
+        <button class="refresh-btn" onclick="refreshPrintCenter()">최신 데이터 불러오기</button>
+        <button class="submit-btn" onclick="printStandardDocument()">A4 가로 인쇄</button>
       </div>
-
-      <button class="submit-btn" onclick="printEditableReport()">A4 가로 인쇄</button>
-      <button class="small-btn" onclick="resetReportSettings()">보고용 설정 초기화</button>
     </div>
 
-    <div class="card report-paper" id="reportPaper">
-      <div class="print-header">
-        <div class="report-left-box">
-          <b>보고용</b><br>
-          <span id="reportTargetText">■ 생산부</span><br>
-          <span id="reportWriterText">작성자: -</span>
+    <div class="card report-paper standard-print-paper" id="standardPrintPaper">
+      <div class="standard-print-header">
+        <div class="standard-print-brand">DOLPHIN ERP</div>
+        <div>
+          <div class="standard-print-title" id="standardPrintTitle">생산회의용 현황</div>
+          <div class="standard-print-subtitle" id="standardPrintSubtitle">공정재고 및 영업잔량 기준</div>
         </div>
-
-        <div class="print-title" id="reportTitleText">돌핀 생산재고 요약현황</div>
-
-        <div class="print-meta">
-          <div id="reportBaseTimeText">기준일시: -</div>
-          <div>기준: 구글시트 입력 누적</div>
-          <div>단위: 대</div>
-        </div>
+        <div class="standard-print-meta" id="standardPrintMeta"></div>
       </div>
-
-      <div class="print-summary-box" id="reportKpiBox">
-        <div class="print-kpi"><div class="print-kpi-title">요청잔량</div><div class="print-kpi-value" id="kpiReq">0</div></div>
-        <div class="print-kpi"><div class="print-kpi-title">출하누계</div><div class="print-kpi-value" id="kpiDone">0</div></div>
-        <div class="print-kpi"><div class="print-kpi-title">요청잔량</div><div class="print-kpi-value" id="kpiRemain">0</div></div>
-        <div class="print-kpi"><div class="print-kpi-title">생산중</div><div class="print-kpi-value" id="kpiWip">0</div></div>
-        <div class="print-kpi"><div class="print-kpi-title">완제품</div><div class="print-kpi-value" id="kpiFg">0</div></div>
-        <div class="print-kpi"><div class="print-kpi-title">부족</div><div class="print-kpi-value" id="kpiShort">0</div></div>
-      </div>
-
-      <h2>제품별 요약</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr id="reportTableHeader">
-              <th>제품명</th>
-              <th>요청잔량</th>
-              <th>출하누계</th>
-              <th>요청잔량</th>
-              <th>3층 용접</th>
-              <th>2층 조립</th>
-              <th>2층 검사</th>
-              <th>2층 포장</th>
-              <th>1층 완제품</th>
-              <th class="status-col">판정</th>
-            </tr>
-          </thead>
-          <tbody id="printSummaryBody"></tbody>
-          <tfoot id="printSummaryFoot"></tfoot>
-        </table>
-      </div>
-
-      <div id="reportMemoBox">
-        <h2>특이사항</h2>
-        <div class="report-memo-text" id="reportMemoText">-</div>
-      </div>
-
-      <div class="print-only-note">
-        ※ 공정 단순화 기준: 용접=용접완료, 조립=조립대기+조립완료,
-        검사=검사대기+검사완료, 포장=포장대기+포장완료, 완제품=출하가능 완제품재고.<br>
-        ※ 영업요청은 마감되지 않았고 요청잔량이 남은 건 기준입니다.
-      </div>
+      <div class="standard-kpi-grid" id="standardPrintKpis"></div>
+      <div class="standard-print-section-title" id="standardPrintSectionTitle">제품별 공정재고</div>
+      <table class="standard-print-table">
+        <thead id="standardPrintHead"></thead>
+        <tbody id="standardPrintBody"></tbody>
+        <tfoot id="standardPrintFoot"></tfoot>
+      </table>
+      <div class="standard-print-footer-note" id="standardPrintNote"></div>
     </div>
   </section>
-
 
   <section id="productionPlan" class="page">
     <div class="card">
@@ -3264,7 +3209,7 @@ const MENU_DEFS=[
   {page:'improvement',label:'개선요청'},
   {page:'history',label:'이력조회'},
   {page:'flow',label:'공정흐름'},
-  {page:'printSummary',label:'보고용'},
+  {page:'printSummary',label:'프린트'},
   {page:'improvementAdmin',label:'개선관리'},
   {page:'userAdmin',label:'사용자관리'},
   {page:'master',label:'마스터'}
@@ -3523,6 +3468,28 @@ function saveRoleAccessRow(btn){
   }).withFailureHandler(function(err){btn.disabled=false;btn.textContent='저장';showError(err);}).saveRoleAccess(payload);
 }
 function showError(error){const raw=(error&&error.message)?error.message:String(error||'');let msg=raw;if(/<!DOCTYPE|<html|API\(JSON\/JSONP\)|응답 앞부분/i.test(raw)){msg='서버 응답 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';}else if(/is not defined|ReferenceError|TypeError|SyntaxError/i.test(raw)){msg='처리 중 화면 오류가 발생했습니다. 새로고침 후 다시 시도해주세요.';}alert(msg);}
+</script>
+
+<script id="standardPrintCenterScript">
+let STANDARD_PRINT_TYPE='production';
+function printNum(v){return Number(v)||0;}
+function printPct(a,b){return b>0?Math.round((a/b)*100)+'%':'0%';}
+function printEsc(v){return escapeHtml(String(v==null?'':v));}
+function setPrintKpis(items){const box=document.getElementById('standardPrintKpis');if(!box)return;box.innerHTML=(items||[]).map(function(x){return '<div class="standard-kpi"><div class="standard-kpi-label">'+printEsc(x[0])+'</div><div class="standard-kpi-value">'+printEsc(x[1])+'</div></div>';}).join('');box.style.gridTemplateColumns='repeat('+Math.max(1,Math.min(6,(items||[]).length))+',minmax(0,1fr))';}
+function setPrintTable(headers,rows,foot){const h=document.getElementById('standardPrintHead'),b=document.getElementById('standardPrintBody'),f=document.getElementById('standardPrintFoot');h.innerHTML='<tr>'+headers.map(function(x){return '<th>'+printEsc(x)+'</th>';}).join('')+'</tr>';b.innerHTML=rows.length?rows.map(function(r){return '<tr>'+r.map(function(x,i){return '<td class="'+(i===0?'text-left':'')+'">'+printEsc(x)+'</td>';}).join('')+'</tr>';}).join(''):'<tr><td class="print-empty" colspan="'+headers.length+'">출력할 데이터가 없습니다.</td></tr>';f.innerHTML=foot&&foot.length?'<tr>'+foot.map(function(x){return '<th>'+printEsc(x)+'</th>';}).join('')+'</tr>':'';}
+function standardPrintMeta(){const d=new Date();return '출력일시: '+d.toLocaleString('ko-KR')+'<br>용지: A4 가로<br>단위: 대';}
+function selectPrintTemplate(type,btn){STANDARD_PRINT_TYPE=type;document.querySelectorAll('.print-template-btn').forEach(function(b){b.classList.toggle('active',b===btn||b.getAttribute('data-print-type')===type);});renderStandardPrint();}
+function renderStandardPrint(){const title=document.getElementById('standardPrintTitle'),sub=document.getElementById('standardPrintSubtitle'),meta=document.getElementById('standardPrintMeta'),sec=document.getElementById('standardPrintSectionTitle'),note=document.getElementById('standardPrintNote');if(meta)meta.innerHTML=standardPrintMeta();if(STANDARD_PRINT_TYPE==='sales')renderSalesPrint(title,sub,sec,note);else if(STANDARD_PRINT_TYPE==='plan')renderPlanPrint(title,sub,sec,note);else if(STANDARD_PRINT_TYPE==='work')renderWorkPrint(title,sub,sec,note);else renderProductionPrint(title,sub,sec,note);}
+function renderProductionPrint(title,sub,sec,note){title.textContent='생산회의용 현황';sub.textContent='공정재고 · 영업잔량 · 완제품 현황';sec.textContent='제품별 공정재고';const rows=(APP.dashboard||[]).slice().sort(function(a,b){return String(a.productName||'').localeCompare(String(b.productName||''),'ko');});let t={remain:0,weld:0,assy:0,insp:0,pack:0,fg:0,short:0};const body=rows.map(function(r){const remain=printNum(r.salesRemainQty||r.requestRemainQty),weld=printNum(r.weldStock),assy=printNum(r.assyWorkStock)+printNum(r.assyDoneStock),insp=printNum(r.inspWorkStock)+printNum(r.inspDoneStock),pack=printNum(r.packWorkStock)+printNum(r.packDoneStock),fg=printNum(r.fgStock),short=Math.max(0,remain-fg);t.remain+=remain;t.weld+=weld;t.assy+=assy;t.insp+=insp;t.pack+=pack;t.fg+=fg;t.short+=short;return [r.productName||r.productCode,remain,weld,assy,insp,pack,fg,short];});setPrintKpis([['영업잔량',t.remain],['생산중',t.weld+t.assy+t.insp+t.pack],['완제품',t.fg],['완제품 부족',t.short],['제품종류',rows.length]]);setPrintTable(['제품명','영업잔량','용접','조립','검사','포장','완제품','부족'],body,['합계',t.remain,t.weld,t.assy,t.insp,t.pack,t.fg,t.short]);note.textContent='※ 조립·검사·포장은 대기와 완료 재고를 합산합니다. 부족은 영업잔량에서 완제품을 뺀 수량이며, 공정재고를 포함하지 않습니다.';}
+function renderSalesPrint(title,sub,sec,note){title.textContent='영업회의용 현황';sub.textContent='진행 중 수주 · 납기 · 출하 · 잔량';sec.textContent='진행 중 영업요청';const rows=(APP.salesRequests||[]).filter(function(r){return !isClosedSalesRow(r);}).slice().sort(function(a,b){return dueSortValue(a.dueDate)-dueSortValue(b.dueDate);});let req=0,done=0,remain=0,urgent=0;const body=rows.map(function(r){const q=printNum(r.requestQty),d=printNum(r.shippedQty||r.doneQty),rm=printNum(r.remainQty);req+=q;done+=d;remain+=rm;if(String(r.urgency||r.judgement||'').indexOf('긴급')>=0)urgent++;return [r.requestId||'',r.customerName||'',r.productName||'',q,d,rm,r.dueDate||'',r.urgency||r.judgement||'',r.status||'진행'];});setPrintKpis([['진행건수',rows.length],['총 요청',req],['출하누계',done],['총 잔량',remain],['긴급건',urgent]]);setPrintTable(['수주번호','납품처','제품명','요청','출하','잔량','납기일','판단','상태'],body,['합계','','',req,done,remain,'','','']);note.textContent='※ 마감된 영업요청은 제외합니다. 납기일이 빠른 순서로 출력합니다.';}
+function planPrintRows(){const src=((APP.productionPlan||{}).rows)||[];const out=[];['용접','조립','검사','포장'].forEach(function(proc){planDisplayRows(src,proc).forEach(function(r){const pq=planQty(r,proc),actual=planActual(r,proc);if(pq>0||actual>0)out.push({proc:proc,name:r.productName||'',plan:pq,actual:actual,remain:Math.max(0,pq-actual),rate:printPct(actual,pq),priority:planPriority(r,proc)});});});return out;}
+function renderPlanPrint(title,sub,sec,note){const date=(document.getElementById('planDate')&&document.getElementById('planDate').value)||getTodayString();title.textContent='생산계획';sub.textContent=date+' 계획 대비 실적';sec.textContent='공정별 생산계획';const rows=planPrintRows();let p=0,a=0,r=0;const body=rows.map(function(x){p+=x.plan;a+=x.actual;r+=x.remain;return [x.proc,x.name,x.plan,x.actual,x.rate,x.remain,x.priority];});setPrintKpis([['계획일',date],['총 계획',p],['총 실적',a],['달성률',printPct(a,p)],['잔여',r]]);setPrintTable(['공정','제품명','계획','실적','달성률','잔여','우선순위'],body,['합계','',p,a,printPct(a,p),r,'']);note.textContent='※ 저장된 생산계획 또는 실적이 있는 항목만 출력합니다. 공정 순서는 용접 → 조립 → 검사 → 포장입니다.';}
+function renderWorkPrint(title,sub,sec,note){const date=(document.getElementById('planDate')&&document.getElementById('planDate').value)||getTodayString();title.textContent='현장용 작업지시서';sub.textContent=date+' 작업 우선순위 및 담당 현황';sec.textContent='오늘 작업지시';const src=((APP.productionPlan||{}).rows)||[];const rows=[];['용접','조립','검사','포장'].forEach(function(proc){planDisplayRows(src,proc).forEach(function(r){const pq=planQty(r,proc);if(pq>0){const actors=workActorsText(proc,r.productCode)||'-';rows.push([proc,r.productName||'',pq,planActual(r,proc),Math.max(0,pq-planActual(r,proc)),planPriority(r,proc),actors,'□ 완료']);}});});let qty=0,remain=0;rows.forEach(function(r){qty+=printNum(r[2]);remain+=printNum(r[4]);});setPrintKpis([['작업일',date],['지시건수',rows.length],['총 계획',qty],['총 잔여',remain],['현재 작업자',(APP.currentWorks||[]).filter(function(w){return w.state==='작업중';}).length]]);setPrintTable(['공정','제품명','계획수량','실적','남은수량','우선순위','담당/작업중','확인'],rows,['합계','',qty,'',remain,'','','']);note.textContent='※ 현장 작업자는 완료 후 확인란에 표시합니다. 담당/작업중은 ERP에 등록된 현재작업 정보를 기준으로 합니다.';}
+function refreshPrintCenter(){loadDashboard(function(){loadSalesRequests(function(){loadProductionPlan(function(){renderStandardPrint();});});});}
+function printStandardDocument(){renderStandardPrint();document.body.classList.remove('print-report','print-production-plan');document.body.classList.add('print-standard');setTimeout(function(){window.print();},80);}
+window.addEventListener('afterprint',function(){document.body.classList.remove('print-standard');});
+const _oldOpenPageForPrintCenter=typeof openPage==='function'?openPage:null;
+if(_oldOpenPageForPrintCenter){openPage=function(id,btn){const result=_oldOpenPageForPrintCenter.apply(this,arguments);if(id==='printSummary'){if(!APP.productionPlan||!APP.productionPlan.rows||!APP.productionPlan.rows.length)loadProductionPlan(function(){renderStandardPrint();});else renderStandardPrint();}return result;};}
 </script>
 </body>
 </html>

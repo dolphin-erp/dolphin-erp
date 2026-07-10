@@ -979,7 +979,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 .standard-kpi{border:1px solid #94a3b8;border-radius:6px;padding:7px;text-align:center}.standard-kpi-label{font-size:10px;color:#475569}.standard-kpi-value{font-size:19px;font-weight:800;margin-top:2px}
 .standard-print-section-title{font-weight:800;font-size:14px;margin:8px 0 5px}.standard-print-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px}
 .standard-print-table th,.standard-print-table td{border:1px solid #64748b;padding:5px 4px;text-align:center;vertical-align:middle;overflow-wrap:normal;word-break:keep-all}.standard-print-table th{background:#e2e8f0;font-weight:800;white-space:nowrap}.standard-print-table td.text-left{text-align:left}.standard-print-table td.nowrap{white-space:nowrap}.standard-print-table td.wrap{white-space:normal;word-break:break-word}.standard-print-table tfoot th{background:#f1f5f9}.standard-print-table .process-cell{text-align:center!important;font-weight:800}.standard-print-table .need-hot{font-weight:900;background:#fee2e2}.standard-print-table .need-ok{font-weight:800;background:#dcfce7}
-.standard-print-footer-note{margin-top:8px;font-size:9px;color:#475569;line-height:1.45}.print-urgent{font-weight:800}.print-muted{color:#64748b}.print-empty{text-align:center!important;padding:28px!important;color:#64748b}
+.standard-print-footer-note{margin-top:8px;font-size:9px;color:#475569;line-height:1.45}.standard-print-table thead .print-group-row th{border-bottom:0;font-size:10px;letter-spacing:.02em}.standard-print-table thead .group-product{background:#f1f5f9}.standard-print-table thead .group-status{background:#dbeafe;color:#1e3a8a}.standard-print-table thead .group-plan{background:#fef3c7;color:#92400e}.standard-print-table thead .group-result{background:#dcfce7;color:#14532d}.print-urgent{font-weight:800}.print-muted{color:#64748b}.print-empty{text-align:center!important;padding:28px!important;color:#64748b}
 @media(max-width:900px){.print-template-grid{grid-template-columns:1fr 1fr}.standard-print-header{grid-template-columns:1fr}.standard-print-title,.standard-print-subtitle,.standard-print-meta{text-align:left}.standard-print-brand{margin-bottom:5px}}
 @media print{
  @page{size:A4 landscape;margin:8mm}
@@ -1004,7 +1004,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v16.17 · 2026-07-10 · 프린트 양식·권한마스터 개선</span>
+    <span class="version-badge">v16.18 · 2026-07-10 · 프린트 현황·작성자 개선</span>
     <button type="button" id="userProfileBtn" class="user-profile-btn" onclick="openUserSetup()" title="사용자 등록/변경">👤 사용자</button>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
     <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
@@ -1104,7 +1104,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
   <section id="printSummary" class="page">
     <div class="card no-print print-center-control">
       <h2>프린트</h2>
-      <div class="note">회사 공통 표준양식입니다. 출력 종류만 선택하면 최신 데이터 기준으로 자동 구성됩니다. 모든 문서는 A4 가로로 인쇄되며, 내용이 많으면 행 단위로 자연스럽게 다음 페이지로 이어집니다.</div>
+      <div class="note">회사 공통 표준양식입니다. 출력 종류만 선택하면 최신 데이터 기준으로 자동 구성되며, 내용이 많으면 행 단위로 자연스럽게 다음 페이지로 이어집니다.</div>
       <div class="print-template-grid">
         <button class="print-template-btn active" data-print-type="production" onclick="selectPrintTemplate('production',this)"><b>공정재고 현황</b><span>영업잔량·공정재고·완제품·생산필요 판단</span></button>
         <button class="print-template-btn" data-print-type="sales" onclick="selectPrintTemplate('sales',this)"><b>영업지시 현황</b><span>진행 수주·납기·출하·잔량·긴급도</span></button>
@@ -1113,7 +1113,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
       </div>
       <div class="print-action-row">
         <button class="refresh-btn" onclick="refreshPrintCenter()">최신 데이터 불러오기</button>
-        <button class="submit-btn" onclick="printStandardDocument()">A4 가로 인쇄</button>
+        <button class="submit-btn" onclick="printStandardDocument()">인쇄</button>
       </div>
     </div>
 
@@ -3482,7 +3482,7 @@ function setPrintTable(headers,rows,foot,widths,cellClasses){
   b.innerHTML=rows.length?rows.map(function(r){return '<tr>'+r.map(function(x,i){let cls=(cellClasses&&cellClasses[i])||'';if(i===0&&!cls)cls='text-left';return '<td class="'+cls+'">'+printEsc(x)+'</td>';}).join('')+'</tr>';}).join(''):'<tr><td class="print-empty" colspan="'+headers.length+'">출력할 데이터가 없습니다.</td></tr>';
   f.innerHTML=foot&&foot.length?'<tr>'+foot.map(function(x){return '<th>'+printEsc(x)+'</th>';}).join('')+'</tr>':'';
 }
-function standardPrintMeta(){const d=new Date();return '출력일시: '+d.toLocaleString('ko-KR')+'<br>용지: A4 가로<br>단위: 대';}
+function standardPrintMeta(){const d=new Date(),p=getUserProfile()||{};const writer=[p.dept||'',p.name||''].filter(Boolean).join(' / ')||'-';return '출력일시: '+d.toLocaleString('ko-KR')+'<br>작성자: '+printEsc(writer)+'<br>단위: 대';}
 function selectPrintTemplate(type,btn){STANDARD_PRINT_TYPE=type;document.querySelectorAll('.print-template-btn').forEach(function(b){b.classList.toggle('active',b===btn||b.getAttribute('data-print-type')===type);});renderStandardPrint();}
 function renderStandardPrint(){const title=document.getElementById('standardPrintTitle'),sub=document.getElementById('standardPrintSubtitle'),meta=document.getElementById('standardPrintMeta'),sec=document.getElementById('standardPrintSectionTitle'),note=document.getElementById('standardPrintNote');if(meta)meta.innerHTML=standardPrintMeta();if(STANDARD_PRINT_TYPE==='sales')renderSalesPrint(title,sub,sec,note);else if(STANDARD_PRINT_TYPE==='plan')renderPlanPrint(title,sub,sec,note);else if(STANDARD_PRINT_TYPE==='work')renderWorkPrint(title,sub,sec,note);else renderProductionPrint(title,sub,sec,note);}
 function dashPlanRow(code){return ((((APP.productionPlan||{}).rows)||[]).find(function(r){return String(r.productCode||'')===String(code||'');})||{});}
@@ -3496,19 +3496,39 @@ function renderProductionPrint(title,sub,sec,note){
   note.textContent='※ 생산필요 = 영업잔량 - (용접·조립·검사·포장 공정재고 + 완제품). 실제 재고 확인 후 우선 생산 여부를 판단합니다.';
 }
 function renderSalesPrint(title,sub,sec,note){
-  title.textContent='영업지시 현황';sub.textContent='제품별 진행 지시를 납기 순서로 확인';sec.textContent='제품별 영업지시';
+  title.textContent='영업지시 현황';sub.textContent='요청·출하·잔량과 현재 공정재고를 함께 확인';sec.textContent='제품별 영업지시 및 생산대응 현황';
+  const stockMap={};
+  (APP.dashboard||[]).forEach(function(d){
+    const total=printNum(d.weldStock)+printNum(d.assyWorkStock)+printNum(d.assyDoneStock)+printNum(d.inspWorkStock)+printNum(d.inspDoneStock)+printNum(d.packWorkStock)+printNum(d.packDoneStock);
+    if(d.productCode)stockMap['C:'+String(d.productCode)]=total;
+    if(d.productName)stockMap['N:'+String(d.productName)]=total;
+  });
   const rows=(APP.salesRequests||[]).filter(function(r){return !isClosedSalesRow(r);}).slice().sort(function(a,b){
     const pn=String(a.productName||'').localeCompare(String(b.productName||''),'ko');
     return pn||dueSortValue(a.dueDate)-dueSortValue(b.dueDate)||String(a.customerName||'').localeCompare(String(b.customerName||''),'ko');
   });
-  let req=0,done=0,remain=0,urgent=0;
-  const body=rows.map(function(r){const q=printNum(r.requestQty),d=printNum(r.shippedQty||r.doneQty),rm=printNum(r.remainQty),jud=r.urgency||r.judgement||'';req+=q;done+=d;remain+=rm;if(String(jud).indexOf('긴급')>=0)urgent++;return [r.productName||'',r.customerName||'',q,d,rm,r.dueDate||'',jud,r.status||'진행'];});
-  setPrintKpis([['진행건수',rows.length],['총 요청',req],['출하누계',done],['총 잔량',remain],['긴급건',urgent]]);
-  setPrintTable(['제품명','납품처','요청','출하','잔량','납기일','판단','상태'],body,['합계','',req,done,remain,'','',''],['21%','24%','8%','8%','8%','13%','11%','7%'],['text-left nowrap','text-left wrap','','','','nowrap','nowrap','nowrap']);
-  note.textContent='※ 마감된 지시는 제외합니다. 제품명 오름차순으로 묶고, 같은 제품은 납기일이 빠른 순서로 출력합니다.';
+  let req=0,done=0,remain=0,processStock=0,urgent=0;
+  const counted={};
+  const body=rows.map(function(r){
+    const q=printNum(r.requestQty),d=printNum(r.shippedQty||r.doneQty),rm=printNum(r.remainQty),jud=r.urgency||r.judgement||'';
+    const key=r.productCode?('C:'+String(r.productCode)):('N:'+String(r.productName||''));
+    const ps=printNum(stockMap[key]);
+    req+=q;done+=d;remain+=rm;if(!counted[key]){processStock+=ps;counted[key]=true;}if(String(jud).indexOf('긴급')>=0)urgent++;
+    return [r.productName||'',r.customerName||'',q,d,rm,ps,r.dueDate||'',jud,r.status||'진행'];
+  });
+  setPrintKpis([['진행건수',rows.length],['총 요청',req],['출하누계',done],['총 잔량',remain],['총 공정재고',processStock],['긴급건',urgent]]);
+  setPrintTable(['제품명','납품처','요청','출하','잔량','총 공정재고','납기일','판단','상태'],body,['합계','',req,done,remain,processStock,'','',''],['19%','20%','7%','7%','7%','10%','12%','11%','7%'],['text-left nowrap','text-left wrap','','','','','nowrap','nowrap','nowrap']);
+  note.textContent='※ 마감된 지시는 제외합니다. 요청수량에서 출하수량을 뺀 잔량과 현재 총 공정재고를 함께 확인하여 추가 생산 필요 여부를 판단합니다. 제품명 오름차순, 동일 제품은 납기일 순입니다.';
+}
+function setPrintGroupedTable(groups,subHeaders,rows,widths,cellClasses){
+  const h=document.getElementById('standardPrintHead'),b=document.getElementById('standardPrintBody'),f=document.getElementById('standardPrintFoot'),table=h&&h.closest('table');
+  if(table){const old=table.querySelector('colgroup');if(old)old.remove();if(widths&&widths.length){const cg=document.createElement('colgroup');widths.forEach(function(w){const c=document.createElement('col');c.style.width=w;cg.appendChild(c);});table.insertBefore(cg,table.firstChild);}}
+  h.innerHTML='<tr class="print-group-row">'+groups.map(function(g){return '<th colspan="'+printNum(g[1])+'" class="'+(g[2]||'')+'">'+printEsc(g[0])+'</th>';}).join('')+'</tr><tr>'+subHeaders.map(function(x){return '<th>'+printEsc(x)+'</th>';}).join('')+'</tr>';
+  b.innerHTML=rows.length?rows.map(function(r){return '<tr>'+r.map(function(x,i){let cls=(cellClasses&&cellClasses[i])||'';if(i===0&&!cls)cls='text-left';return '<td class="'+cls+'">'+printEsc(x)+'</td>';}).join('')+'</tr>';}).join(''):'<tr><td class="print-empty" colspan="'+subHeaders.length+'">출력할 데이터가 없습니다.</td></tr>';
+  f.innerHTML='';
 }
 function renderPlanPrint(title,sub,sec,note){
-  const date=(document.getElementById('planDate')&&document.getElementById('planDate').value)||getTodayString();title.textContent='생산계획';sub.textContent=date+' 현재 재고 기준 아침 생산계획';sec.textContent='재고 대비 오늘 공정계획';
+  const date=(document.getElementById('planDate')&&document.getElementById('planDate').value)||getTodayString();title.textContent='생산계획';sub.textContent=date+' 현재 재고 기준 아침 생산계획';sec.textContent='재고 판단 및 공정별 오늘 계획';
   const dash=(APP.dashboard||[]).slice().sort(function(a,b){return String(a.productName||'').localeCompare(String(b.productName||''),'ko');});let totalNeed=0,plannedProducts=0,needProducts=0;
   const body=dash.map(function(d){
     const pr=dashPlanRow(d.productCode),remain=printNum(d.salesRemainQty||d.requestRemainQty),fg=printNum(d.fgStock),processStock=printNum(d.weldStock)+printNum(d.assyWorkStock)+printNum(d.assyDoneStock)+printNum(d.inspWorkStock)+printNum(d.inspDoneStock)+printNum(d.packWorkStock)+printNum(d.packDoneStock),need=Math.max(0,remain-(fg+processStock));
@@ -3519,8 +3539,8 @@ function renderPlanPrint(title,sub,sec,note){
     return [d.productName||d.productCode,remain,fg,processStock,need,wp,ap,ip,pp,judge];
   });
   setPrintKpis([['계획일',date],['영업잔량',body.reduce(function(s,r){return s+printNum(r[1]);},0)],['생산필요 제품',needProducts],['신규 생산필요',totalNeed],['계획 등록 제품',plannedProducts]]);
-  setPrintTable(['제품명','영업잔량','완제품','공정재고','부족수량','용접','조립','검사','포장','판단'],body,null,['18%','8%','8%','9%','9%','8%','8%','8%','8%','16%'],['text-left nowrap','','','','','process-cell','process-cell','process-cell','process-cell','text-left wrap']);
-  note.textContent='※ 아침 계획 수립용입니다. 영업잔량에서 완제품과 전체 공정재고를 뺀 부족수량을 먼저 확인하고, 부족한 제품의 공정별 오늘 계획만 판단합니다.';
+  setPrintGroupedTable([['제품',1,'group-product'],['생산 판단 기준',4,'group-status'],['오늘 공정계획',4,'group-plan'],['결론',1,'group-result']],['제품명','영업잔량','완제품','공정재고','부족수량','용접','조립','검사','포장','판단'],body,['18%','8%','8%','9%','9%','8%','8%','8%','8%','16%'],['text-left nowrap','','','','','process-cell','process-cell','process-cell','process-cell','text-left wrap']);
+  note.textContent='※ 생산 판단 기준과 오늘 공정계획을 구분했습니다. 영업잔량에서 완제품과 전체 공정재고를 뺀 부족수량을 확인한 뒤, 필요한 공정의 계획만 수립합니다.';
 }
 function printDueInfo(productCode,productName){
   const today=new Date();today.setHours(0,0,0,0);

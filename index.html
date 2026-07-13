@@ -1006,7 +1006,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v16.20 · 2026-07-10 · 프린트 권한 분리 및 과부족 강조</span>
+    <span class="version-badge">v17.0 · 2026-07-13 · 월간 확보계획 기반 생산관리</span>
     <button type="button" id="userProfileBtn" class="user-profile-btn" onclick="openUserSetup()" title="사용자 등록/변경">👤 사용자</button>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
     <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
@@ -1054,7 +1054,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 
   <div class="tabs">
     <button class="active" onclick="openPage('dashboard',this)">현황판</button>
-    <button onclick="openPage('sales',this)">영업요청</button>
+    <button onclick="openPage('sales',this)">월간 확보계획</button>
     <button onclick="openPage('worklog',this)">작업일보</button>
     <button onclick="openPage('summary',this)">집계</button>
     <button onclick="openPage('productionPlan',this)">생산계획</button>
@@ -1091,13 +1091,13 @@ body.dark-mode .role-user-list{color:#cbd5e1}
   <section id="dashboard" class="page active">
     <div class="card">
       <h2>제품별 공정재고 현황</h2>
-      <div class="note">요청잔량은 마감되지 않은 영업요청의 미출하 잔량 합계입니다. 출하하면 자동으로 줄어들고, 잔량이 0이면 해당 요청은 마감됩니다. 층 구분: 용접 3층 / 조립·검사·포장 2층 / 완제품 1층입니다.</div>
+      <div class="note">생산필요는 이번 달 월간 확보수량과 최소확보수량에서 현재 완제품·공정재고를 차감한 수량입니다. 층 구분: 용접 3층 / 조립·검사·포장 2층 / 완제품 1층입니다.</div>
       <button class="refresh-btn" onclick="loadAll()">새로고침</button><span class="auto-refresh-badge" id="autoRefreshText">현황판 30초 자동갱신</span>
-      <div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th rowspan="2">요청잔량</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th><th rowspan="2">출하누계</th></tr><tr><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="dashboardBody"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th rowspan="2">생산필요</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th><th rowspan="2">출하누계</th></tr><tr><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="dashboardBody"></tbody></table></div>
     </div>
     <div id="v15DashboardHero" class="v15-dashboard-hero"></div>
     <div class="card">
-      <h2>진행 중 영업요청</h2>
+      <h2>이번 달 월간 확보계획</h2>
       <div class="table-wrap"><table><thead><tr><th>요청일</th><th>납기일</th><th>판단</th><th>납품처</th><th>제품명</th><th>등록수량</th><th>출하누계</th><th>잔량</th><th>완제품재고</th><th>상태</th><th>비고</th></tr></thead><tbody id="dashboardSalesBody"></tbody></table></div>
     </div>
   </section>
@@ -1109,7 +1109,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
       <div class="note">회사 공통 표준양식입니다. 출력 종류만 선택하면 최신 데이터 기준으로 자동 구성되며, 내용이 많으면 행 단위로 자연스럽게 다음 페이지로 이어집니다.</div>
       <div class="print-template-grid">
         <button class="print-template-btn active" data-print-type="production" onclick="selectPrintTemplate('production',this)"><b>공정재고 현황</b><span>영업잔량·공정재고·완제품·생산필요 판단</span></button>
-        <button class="print-template-btn" data-print-type="sales" onclick="selectPrintTemplate('sales',this)"><b>영업지시 현황</b><span>진행 수주·납기·출하·잔량·긴급도</span></button>
+        <button class="print-template-btn" data-print-type="sales" onclick="selectPrintTemplate('sales',this)"><b>월간 확보 현황</b><span>확보계획·최소재고·현재재고·생산필요·판단</span></button>
         <button class="print-template-btn" data-print-type="plan" onclick="selectPrintTemplate('plan',this)"><b>생산계획</b><span>현재 재고를 기준으로 공정별 오늘 계획 판단</span></button>
         <button class="print-template-btn" data-print-type="work" onclick="selectPrintTemplate('work',this)"><b>작업지시서</b><span>작업자별 담당 공정·제품·지시수량</span></button>
       </div>
@@ -1200,33 +1200,15 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 
   <section id="sales" class="page">
     <div class="card">
-      <h2>영업요청 등록</h2>
-      <div class="note">영업팀 요청수량을 수주번호 단위로 등록합니다. 등록수량은 고정되고, 출하증에서 선택해 출하하면 출하누계와 잔량이 자동 계산됩니다.</div>
-      <div class="form-grid">
-        <div><label>요청일</label><input type="date" id="salesDate"></div>
-        <div><label>납기일 <span style="color:#64748b;font-size:12px;">선택</span></label><input type="date" id="salesDueDate"></div>
-        <div><label>납품처</label><input type="text" id="salesCustomer" placeholder="예: 서울지사, 거래처명"></div>
-        <div><label>제품</label><select id="salesProduct"></select></div>
-        <div><label>요청수량</label><input type="number" id="salesQty" min="1" value="1"></div>
-        <div class="full"><label>비고</label><textarea id="salesMemo" placeholder="예: 긴급, 납기, 특이사항"></textarea></div>
+      <h2>월간 확보계획</h2>
+      <div class="note">영업팀은 해당 월의 예상 총 출하수량을 입력합니다. 생산필요 = 월간 확보수량 + 최소확보수량 - 현재 확보가능재고이며, 음수는 0으로 처리합니다. 제품은 제품명 순으로 고정 나열됩니다.</div>
+      <div class="form-grid" style="grid-template-columns:minmax(160px,220px) minmax(160px,220px);">
+        <div><label>대상월</label><input type="month" id="monthlyPlanMonth" onchange="loadMonthlyPlans()"></div>
+        <div><label>작성자</label><input type="text" id="monthlyPlanWriter" placeholder="예: 변재형"></div>
       </div>
-      <button class="submit-btn" id="salesSubmitBtn" onclick="saveSalesRequest()">영업요청 등록</button>
-      <div class="message" id="salesMsg"></div>
-    </div>
-
-    <div class="card">
-      <div class="sales-list-head">
-        <h2>수주/영업요청 현황</h2>
-        <div class="sales-view-toggle" id="salesViewToggle">
-          <button type="button" data-mode="product" class="active" onclick="setSalesViewMode('product',this)">제품별 보기</button>
-          <button type="button" data-mode="due" onclick="setSalesViewMode('due',this)">납기순 보기</button>
-        </div>
-      </div>
-      <div class="table-wrap"><table><thead><tr><th>수주번호</th><th>요청일</th><th>납기일</th><th>판단</th><th>납품처</th><th>제품명</th><th>등록수량</th><th>출하누계</th><th>잔량</th><th>완제품재고</th><th>상태</th><th>출하선택</th><th>마감</th><th>비고</th></tr></thead><tbody id="salesBody"></tbody></table></div>
-      <details class="sales-closed-card">
-        <summary>마감내역 보기</summary>
-        <div class="table-wrap"><table><thead><tr><th>수주번호</th><th>요청일</th><th>납기일</th><th>판단</th><th>납품처</th><th>제품명</th><th>등록수량</th><th>출하누계</th><th>잔량</th><th>완제품재고</th><th>상태</th><th>비고</th></tr></thead><tbody id="salesClosedBody"></tbody></table></div>
-      </details>
+      <div class="table-wrap"><table><thead><tr><th>제품명</th><th>월간 확보수량</th><th>최소확보수량</th><th>공정재고</th><th>완제품</th><th>확보가능재고</th><th>목표수량</th><th>생산필요</th><th>확보율</th><th>판단</th><th>비고</th></tr></thead><tbody id="monthlyPlanBody"></tbody></table></div>
+      <button class="submit-btn" id="monthlyPlanSaveBtn" onclick="saveMonthlyPlans()">월간 확보계획 저장</button>
+      <div class="message" id="monthlyPlanMsg"></div>
     </div>
   </section>
 
@@ -1290,13 +1272,13 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 </section>
 
 <section id="receipt" class="page">
-    <div class="card"><h2>입고 선택용 공정재고 현황</h2><div class="note">재고 숫자를 클릭하면 해당 위치가 FROM으로 선택됩니다. 빨간색은 FROM, 초록색은 TO입니다.</div><div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th rowspan="2">요청잔량</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th></tr><tr><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="receiptStockBody"></tbody></table></div></div>
+    <div class="card"><h2>입고 선택용 공정재고 현황</h2><div class="note">재고 숫자를 클릭하면 해당 위치가 FROM으로 선택됩니다. 빨간색은 FROM, 초록색은 TO입니다.</div><div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th rowspan="2">생산필요</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th></tr><tr><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="receiptStockBody"></tbody></table></div></div>
     <div class="card"><h2>입고증 작성</h2><div class="form-grid"><div><label>입고일</label><input type="date" id="receiptDate"></div><div><label>입고방식</label><select id="receiptMode" onchange="changeReceiptMode()"><option value="auto">자동입고</option><option value="manual">수동입고/반송</option></select></div><div><label>제품</label><select id="receiptProduct" onchange="updateReceiptProcessAndQty()"></select></div><div id="autoProcessBox"><label>기준공정</label><select id="receiptProcess" onchange="setReceiptQtyToAvailable(); updateReceiptPreview();"></select></div><div id="manualTypeBox" class="hidden"><label>입고구분</label><input type="text" id="manualReceiptType" placeholder="예: 반송입고, 초기재고"></div><div id="manualFromBox" class="hidden"><label>FROM위치</label><select id="manualFromLocation" onchange="setReceiptQtyToAvailable(); updateReceiptPreview();"></select></div><div id="manualToBox" class="hidden"><label>TO위치</label><select id="manualToLocation" onchange="updateReceiptPreview()"></select></div><div id="autoManualToBox"><label>예외 TO위치</label><select id="autoManualToLocation" onchange="updateReceiptPreview()"><option value="">자동 노선 그대로 사용</option></select></div><div><label>수량</label><input type="number" id="receiptQty" min="1" value="1"><button type="button" class="small-btn" onclick="fillReceiptAllQty()">현재 FROM 재고 전량 입력</button></div><div><label>작성자</label><input type="text" id="receiptWriter" list="workerNameList"></div><div class="full"><div class="route-box" id="receiptPreview">자동 노선 미리보기</div></div><div class="full"><label>비고</label><textarea id="receiptMemo"></textarea></div></div><button class="submit-btn" id="receiptSubmitBtn" onclick="saveReceipt()">입고증 등록</button><div class="message" id="receiptMsg"></div></div>
   </section>
 
   <section id="shipment" class="page">
     <div class="card"><h2>영업요청 선택</h2><div class="note">요청을 선택하면 제품, 납품처, 수량이 자동으로 들어갑니다. 수량은 요청잔량과 완제품재고 중 작은 값으로 잡힙니다.</div><div class="table-wrap"><table><thead><tr><th>요청일</th><th>납기일</th><th>판단</th><th>납품처</th><th>제품명</th><th>잔량</th><th>완제품재고</th><th>선택</th></tr></thead><tbody id="shipmentSalesBody"></tbody></table></div></div>
-    <div class="card"><h2>완제품 출하 가능 현황</h2><div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th rowspan="2">요청잔량</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th></tr><tr><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="shipmentStockBody"></tbody></table></div></div>
+    <div class="card"><h2>완제품 출하 가능 현황</h2><div class="table-wrap"><table><thead><tr><th rowspan="2">제품명</th><th rowspan="2">생산필요</th><th colspan="1" class="floor-3">3층 용접</th><th colspan="6" class="floor-2">2층 조립 / 검사 / 포장</th><th class="floor-1">1층 완제품</th></tr><tr><th class="floor-3">용접완료</th><th class="floor-2">조립대기</th><th class="floor-2">조립완료</th><th class="floor-2">검사대기</th><th class="floor-2">검사완료</th><th class="floor-2">포장대기</th><th class="floor-2">포장완료</th><th class="floor-1">완제품</th></tr></thead><tbody id="shipmentStockBody"></tbody></table></div></div>
     <div class="card"><h2>출하증 작성</h2><div class="form-grid"><div><label>출하일</label><input type="date" id="shipDate"></div><div><label>영업요청</label><select id="shipSalesRequest" onchange="selectSalesRequestBySelect()"><option value="">일반 출하</option></select></div><div><label>출하구분</label><select id="shipType"><option value="출하">출하</option><option value="불량폐기">불량폐기</option><option value="샘플출하">샘플출하</option><option value="재고조정감소">재고조정감소</option></select></div><div class="hidden"><label>출하위치</label><select id="shipLocation" onchange="setShipQtyToAvailable(); updateShipStockPreview();"></select></div><div><label>제품</label><select id="shipProduct" onchange="setShipQtyToAvailable(); updateShipStockPreview();"></select></div><div><label>수량</label><input type="number" id="shipQty" min="1" value="1"><div class="route-box" id="shipStockPreview">현재 출하위치 재고: 0대</div><button type="button" class="small-btn" onclick="fillShipAllQty()">현재고 전량 출하</button></div><div><label>납품처</label><input type="text" id="customerName"></div><div><label>작성자</label><input type="text" id="shipWriter" list="workerNameList"></div><div class="full"><label>비고</label><textarea id="shipMemo"></textarea></div></div><button class="submit-btn" id="shipSubmitBtn" onclick="saveShipment()">출하증 등록</button><div class="message" id="shipMsg"></div></div>
   </section>
 
@@ -2624,7 +2606,6 @@ function saveShipment(){
   const key='shipmentSave';
   if(ACTION_BUSY[key])return;
   if(!document.getElementById('shipWriter').value.trim()){alert('작성자명을 입력하세요.');return;}
-  if(!document.getElementById('shipSalesRequest').value){alert('영업요청을 선택하세요.');return;}
   document.getElementById('shipLocation').value='완제품재고';
   if(!validateShipmentBeforeSave())return;
   const data={shipDate:document.getElementById('shipDate').value,shipType:document.getElementById('shipType').value,location:document.getElementById('shipLocation').value,productCode:document.getElementById('shipProduct').value,qty:document.getElementById('shipQty').value,customerName:document.getElementById('customerName').value,writer:document.getElementById('shipWriter').value,memo:document.getElementById('shipMemo').value,salesRequestId:document.getElementById('shipSalesRequest').value};
@@ -3581,6 +3562,34 @@ function printStandardDocument(){renderStandardPrint();document.body.classList.r
 window.addEventListener('afterprint',function(){document.body.classList.remove('print-standard');});
 const _oldOpenPageForPrintCenter=typeof openPage==='function'?openPage:null;
 if(_oldOpenPageForPrintCenter){openPage=function(id,btn){const result=_oldOpenPageForPrintCenter.apply(this,arguments);if(id==='printSummary'){if(!APP.productionPlan||!APP.productionPlan.rows||!APP.productionPlan.rows.length)loadProductionPlan(function(){renderStandardPrint();});else renderStandardPrint();}return result;};}
+
+// v17.0 월간 확보계획
+APP.monthlyPlans=APP.monthlyPlans||[];
+function currentMonthInput(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function monthlyJudgeClass(v){return v==='긴급생산'?'status-danger':v==='우선생산'?'status-warn':v==='소량생산'?'status-active':v==='여유'?'status-done':'status-ok';}
+function loadMonthlyPlans(done){
+  const month=(document.getElementById('monthlyPlanMonth')&&document.getElementById('monthlyPlanMonth').value)||currentMonthInput();
+  google.script.run.withSuccessHandler(function(rows){APP.monthlyPlans=rows||[];renderMonthlyPlans();markPageLoaded('sales');if(typeof done==='function')done();}).withFailureHandler(function(err){showError(err);if(typeof done==='function')done();}).getMonthlyStockPlans(month);
+}
+function renderMonthlyPlans(){const tbody=document.getElementById('monthlyPlanBody');if(!tbody)return;tbody.innerHTML='';(APP.monthlyPlans||[]).forEach(function(r){const tr=document.createElement('tr');tr.innerHTML='<td>'+r.productName+'</td><td><input type="number" min="0" class="monthly-plan-qty" data-code="'+r.productCode+'" value="'+r.planQty+'" oninput="recalcMonthlyRow(this)"></td><td><input type="number" min="0" class="monthly-min-qty" data-code="'+r.productCode+'" value="'+r.minQty+'" oninput="recalcMonthlyRow(this)"></td><td data-role="process">'+r.processStock+'</td><td data-role="fg">'+r.fgStock+'</td><td data-role="available">'+r.availableQty+'</td><td data-role="target">'+r.targetQty+'</td><td data-role="need" class="plus">'+r.productionNeed+'</td><td data-role="rate">'+r.secureRate+'%</td><td data-role="judge"><span class="urgency-chip '+monthlyJudgeClass(r.judgment)+'">'+r.judgment+'</span></td><td><input type="text" class="monthly-memo" data-code="'+r.productCode+'" value="'+String(r.memo||'').replace(/"/g,'&quot;')+'"></td>';tbody.appendChild(tr);});}
+function calcMonthlyJudge(target,available,need){const rate=target>0?available/target:1;if(need<=0)return available>=target+Math.max(5,Math.ceil(target*.2))?'여유':'재고충분';if(rate<.4||need>=20)return '긴급생산';if(rate<.7||need>=10)return '우선생산';return '소량생산';}
+function recalcMonthlyRow(el){const tr=el.closest('tr'),plan=Number(tr.querySelector('.monthly-plan-qty').value)||0,min=Number(tr.querySelector('.monthly-min-qty').value)||0,available=Number(tr.querySelector('[data-role="available"]').textContent)||0,target=plan+min,need=Math.max(0,target-available),rate=target>0?Math.round(available/target*100):100,judge=calcMonthlyJudge(target,available,need);tr.querySelector('[data-role="target"]').textContent=target;tr.querySelector('[data-role="need"]').textContent=need;tr.querySelector('[data-role="rate"]').textContent=rate+'%';tr.querySelector('[data-role="judge"]').innerHTML='<span class="urgency-chip '+monthlyJudgeClass(judge)+'">'+judge+'</span>';}
+function saveMonthlyPlans(){const writer=document.getElementById('monthlyPlanWriter').value.trim();if(!writer){alert('작성자명을 입력하세요.');return;}const items=[];document.querySelectorAll('#monthlyPlanBody tr').forEach(function(tr){const q=tr.querySelector('.monthly-plan-qty'),m=tr.querySelector('.monthly-min-qty'),memo=tr.querySelector('.monthly-memo');if(q)items.push({productCode:q.dataset.code,planQty:q.value,minQty:m.value,memo:memo?memo.value:''});});const data={month:document.getElementById('monthlyPlanMonth').value,writer:writer,items:items};if(!beginAction('monthlyPlanSave','monthlyPlanSaveBtn','monthlyPlanMsg','저장 중...','월간 확보계획을 저장하고 있습니다.'))return;google.script.run.withSuccessHandler(function(msg){document.getElementById('monthlyPlanMsg').textContent=msg;loadMonthlyPlans(function(){loadDashboard();});endAction('monthlyPlanSave','monthlyPlanSaveBtn','월간 확보계획 저장');}).withFailureHandler(function(err){endAction('monthlyPlanSave','monthlyPlanSaveBtn','월간 확보계획 저장');showError(err);}).saveMonthlyStockPlans(data);}
+const _v17OldLoadSalesRequests=loadSalesRequests;
+loadSalesRequests=function(done){loadMonthlyPlans(done);};
+
+
+function renderSalesPrint(title,sub,sec,note){
+  const month=(document.getElementById('monthlyPlanMonth')&&document.getElementById('monthlyPlanMonth').value)||currentMonthInput();
+  title.textContent='월간 확보 현황';sub.textContent=month+' 월간 확보계획 및 생산필요';sec.textContent='제품별 확보계획';
+  const rows=(APP.monthlyPlans||[]).map(function(r){return [r.productName,r.planQty,r.minQty,r.processStock,r.fgStock,r.availableQty,r.targetQty,r.productionNeed,r.secureRate+'%',r.judgment];});
+  const t=(APP.monthlyPlans||[]).reduce(function(a,r){a.plan+=Number(r.planQty)||0;a.min+=Number(r.minQty)||0;a.process+=Number(r.processStock)||0;a.fg+=Number(r.fgStock)||0;a.available+=Number(r.availableQty)||0;a.target+=Number(r.targetQty)||0;a.need+=Number(r.productionNeed)||0;return a;},{plan:0,min:0,process:0,fg:0,available:0,target:0,need:0});
+  setPrintKpis([['대상월',month],['월간 확보',t.plan],['최소 확보',t.min],['확보가능재고',t.available],['총 생산필요',t.need]]);
+  setPrintTable(['제품명','월간확보','최소확보','공정재고','완제품','확보가능','목표수량','생산필요','확보율','판단'],rows,['합계',t.plan,t.min,t.process,t.fg,t.available,t.target,t.need,'',''],['18%','8%','8%','8%','8%','9%','9%','9%','8%','15%'],['text-left nowrap','','','','','','','','nowrap','nowrap']);
+  note.textContent='※ 생산필요 = 월간 확보수량 + 최소확보수량 - 현재 공정재고 - 완제품재고이며, 음수는 0으로 표시합니다. 제품은 제품명 순으로 고정 표시됩니다.';
+}
+
+document.addEventListener('DOMContentLoaded',function(){const m=document.getElementById('monthlyPlanMonth');if(m&&!m.value)m.value=currentMonthInput();});
 </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/* Dolphin ERP v14.6 API shim
+/* Dolphin ERP v18.0 API shim
  * Cloudflare Pages 전용.
  * 중요: 브라우저는 Apps Script를 직접 호출하지 않습니다.
  * 검증된 /api?action=... GET 경로만 사용합니다.
@@ -78,5 +78,5 @@
   window.google.script = window.google.script || {};
   window.google.script.run = createRunner();
 
-  window.DOLPHIN_API_MODE = 'cloudflare-get-proxy-v13.2';
+  window.DOLPHIN_API_MODE = 'cloudflare-get-proxy-v18.0';
 })();

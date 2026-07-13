@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dolphin ERP v16.10</title>
+  <title>Dolphin ERP v18.0</title>
   <!-- Dolphin ERP v12: Cloudflare/GitHub frontend -->
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -1006,7 +1006,7 @@ body.dark-mode .role-user-list{color:#cbd5e1}
 <header>
   <span>돌핀 공정재고 웹앱</span>
   <span class="header-actions">
-    <span class="version-badge">v17.0 · 2026-07-13 · 월간 확보계획 기반 생산관리</span>
+    <span class="version-badge">v18.0 · 2026-07-13 · 월간 확보계획 기반 생산관리</span>
     <button type="button" id="userProfileBtn" class="user-profile-btn" onclick="openUserSetup()" title="사용자 등록/변경">👤 사용자</button>
     <button type="button" id="themeToggleBtn" class="theme-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환">🌙 다크모드</button>
     <button type="button" id="globalRefreshBtn" class="global-refresh-toggle" onclick="globalRefreshCurrentPage()" aria-label="현재 화면 새로고침" title="현재 화면 새로고침">↻</button>
@@ -1965,12 +1965,11 @@ function downstreamAfterPackingQty(r){
   return qtyVal(r.packDoneStock)+qtyVal(r.fgStock);
 }
 function planNeedQty(r,process){
-  const remain=qtyVal(r.requestRemainQty);
-  if(process==='조립')return positiveQty(remain-downstreamAfterAssemblyQty(r));
-  if(process==='검사')return positiveQty(remain-downstreamAfterInspectionQty(r));
-  if(process==='포장')return positiveQty(remain-downstreamAfterPackingQty(r));
-  if(process==='용접')return positiveQty(remain-(qtyVal(r.weldStock)+qtyVal(r.assyWorkStock)+downstreamAfterAssemblyQty(r)));
-  return remain;
+  // v18.1: 월간 확보계획에서 이미 완제품과 전체 공정재고를 차감해 산출한
+  // 생산필요수량을 생산계획의 공정별 기준값으로 그대로 사용한다.
+  // 공정별 화면에서 재고를 다시 차감하면 동일 재고가 중복 차감되어
+  // 현황판과 생산계획의 필요수량이 달라지는 오류가 발생한다.
+  return positiveQty(r.productionNeed != null ? r.productionNeed : r.requestRemainQty);
 }
 function planInputDefaultQty(r,process){
   const saved=planQty(r,process);

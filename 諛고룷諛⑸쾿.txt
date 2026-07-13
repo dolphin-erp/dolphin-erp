@@ -1,0 +1,24 @@
+Dolphin ERP v18.0 GitHub / Cloudflare Pages 배포방법
+
+1. 먼저 Apps Script v18.0의 Code.gs와 index.html을 교체합니다.
+2. Apps Script에서 setupSheets를 1회 실행합니다.
+3. 배포 > 배포 관리 > 기존 웹 앱 배포 수정 > 새 버전으로 배포합니다.
+4. Apps Script 웹 앱 URL이 기존과 같다면 GitHub 쪽 URL 수정은 필요 없습니다.
+5. URL이 바뀌었다면 아래 둘 중 하나를 수정합니다.
+   - 권장: Cloudflare Pages 환경변수 APPS_SCRIPT_URL에 새 /exec URL 입력
+   - 또는 functions/api.js의 DEFAULT_APPS_SCRIPT_URL 교체
+6. 이 폴더의 파일 전체를 기존 GitHub 저장소 루트에 덮어씁니다.
+7. GitHub Desktop에서 Commit 후 Push 합니다.
+8. Cloudflare Pages 배포 완료 후 강력 새로고침(Ctrl+F5)합니다.
+
+확인 항목
+- 메뉴에 월간 확보계획이 표시되는지
+- 월 선택 후 제품 목록이 불러와지는지
+- 저장 시 허용되지 않은 API action 오류가 없는지
+- 생산필요와 판단이 자동 계산되는지
+- 프린트에서 월간 확보 현황이 출력되는지
+
+주의
+Cloudflare 화면은 functions/api.js를 통해 Apps Script를 호출합니다.
+프론트만 배포하고 Apps Script를 v18.0으로 새 버전 배포하지 않으면
+getMonthlyStockPlans 허용 오류가 다시 발생합니다.
